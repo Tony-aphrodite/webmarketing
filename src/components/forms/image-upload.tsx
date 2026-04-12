@@ -153,7 +153,7 @@ export function ImageUpload({
       {/* Room selector */}
       <div className="space-y-2">
         <Label>Room category for upload</Label>
-        <Select value={selectedRoom} onValueChange={setSelectedRoom}>
+        <Select value={selectedRoom} onValueChange={(val) => { if (val) setSelectedRoom(val); }}>
           <SelectTrigger>
             <SelectValue />
           </SelectTrigger>
