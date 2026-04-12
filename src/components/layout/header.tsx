@@ -26,7 +26,7 @@ export function DashboardHeader({ userName }: { userName: string }) {
           <span className="text-sm text-muted-foreground">{userName}</span>
           <Button variant="ghost" size="sm" onClick={handleSignOut}>
             <LogOut className="mr-2 h-4 w-4" />
-            Salir
+            Sign Out
           </Button>
         </div>
       </div>

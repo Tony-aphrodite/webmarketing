@@ -13,6 +13,7 @@ import {
   Users,
   FileText,
   Settings,
+  ImageIcon,
 } from "lucide-react";
 
 interface NavItem {
@@ -24,44 +25,71 @@ interface NavItem {
 
 const NAV_ITEMS: NavItem[] = [
   {
-    label: "Panel Principal",
+    label: "Dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
-    roles: ["propietario", "inquilino", "pymes"],
+    roles: [
+      "propietario",
+      "propietario_preferido",
+      "inversionista",
+      "inquilino",
+      "inquilino_premium",
+      "pymes",
+    ],
   },
   {
-    label: "Mis Propiedades",
+    label: "My Properties",
     href: "/dashboard/properties",
     icon: Building2,
-    roles: ["propietario"],
+    roles: ["propietario", "propietario_preferido", "inversionista"],
   },
   {
-    label: "Servicios Recomendados",
+    label: "Image Gallery",
+    href: "/dashboard/images",
+    icon: ImageIcon,
+    roles: ["propietario", "propietario_preferido", "inversionista"],
+  },
+  {
+    label: "Recommended Services",
     href: "/dashboard/services",
     icon: Heart,
-    roles: ["propietario", "inquilino", "pymes"],
+    roles: [
+      "propietario",
+      "propietario_preferido",
+      "inversionista",
+      "inquilino",
+      "inquilino_premium",
+      "pymes",
+    ],
   },
   {
-    label: "Mi Perfil",
+    label: "My Profile",
     href: "/dashboard/profile",
     icon: User,
-    roles: ["propietario", "inquilino", "pymes"],
+    roles: [
+      "propietario",
+      "propietario_preferido",
+      "inversionista",
+      "inquilino",
+      "inquilino_premium",
+      "pymes",
+    ],
   },
   // Admin routes
   {
-    label: "Panel Admin",
+    label: "Admin Panel",
     href: "/admin",
     icon: LayoutDashboard,
     roles: ["admin"],
   },
   {
-    label: "Usuarios",
+    label: "Users",
     href: "/admin/users",
     icon: Users,
     roles: ["admin"],
   },
   {
-    label: "Propiedades",
+    label: "Properties",
     href: "/admin/properties",
     icon: Building2,
     roles: ["admin"],
@@ -73,13 +101,13 @@ const NAV_ITEMS: NavItem[] = [
     roles: ["admin"],
   },
   {
-    label: "Servicios",
+    label: "Services",
     href: "/admin/services",
     icon: Settings,
     roles: ["admin"],
   },
   {
-    label: "Pagos",
+    label: "Payments",
     href: "/admin/payments",
     icon: CreditCard,
     roles: ["admin"],

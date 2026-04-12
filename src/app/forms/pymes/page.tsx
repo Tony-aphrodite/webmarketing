@@ -5,11 +5,10 @@ import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createClient } from "@/lib/supabase/client";
-import { pymesFormSchema, type PymesFormData } from "@/types/forms";
+import { pymesCalculatorSchema, type PymesCalculatorData } from "@/types/forms";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -24,85 +23,112 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { BarChart3 } from "lucide-react";
 
 const SECTORS = [
-  { value: "retail", label: "Retail / Comercio" },
-  { value: "servicios", label: "Servicios" },
-  { value: "tecnologia", label: "Tecnología" },
-  { value: "gastronomia", label: "Gastronomía" },
-  { value: "salud", label: "Salud" },
-  { value: "educacion", label: "Educación" },
-  { value: "construccion", label: "Construcción" },
-  { value: "otro", label: "Otro" },
+  { value: "retail", label: "Retail / Commerce" },
+  { value: "services", label: "Services" },
+  { value: "technology", label: "Technology" },
+  { value: "food_beverage", label: "Food & Beverage" },
+  { value: "health", label: "Health & Wellness" },
+  { value: "education", label: "Education" },
+  { value: "construction", label: "Construction" },
+  { value: "other", label: "Other" },
 ];
 
-const EMPLOYEE_COUNTS = [
-  { value: "1-5", label: "1 - 5 empleados" },
-  { value: "6-20", label: "6 - 20 empleados" },
-  { value: "21-50", label: "21 - 50 empleados" },
-  { value: "51+", label: "Más de 50 empleados" },
+const LIKERT_OPTIONS = [
+  { value: 1, label: "1 - Very poor" },
+  { value: 2, label: "2 - Poor" },
+  { value: 3, label: "3 - Average" },
+  { value: 4, label: "4 - Good" },
+  { value: 5, label: "5 - Excellent" },
 ];
 
-const REVENUE_RANGES = [
-  { value: "menos_5k", label: "Menos de $5,000" },
-  { value: "5k_20k", label: "$5,000 - $20,000" },
-  { value: "20k_50k", label: "$20,000 - $50,000" },
-  { value: "50k_100k", label: "$50,000 - $100,000" },
-  { value: "mas_100k", label: "Más de $100,000" },
+interface QuestionDef {
+  field: keyof PymesCalculatorData;
+  block: string;
+  question: string;
+  helpText: string;
+}
+
+const QUESTIONS: QuestionDef[] = [
+  {
+    field: "q1_online_presence",
+    block: "Digital Visibility",
+    question: "How would you rate your business's online presence?",
+    helpText: "1 = Non-existent, 5 = Excellent & well-maintained",
+  },
+  {
+    field: "q2_seo_positioning",
+    block: "Digital Visibility",
+    question: "How well does your business rank on search engines?",
+    helpText: "1 = Not at all, 5 = Top positions on Google",
+  },
+  {
+    field: "q3_lead_generation",
+    block: "Lead Generation",
+    question: "How effective is your current lead generation?",
+    helpText: "1 = No leads coming in, 5 = Steady flow of qualified leads",
+  },
+  {
+    field: "q4_lead_conversion",
+    block: "Lead Generation",
+    question: "What percentage of leads convert to customers?",
+    helpText: "1 = Under 5%, 5 = Over 40%",
+  },
+  {
+    field: "q5_client_retention",
+    block: "Retention & Loyalty",
+    question: "How well do you retain existing clients?",
+    helpText: "1 = High churn rate, 5 = Excellent retention",
+  },
+  {
+    field: "q6_repeat_purchases",
+    block: "Retention & Loyalty",
+    question: "How often do clients make repeat purchases?",
+    helpText: "1 = Rarely, 5 = Frequently & predictably",
+  },
+  {
+    field: "q7_marketing_strategy",
+    block: "Marketing Strategy",
+    question: "How structured is your marketing strategy?",
+    helpText: "1 = No strategy, 5 = Fully planned & executed",
+  },
 ];
 
-const MARKETING_BUDGETS = [
-  { value: "ninguno", label: "Sin presupuesto" },
-  { value: "menos_500", label: "Menos de $500" },
-  { value: "500_2000", label: "$500 - $2,000" },
-  { value: "2000_5000", label: "$2,000 - $5,000" },
-  { value: "mas_5000", label: "Más de $5,000" },
-];
+function calculateResults(data: PymesCalculatorData) {
+  const totalScore =
+    data.q1_online_presence +
+    data.q2_seo_positioning +
+    data.q3_lead_generation +
+    data.q4_lead_conversion +
+    data.q5_client_retention +
+    data.q6_repeat_purchases +
+    data.q7_marketing_strategy;
 
-const SOCIAL_PLATFORMS = [
-  "Facebook",
-  "Instagram",
-  "TikTok",
-  "LinkedIn",
-  "YouTube",
-  "Twitter/X",
-];
+  const estimatedLoss = data.monthly_revenue * 0.3 * 12;
 
-const MARKETING_CHANNELS = [
-  { value: "ninguno", label: "Ninguno" },
-  { value: "redes_sociales", label: "Redes Sociales" },
-  { value: "email", label: "Email Marketing" },
-  { value: "google_ads", label: "Google Ads" },
-  { value: "seo", label: "SEO" },
-  { value: "contenido", label: "Marketing de Contenido" },
-  { value: "referidos", label: "Referidos" },
-  { value: "publicidad_tradicional", label: "Publicidad Tradicional" },
-];
+  let urgencyLevel: "critical" | "high" | "moderate";
+  let recommendedPlan: "rescue" | "growth" | "scale";
 
-const CHALLENGES = [
-  { value: "atraer_clientes", label: "Atraer nuevos clientes" },
-  { value: "retener_clientes", label: "Retener clientes existentes" },
-  { value: "presencia_digital", label: "Mejorar presencia digital" },
-  { value: "automatizar_procesos", label: "Automatizar procesos" },
-  { value: "aumentar_ventas", label: "Aumentar ventas" },
-  { value: "branding", label: "Fortalecer la marca (branding)" },
-];
+  if (totalScore <= 14) {
+    urgencyLevel = "critical";
+    recommendedPlan = "rescue";
+  } else if (totalScore <= 24) {
+    urgencyLevel = "high";
+    recommendedPlan = "growth";
+  } else {
+    urgencyLevel = "moderate";
+    recommendedPlan = "scale";
+  }
 
-const BUSINESS_GOALS = [
-  "Aumentar ventas online",
-  "Generar más leads",
-  "Mejorar posicionamiento en Google",
-  "Crear presencia en redes sociales",
-  "Automatizar marketing",
-  "Lanzar campañas publicitarias",
-  "Mejorar imagen de marca",
-  "Expandir a nuevos mercados",
-];
+  return { totalScore, estimatedLoss, urgencyLevel, recommendedPlan };
+}
 
-export default function PymesFormPage() {
+export default function PymesCalculatorPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
-  const [step, setStep] = useState(1);
+  const [step, setStep] = useState(1); // 1: company info, 2-8: questions, 9: submit
   const [error, setError] = useState<string | null>(null);
 
   const {
@@ -112,34 +138,32 @@ export default function PymesFormPage() {
     watch,
     formState: { errors },
     trigger,
-  } = useForm<PymesFormData>({
+  } = useForm<PymesCalculatorData>({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    resolver: zodResolver(pymesFormSchema) as any,
+    resolver: zodResolver(pymesCalculatorSchema) as any,
     defaultValues: {
-      has_website: false,
-      has_social_media: false,
-      social_media_platforms: [],
-      current_marketing_channels: [],
-      business_goals: [],
+      q1_online_presence: 0,
+      q2_seo_positioning: 0,
+      q3_lead_generation: 0,
+      q4_lead_conversion: 0,
+      q5_client_retention: 0,
+      q6_repeat_purchases: 0,
+      q7_marketing_strategy: 0,
     },
   });
 
-  const hasSocialMedia = watch("has_social_media");
-  const socialPlatforms = watch("social_media_platforms");
-  const marketingChannels = watch("current_marketing_channels");
-  const businessGoals = watch("business_goals");
+  const totalSteps = 9; // 1 company + 7 questions + 1 review
+  const progress = Math.round((step / totalSteps) * 100);
 
   async function nextStep() {
-    let fieldsToValidate: (keyof PymesFormData)[] = [];
-    if (step === 1) fieldsToValidate = ["company_name", "sector", "employee_count", "monthly_revenue"];
-    if (step === 2) fieldsToValidate = [];
-    if (step === 3) fieldsToValidate = ["marketing_budget"];
-
-    const valid = fieldsToValidate.length === 0 || (await trigger(fieldsToValidate));
-    if (valid) setStep(step + 1);
+    if (step === 1) {
+      const valid = await trigger(["company_name", "sector", "monthly_revenue"]);
+      if (!valid) return;
+    }
+    setStep(step + 1);
   }
 
-  async function onSubmit(data: PymesFormData) {
+  async function onSubmit(data: PymesCalculatorData) {
     setLoading(true);
     setError(null);
 
@@ -154,22 +178,29 @@ export default function PymesFormPage() {
         return;
       }
 
-      const { error: insertError } = await supabase
+      const results = calculateResults(data);
+
+      const { data: diagnosis, error: insertError } = await supabase
         .from("pymes_diagnosis")
         .insert({
           user_id: user.id,
           company_name: data.company_name,
           sector: data.sector,
-          employee_count: data.employee_count,
           monthly_revenue: data.monthly_revenue,
-          has_website: data.has_website,
-          has_social_media: data.has_social_media,
-          social_media_platforms: data.social_media_platforms,
-          current_marketing_channels: data.current_marketing_channels,
-          marketing_budget: data.marketing_budget,
-          main_challenge: data.main_challenge,
-          business_goals: data.business_goals,
-        });
+          q1_online_presence: data.q1_online_presence,
+          q2_seo_positioning: data.q2_seo_positioning,
+          q3_lead_generation: data.q3_lead_generation,
+          q4_lead_conversion: data.q4_lead_conversion,
+          q5_client_retention: data.q5_client_retention,
+          q6_repeat_purchases: data.q6_repeat_purchases,
+          q7_marketing_strategy: data.q7_marketing_strategy,
+          total_score: results.totalScore,
+          urgency_level: results.urgencyLevel,
+          estimated_loss: results.estimatedLoss,
+          recommended_plan: results.recommendedPlan,
+        })
+        .select("id")
+        .single();
 
       if (insertError) throw insertError;
 
@@ -177,55 +208,73 @@ export default function PymesFormPage() {
       await fetch("/api/leads", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ source: "formulario_pymes" }),
+        body: JSON.stringify({ source: "pymes_calculator" }),
       });
 
-      router.push("/dashboard");
+      router.push(`/results/pymes/${diagnosis?.id}`);
     } catch (err) {
-      setError("Error al guardar el diagnóstico. Intente nuevamente.");
+      setError("Failed to save diagnosis. Please try again.");
       console.error(err);
     } finally {
       setLoading(false);
     }
   }
 
-  return (
-    <div className="mx-auto max-w-2xl py-8 px-4">
-      <Card>
-        <CardHeader>
-          <CardTitle>Diagnóstico Empresarial</CardTitle>
-          <CardDescription>
-            Complete el diagnóstico para recibir recomendaciones personalizadas.
-            Paso {step} de 4.
-          </CardDescription>
-          <div className="flex gap-1 pt-2">
-            {[1, 2, 3, 4].map((s) => (
-              <div
-                key={s}
-                className={`h-2 flex-1 rounded-full ${
-                  s <= step ? "bg-primary" : "bg-muted"
-                }`}
-              />
-            ))}
-          </div>
-        </CardHeader>
+  const currentQuestion = step >= 2 && step <= 8 ? QUESTIONS[step - 2] : null;
 
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-background to-secondary/20 px-4 py-8">
+      {/* Progress */}
+      <div className="mb-8 w-full max-w-xl">
+        <div className="mb-2 flex items-center justify-between text-xs text-muted-foreground">
+          <span className="flex items-center gap-1">
+            <BarChart3 className="h-3.5 w-3.5" />
+            Sales Leak Calculator
+          </span>
+          <span>{progress}%</span>
+        </div>
+        <div className="h-2 w-full rounded-full bg-muted">
+          <div
+            className="h-2 rounded-full bg-accent transition-all duration-500"
+            style={{ width: `${progress}%` }}
+          />
+        </div>
+      </div>
+
+      <Card className="w-full max-w-xl">
         <form onSubmit={handleSubmit(onSubmit)}>
-          <CardContent className="space-y-4">
+          <CardHeader>
+            <CardTitle className="text-xl">
+              {step === 1
+                ? "Company Information"
+                : step <= 8
+                  ? `${currentQuestion?.block}`
+                  : "Your Results Preview"}
+            </CardTitle>
+            <CardDescription>
+              {step === 1
+                ? "Tell us about your business to start the diagnosis."
+                : step <= 8
+                  ? `Question ${step - 1} of 7`
+                  : "Review and submit to see your full diagnosis."}
+            </CardDescription>
+          </CardHeader>
+
+          <CardContent className="min-h-[200px]">
             {error && (
-              <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+              <div className="mb-4 rounded-md bg-destructive/10 p-3 text-sm text-destructive">
                 {error}
               </div>
             )}
 
             {/* Step 1: Company Info */}
             {step === 1 && (
-              <>
+              <div className="space-y-4">
                 <div className="space-y-2">
-                  <Label htmlFor="company_name">Nombre de la empresa</Label>
+                  <Label htmlFor="company_name">Company name</Label>
                   <Input
                     id="company_name"
-                    placeholder="Mi Empresa S.A.S."
+                    placeholder="Your Business Inc."
                     {...register("company_name")}
                   />
                   {errors.company_name && (
@@ -235,14 +284,17 @@ export default function PymesFormPage() {
                   )}
                 </div>
                 <div className="space-y-2">
-                  <Label>Sector</Label>
+                  <Label>Industry sector</Label>
                   <Select
                     onValueChange={(val) =>
-                      setValue("sector", val as PymesFormData["sector"])
+                      setValue(
+                        "sector",
+                        val as PymesCalculatorData["sector"]
+                      )
                     }
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Seleccione el sector" />
+                      <SelectValue placeholder="Select sector" />
                     </SelectTrigger>
                     <SelectContent>
                       {SECTORS.map((s) => (
@@ -253,260 +305,173 @@ export default function PymesFormPage() {
                     </SelectContent>
                   </Select>
                   {errors.sector && (
-                    <p className="text-sm text-destructive">{errors.sector.message}</p>
-                  )}
-                </div>
-                <div className="space-y-2">
-                  <Label>Número de empleados</Label>
-                  <Select
-                    onValueChange={(val) =>
-                      setValue("employee_count", val as PymesFormData["employee_count"])
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {EMPLOYEE_COUNTS.map((e) => (
-                        <SelectItem key={e.value} value={e.value}>
-                          {e.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.employee_count && (
                     <p className="text-sm text-destructive">
-                      {errors.employee_count.message}
+                      {errors.sector.message}
                     </p>
                   )}
                 </div>
                 <div className="space-y-2">
-                  <Label>Ingresos mensuales aproximados</Label>
-                  <Select
-                    onValueChange={(val) =>
-                      setValue("monthly_revenue", val as PymesFormData["monthly_revenue"])
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccione el rango" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {REVENUE_RANGES.map((r) => (
-                        <SelectItem key={r.value} value={r.value}>
-                          {r.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                  <Label htmlFor="monthly_revenue">
+                    Monthly revenue (CAD)
+                  </Label>
+                  <Input
+                    id="monthly_revenue"
+                    type="number"
+                    placeholder="e.g. 25000"
+                    {...register("monthly_revenue")}
+                  />
                   {errors.monthly_revenue && (
                     <p className="text-sm text-destructive">
                       {errors.monthly_revenue.message}
                     </p>
                   )}
+                  <p className="text-xs text-muted-foreground">
+                    This is used to calculate your estimated annual loss.
+                  </p>
                 </div>
-              </>
+              </div>
             )}
 
-            {/* Step 2: Digital Presence */}
-            {step === 2 && (
-              <>
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    id="has_website"
-                    checked={watch("has_website")}
-                    onCheckedChange={(checked) =>
-                      setValue("has_website", checked === true)
-                    }
-                  />
-                  <Label htmlFor="has_website" className="font-normal">
-                    ¿Su empresa tiene sitio web?
-                  </Label>
+            {/* Steps 2-8: Diagnostic Questions */}
+            {currentQuestion && (
+              <div className="space-y-4">
+                <div className="rounded-lg border bg-muted/30 p-4">
+                  <p className="text-base font-medium">
+                    {currentQuestion.question}
+                  </p>
+                  <p className="mt-1 text-sm text-muted-foreground">
+                    {currentQuestion.helpText}
+                  </p>
                 </div>
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    id="has_social_media"
-                    checked={hasSocialMedia}
-                    onCheckedChange={(checked) => {
-                      setValue("has_social_media", checked === true);
-                      if (!checked) setValue("social_media_platforms", []);
-                    }}
-                  />
-                  <Label htmlFor="has_social_media" className="font-normal">
-                    ¿Su empresa tiene presencia en redes sociales?
-                  </Label>
+                <div className="grid gap-2">
+                  {LIKERT_OPTIONS.map((opt) => {
+                    const fieldValue = watch(currentQuestion.field as keyof PymesCalculatorData);
+                    return (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => {
+                          setValue(
+                            currentQuestion.field as keyof PymesCalculatorData,
+                            opt.value as never
+                          );
+                          if (step < 8) {
+                            setStep(step + 1);
+                          }
+                        }}
+                        className={`rounded-lg border p-3 text-left text-sm transition-all hover:border-accent hover:bg-accent/5 ${
+                          fieldValue === opt.value
+                            ? "border-accent bg-accent/5 font-medium"
+                            : "border-border"
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    );
+                  })}
                 </div>
-
-                {hasSocialMedia && (
-                  <div className="space-y-3 rounded-md border p-4">
-                    <Label>¿En qué plataformas?</Label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {SOCIAL_PLATFORMS.map((platform) => (
-                        <div key={platform} className="flex items-center gap-2">
-                          <Checkbox
-                            id={`platform-${platform}`}
-                            checked={socialPlatforms.includes(platform)}
-                            onCheckedChange={(checked) => {
-                              setValue(
-                                "social_media_platforms",
-                                checked
-                                  ? [...socialPlatforms, platform]
-                                  : socialPlatforms.filter((p) => p !== platform)
-                              );
-                            }}
-                          />
-                          <Label
-                            htmlFor={`platform-${platform}`}
-                            className="text-sm font-normal"
-                          >
-                            {platform}
-                          </Label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </>
+              </div>
             )}
 
-            {/* Step 3: Marketing */}
-            {step === 3 && (
-              <>
-                <div className="space-y-3">
-                  <Label>Canales de marketing actuales</Label>
-                  <div className="grid grid-cols-2 gap-2">
-                    {MARKETING_CHANNELS.map((channel) => (
-                      <div key={channel.value} className="flex items-center gap-2">
-                        <Checkbox
-                          id={`channel-${channel.value}`}
-                          checked={marketingChannels.includes(channel.value)}
-                          onCheckedChange={(checked) => {
-                            setValue(
-                              "current_marketing_channels",
-                              checked
-                                ? [...marketingChannels, channel.value]
-                                : marketingChannels.filter((c) => c !== channel.value)
-                            );
-                          }}
-                        />
-                        <Label
-                          htmlFor={`channel-${channel.value}`}
-                          className="text-sm font-normal"
+            {/* Step 9: Review */}
+            {step === 9 && (
+              <div className="space-y-4">
+                {(() => {
+                  const formValues = watch();
+                  if (
+                    !formValues.q1_online_presence ||
+                    !formValues.monthly_revenue
+                  )
+                    return null;
+                  const results = calculateResults(formValues as PymesCalculatorData);
+                  return (
+                    <>
+                      <div
+                        className={`rounded-lg border p-4 ${
+                          results.urgencyLevel === "critical"
+                            ? "border-red-200 bg-red-50"
+                            : results.urgencyLevel === "high"
+                              ? "border-orange-200 bg-orange-50"
+                              : "border-green-200 bg-green-50"
+                        }`}
+                      >
+                        <p className="text-sm font-medium uppercase tracking-wide">
+                          Urgency Level
+                        </p>
+                        <p
+                          className={`text-2xl font-bold capitalize ${
+                            results.urgencyLevel === "critical"
+                              ? "text-red-600"
+                              : results.urgencyLevel === "high"
+                                ? "text-orange-600"
+                                : "text-green-600"
+                          }`}
                         >
-                          {channel.label}
-                        </Label>
+                          {results.urgencyLevel}
+                        </p>
+                        <p className="mt-1 text-sm text-muted-foreground">
+                          Score: {results.totalScore} / 35
+                        </p>
                       </div>
-                    ))}
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Presupuesto actual de marketing</Label>
-                  <Select
-                    onValueChange={(val) =>
-                      setValue("marketing_budget", val as PymesFormData["marketing_budget"])
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccione" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {MARKETING_BUDGETS.map((b) => (
-                        <SelectItem key={b.value} value={b.value}>
-                          {b.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.marketing_budget && (
-                    <p className="text-sm text-destructive">
-                      {errors.marketing_budget.message}
-                    </p>
-                  )}
-                </div>
-              </>
-            )}
 
-            {/* Step 4: Goals */}
-            {step === 4 && (
-              <>
-                <div className="space-y-2">
-                  <Label>Principal desafío de su negocio</Label>
-                  <Select
-                    onValueChange={(val) =>
-                      setValue("main_challenge", val as PymesFormData["main_challenge"])
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Seleccione el desafío" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {CHALLENGES.map((c) => (
-                        <SelectItem key={c.value} value={c.value}>
-                          {c.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {errors.main_challenge && (
-                    <p className="text-sm text-destructive">
-                      {errors.main_challenge.message}
-                    </p>
-                  )}
-                </div>
-                <div className="space-y-3">
-                  <Label>Objetivos de negocio (seleccione al menos uno)</Label>
-                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                    {BUSINESS_GOALS.map((goal) => (
-                      <div key={goal} className="flex items-center gap-2">
-                        <Checkbox
-                          id={`goal-${goal}`}
-                          checked={businessGoals.includes(goal)}
-                          onCheckedChange={(checked) => {
-                            setValue(
-                              "business_goals",
-                              checked
-                                ? [...businessGoals, goal]
-                                : businessGoals.filter((g) => g !== goal)
-                            );
-                          }}
-                        />
-                        <Label
-                          htmlFor={`goal-${goal}`}
-                          className="text-sm font-normal"
-                        >
-                          {goal}
-                        </Label>
+                      <div className="rounded-lg border bg-primary/5 p-4">
+                        <p className="text-sm font-medium">
+                          Estimated Annual Loss
+                        </p>
+                        <p className="text-2xl font-bold text-primary">
+                          ${results.estimatedLoss.toLocaleString()} CAD
+                        </p>
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          Based on: ${formValues.monthly_revenue?.toLocaleString()}/mo
+                          x 30% x 12 months
+                        </p>
                       </div>
-                    ))}
-                  </div>
-                  {errors.business_goals && (
-                    <p className="text-sm text-destructive">
-                      {errors.business_goals.message}
-                    </p>
-                  )}
-                </div>
-              </>
+
+                      <div className="rounded-lg border p-4">
+                        <p className="text-sm font-medium">Recommended Plan</p>
+                        <p className="text-lg font-bold capitalize text-accent">
+                          Plan {results.recommendedPlan}
+                        </p>
+                        <p className="text-sm text-muted-foreground">
+                          {results.recommendedPlan === "rescue" &&
+                            "$1,500 CAD - Emergency digital rescue"}
+                          {results.recommendedPlan === "growth" &&
+                            "$2,500 CAD - Comprehensive growth strategy"}
+                          {results.recommendedPlan === "scale" &&
+                            "$3,800 CAD - Full digital transformation"}
+                        </p>
+                      </div>
+                    </>
+                  );
+                })()}
+              </div>
             )}
           </CardContent>
 
+          {/* Navigation */}
           <div className="flex justify-between px-6 pb-6">
             {step > 1 ? (
               <Button
                 type="button"
-                variant="outline"
+                variant="ghost"
                 onClick={() => setStep(step - 1)}
               >
-                Anterior
+                Back
               </Button>
             ) : (
               <div />
             )}
-            {step < 4 ? (
-              <Button type="button" onClick={nextStep}>
-                Siguiente
+            {step === 9 ? (
+              <Button type="submit" disabled={loading}>
+                {loading ? "Submitting..." : "Get Full Results"}
+              </Button>
+            ) : step === 8 ? (
+              <Button type="button" onClick={() => setStep(9)}>
+                See Results
               </Button>
             ) : (
-              <Button type="submit" disabled={loading}>
-                {loading ? "Enviando..." : "Enviar Diagnóstico"}
+              <Button type="button" onClick={nextStep}>
+                Next
               </Button>
             )}
           </div>

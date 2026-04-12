@@ -22,7 +22,7 @@ export default async function DashboardLayout({
     .eq("id", user.id)
     .single();
 
-  const userName = profile?.full_name || user.email || "Usuario";
+  const userName = profile?.full_name || user.email || "User";
   const role = (profile?.role as UserRole) || "inquilino";
 
   return (
