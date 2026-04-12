@@ -30,14 +30,14 @@ export default async function PropertiesPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">Mis Propiedades</h1>
+          <h1 className="text-3xl font-bold">My Properties</h1>
           <p className="text-muted-foreground">
-            Gestiona tus propiedades registradas
+            Manage your registered properties
           </p>
         </div>
         <Link href="/forms/propietario" className={buttonVariants()}>
           <Plus className="mr-2 h-4 w-4" />
-          Nueva Propiedad
+          New Property
         </Link>
       </div>
 
@@ -45,10 +45,10 @@ export default async function PropertiesPage() {
         <Card>
           <CardContent className="flex flex-col items-center justify-center py-12">
             <p className="mb-4 text-muted-foreground">
-              Aún no has registrado ninguna propiedad
+              You haven&apos;t registered any properties yet
             </p>
             <Link href="/forms/propietario" className={buttonVariants()}>
-              Registrar mi primera propiedad
+              Register my first property
             </Link>
           </CardContent>
         </Card>
@@ -61,42 +61,44 @@ export default async function PropertiesPage() {
                 {property.images && property.images.length > 0 ? (
                   <img
                     src={property.images[0]}
-                    alt={property.title}
+                    alt={property.address}
                     className="h-full w-full object-cover"
                   />
                 ) : (
                   <div className="flex h-full items-center justify-center text-muted-foreground">
-                    Sin imagen
+                    No image
                   </div>
                 )}
               </div>
               <CardHeader className="pb-2">
                 <div className="flex items-start justify-between">
-                  <CardTitle className="text-lg">{property.title}</CardTitle>
+                  <CardTitle className="text-lg">{property.property_type}</CardTitle>
                   <Badge variant={property.is_available ? "default" : "secondary"}>
-                    {property.is_available ? "Disponible" : "No disponible"}
+                    {property.is_available ? "Available" : "Unavailable"}
                   </Badge>
                 </div>
                 <CardDescription className="flex items-center gap-1">
                   <MapPin className="h-3 w-3" />
                   {property.city}
-                  {property.state ? `, ${property.state}` : ""}
+                  {property.province ? `, ${property.province}` : ""}
                 </CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="flex items-center justify-between">
-                  <span className="text-lg font-bold">
-                    ${property.price?.toLocaleString()} {property.currency}
-                  </span>
+                  {property.monthly_rent && (
+                    <span className="text-lg font-bold">
+                      ${Number(property.monthly_rent).toLocaleString()} CAD/mo
+                    </span>
+                  )}
                   <span className="text-sm text-muted-foreground capitalize">
                     {property.property_type}
                   </span>
                 </div>
-                {(property.bedrooms || property.bathrooms || property.area_sqm) && (
+                {(property.bedrooms || property.bathrooms || property.area_sqft) && (
                   <div className="mt-2 flex gap-3 text-sm text-muted-foreground">
-                    {property.bedrooms && <span>{property.bedrooms} hab.</span>}
-                    {property.bathrooms && <span>{property.bathrooms} baños</span>}
-                    {property.area_sqm && <span>{property.area_sqm} m²</span>}
+                    {property.bedrooms && <span>{property.bedrooms} bed</span>}
+                    {property.bathrooms && <span>{property.bathrooms} bath</span>}
+                    {property.area_sqft && <span>{property.area_sqft} sq ft</span>}
                   </div>
                 )}
               </CardContent>

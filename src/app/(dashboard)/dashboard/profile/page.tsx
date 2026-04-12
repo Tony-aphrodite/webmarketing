@@ -16,10 +16,13 @@ import { Badge } from "@/components/ui/badge";
 import type { Profile } from "@/types/database";
 
 const ROLE_LABELS: Record<string, string> = {
-  propietario: "Propietario / Inversionista",
-  inquilino: "Inquilino",
-  pymes: "Empresa (PYMES)",
-  admin: "Administrador",
+  propietario: "Property Owner",
+  propietario_preferido: "Preferred Owner",
+  inversionista: "Investor",
+  inquilino: "Tenant",
+  inquilino_premium: "Premium Tenant",
+  pymes: "Business Owner (SMB)",
+  admin: "Administrator",
 };
 
 export default function ProfilePage() {
@@ -67,9 +70,9 @@ export default function ProfilePage() {
       .eq("id", profile.id);
 
     if (error) {
-      setMessage("Error al actualizar el perfil");
+      setMessage("Failed to update profile. Please try again.");
     } else {
-      setMessage("Perfil actualizado correctamente");
+      setMessage("Profile updated successfully.");
       setProfile({
         ...profile,
         full_name: formData.get("full_name") as string,
@@ -82,7 +85,7 @@ export default function ProfilePage() {
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
-        <p className="text-muted-foreground">Cargando perfil...</p>
+        <p className="text-muted-foreground">Loading profile...</p>
       </div>
     );
   }
@@ -92,17 +95,17 @@ export default function ProfilePage() {
   return (
     <div className="mx-auto max-w-2xl space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Mi Perfil</h1>
+        <h1 className="text-3xl font-bold">My Profile</h1>
         <p className="text-muted-foreground">
-          Gestiona tu información personal
+          Manage your personal information
         </p>
       </div>
 
       <Card>
         <CardHeader>
-          <CardTitle>Información Personal</CardTitle>
+          <CardTitle>Personal Information</CardTitle>
           <CardDescription>
-            Actualiza tus datos de contacto
+            Update your contact details
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
@@ -110,7 +113,7 @@ export default function ProfilePage() {
             {message && (
               <div
                 className={`rounded-md p-3 text-sm ${
-                  message.includes("Error")
+                  message.includes("Failed")
                     ? "bg-destructive/10 text-destructive"
                     : "bg-green-100 text-green-800"
                 }`}
@@ -119,20 +122,20 @@ export default function ProfilePage() {
               </div>
             )}
             <div className="space-y-2">
-              <Label htmlFor="email">Correo electrónico</Label>
+              <Label htmlFor="email">Email address</Label>
               <Input id="email" value={profile.email} disabled />
               <p className="text-xs text-muted-foreground">
-                El correo no se puede modificar
+                Email cannot be changed
               </p>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="role">Tipo de usuario</Label>
+              <Label htmlFor="role">Account type</Label>
               <div>
                 <Badge>{ROLE_LABELS[profile.role] || profile.role}</Badge>
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="full_name">Nombre completo</Label>
+              <Label htmlFor="full_name">Full name</Label>
               <Input
                 id="full_name"
                 name="full_name"
@@ -140,16 +143,17 @@ export default function ProfilePage() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="phone">Teléfono</Label>
+              <Label htmlFor="phone">Phone number</Label>
               <Input
                 id="phone"
                 name="phone"
                 defaultValue={profile.phone || ""}
+                placeholder="+1 514 000 0000"
               />
             </div>
             <div className="text-sm text-muted-foreground">
-              Miembro desde:{" "}
-              {new Date(profile.created_at).toLocaleDateString("es-ES", {
+              Member since:{" "}
+              {new Date(profile.created_at).toLocaleDateString("en-CA", {
                 year: "numeric",
                 month: "long",
                 day: "numeric",
@@ -158,7 +162,7 @@ export default function ProfilePage() {
           </CardContent>
           <div className="flex justify-end px-6 pb-6">
             <Button type="submit" disabled={saving}>
-              {saving ? "Guardando..." : "Guardar Cambios"}
+              {saving ? "Saving..." : "Save Changes"}
             </Button>
           </div>
         </form>
