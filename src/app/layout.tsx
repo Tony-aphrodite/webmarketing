@@ -13,8 +13,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "WebMarketing - Marketing Residencial y Empresarial",
-  description: "Plataforma de marketing residencial y empresarial. Conectamos propietarios, inquilinos y empresas con los servicios que necesitan.",
+  title: "WebMarketing - Residential & Business Marketing",
+  description: "Residential and business marketing platform. We connect property owners, tenants, and businesses with the marketing services they need.",
 };
 
 export default function RootLayout({
@@ -24,7 +24,7 @@ export default function RootLayout({
 }>) {
   return (
     <html
-      lang="es"
+      lang="en"
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>

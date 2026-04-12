@@ -24,10 +24,10 @@ import {
 } from "@/components/ui/select";
 import type { UserRole } from "@/types/database";
 
-const ROLE_LABELS: Record<Exclude<UserRole, "admin">, string> = {
-  propietario: "Propietario / Inversionista",
-  inquilino: "Inquilino",
-  pymes: "Empresa (PYMES)",
+const ROLE_LABELS: Record<string, string> = {
+  propietario: "Property Owner / Investor",
+  inquilino: "Tenant",
+  pymes: "Business Owner (SMB)",
 };
 
 export default function RegisterPage() {
@@ -49,13 +49,13 @@ export default function RegisterPage() {
     const role = formData.get("role") as UserRole;
 
     if (password !== confirmPassword) {
-      setError("Las contraseñas no coinciden");
+      setError("Passwords do not match");
       setLoading(false);
       return;
     }
 
     if (!role) {
-      setError("Seleccione un tipo de usuario");
+      setError("Please select a user type");
       setLoading(false);
       return;
     }
@@ -91,9 +91,9 @@ export default function RegisterPage() {
   return (
     <Card>
       <CardHeader className="text-center">
-        <CardTitle className="text-2xl">Crear Cuenta</CardTitle>
+        <CardTitle className="text-2xl">Create Account</CardTitle>
         <CardDescription>
-          Regístrate para acceder a nuestros servicios de marketing
+          Sign up to access our marketing services
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
@@ -104,38 +104,38 @@ export default function RegisterPage() {
             </div>
           )}
           <div className="space-y-2">
-            <Label htmlFor="fullName">Nombre completo</Label>
+            <Label htmlFor="fullName">Full name</Label>
             <Input
               id="fullName"
               name="fullName"
-              placeholder="Juan Pérez"
+              placeholder="John Smith"
               required
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="email">Correo electrónico</Label>
+            <Label htmlFor="email">Email address</Label>
             <Input
               id="email"
               name="email"
               type="email"
-              placeholder="correo@ejemplo.com"
+              placeholder="email@example.com"
               required
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="phone">Teléfono (opcional)</Label>
+            <Label htmlFor="phone">Phone (optional)</Label>
             <Input
               id="phone"
               name="phone"
               type="tel"
-              placeholder="+57 300 000 0000"
+              placeholder="+1 514 000 0000"
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="role">Tipo de usuario</Label>
+            <Label htmlFor="role">User type</Label>
             <Select name="role" required>
               <SelectTrigger>
-                <SelectValue placeholder="Seleccione su perfil" />
+                <SelectValue placeholder="Select your profile" />
               </SelectTrigger>
               <SelectContent>
                 {Object.entries(ROLE_LABELS).map(([value, label]) => (
@@ -147,23 +147,23 @@ export default function RegisterPage() {
             </Select>
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Contraseña</Label>
+            <Label htmlFor="password">Password</Label>
             <Input
               id="password"
               name="password"
               type="password"
-              placeholder="Mínimo 6 caracteres"
+              placeholder="Minimum 6 characters"
               minLength={6}
               required
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirmar contraseña</Label>
+            <Label htmlFor="confirmPassword">Confirm password</Label>
             <Input
               id="confirmPassword"
               name="confirmPassword"
               type="password"
-              placeholder="Repita su contraseña"
+              placeholder="Repeat your password"
               minLength={6}
               required
             />
@@ -171,12 +171,12 @@ export default function RegisterPage() {
         </CardContent>
         <CardFooter className="flex flex-col gap-4">
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Registrando..." : "Crear Cuenta"}
+            {loading ? "Creating account..." : "Create Account"}
           </Button>
           <p className="text-sm text-muted-foreground">
-            ¿Ya tienes cuenta?{" "}
+            Already have an account?{" "}
             <Link href="/login" className="text-primary underline">
-              Iniciar sesión
+              Sign in
             </Link>
           </p>
         </CardFooter>

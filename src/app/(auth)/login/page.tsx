@@ -37,7 +37,7 @@ export default function LoginPage() {
     });
 
     if (signInError) {
-      setError("Correo o contraseña incorrectos");
+      setError("Invalid email or password");
       setLoading(false);
       return;
     }
@@ -57,9 +57,9 @@ export default function LoginPage() {
   return (
     <Card>
       <CardHeader className="text-center">
-        <CardTitle className="text-2xl">Iniciar Sesión</CardTitle>
+        <CardTitle className="text-2xl">Sign In</CardTitle>
         <CardDescription>
-          Ingresa a tu cuenta para gestionar tus servicios
+          Log in to your account to manage your services
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
@@ -70,34 +70,34 @@ export default function LoginPage() {
             </div>
           )}
           <div className="space-y-2">
-            <Label htmlFor="email">Correo electrónico</Label>
+            <Label htmlFor="email">Email address</Label>
             <Input
               id="email"
               name="email"
               type="email"
-              placeholder="correo@ejemplo.com"
+              placeholder="email@example.com"
               required
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Contraseña</Label>
+            <Label htmlFor="password">Password</Label>
             <Input
               id="password"
               name="password"
               type="password"
-              placeholder="Su contraseña"
+              placeholder="Your password"
               required
             />
           </div>
         </CardContent>
         <CardFooter className="flex flex-col gap-4">
           <Button type="submit" className="w-full" disabled={loading}>
-            {loading ? "Ingresando..." : "Iniciar Sesión"}
+            {loading ? "Signing in..." : "Sign In"}
           </Button>
           <p className="text-sm text-muted-foreground">
-            ¿No tienes cuenta?{" "}
+            Don&apos;t have an account?{" "}
             <Link href="/register" className="text-primary underline">
-              Regístrate aquí
+              Sign up here
             </Link>
           </p>
         </CardFooter>

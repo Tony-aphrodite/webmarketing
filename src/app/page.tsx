@@ -11,8 +11,7 @@ import {
   Star,
   Shield,
   Zap,
-  Heart,
-  Play,
+  TrendingUp,
 } from "lucide-react";
 
 export default function HomePage() {
@@ -31,22 +30,22 @@ export default function HomePage() {
           </div>
           <nav className="hidden items-center gap-6 md:flex">
             <Link
-              href="#servicios"
+              href="#services"
               className="text-sm text-muted-foreground transition-colors hover:text-primary"
             >
-              Servicios
+              Services
             </Link>
             <Link
-              href="#beneficios"
+              href="#benefits"
               className="text-sm text-muted-foreground transition-colors hover:text-primary"
             >
-              Beneficios
+              Benefits
             </Link>
             <Link
-              href="#testimonios"
+              href="#testimonials"
               className="text-sm text-muted-foreground transition-colors hover:text-primary"
             >
-              Testimonios
+              Testimonials
             </Link>
           </nav>
           <div className="flex items-center gap-3">
@@ -54,10 +53,10 @@ export default function HomePage() {
               href="/login"
               className={buttonVariants({ variant: "ghost", size: "sm" })}
             >
-              Iniciar Sesión
+              Sign In
             </Link>
             <Link href="/register" className={buttonVariants({ size: "sm" })}>
-              Comenzar Gratis
+              Get Started
             </Link>
           </div>
         </div>
@@ -65,80 +64,82 @@ export default function HomePage() {
 
       {/* Hero */}
       <section className="relative overflow-hidden px-4 pb-12 pt-28 sm:pt-32 md:pb-20">
-        {/* Background decoration */}
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
           <div className="absolute -right-40 -top-40 h-[500px] w-[500px] rounded-full bg-primary/5 blur-3xl" />
-          <div className="absolute -bottom-20 -left-40 h-[400px] w-[400px] rounded-full bg-primary/8 blur-3xl" />
+          <div className="absolute -bottom-20 -left-40 h-[400px] w-[400px] rounded-full bg-accent/8 blur-3xl" />
         </div>
 
         <div className="relative z-10 mx-auto grid max-w-6xl items-center gap-12 md:grid-cols-2">
-          {/* Left: Text */}
           <div>
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1.5 text-sm text-primary">
               <Sparkles className="h-3.5 w-3.5" />
-              Plataforma de Marketing Integral
+              Complete Marketing Platform
             </div>
 
             <h1 className="text-4xl font-bold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
-              Impulsa tu{" "}
-              <span className="bg-gradient-to-r from-primary via-pink-400 to-rose-400 bg-clip-text text-transparent">
-                Presencia
+              Grow Your{" "}
+              <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                Property
               </span>{" "}
-              Digital
+              &{" "}
+              <span className="bg-gradient-to-r from-accent to-primary bg-clip-text text-transparent">
+                Business
+              </span>
             </h1>
 
             <p className="mt-6 max-w-lg text-lg leading-relaxed text-muted-foreground">
-              Conectamos propietarios, inquilinos y empresas con estrategias de
-              marketing personalizadas. Diagnosticamos, recomendamos y
-              transformamos tu negocio.
+              We connect property owners, investors, tenants, and businesses
+              with tailored marketing strategies. Diagnose, recommend, and
+              transform your results.
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link
-                href="/register"
+                href="/forms/propietario"
                 className={buttonVariants({
                   size: "lg",
                   className: "gap-2 px-8 shadow-lg shadow-primary/25",
                 })}
               >
-                Comenzar Ahora
+                Property Owners
                 <ArrowRight className="h-4 w-4" />
               </Link>
               <Link
-                href="#servicios"
+                href="/forms/pymes"
                 className={buttonVariants({
                   size: "lg",
                   variant: "outline",
-                  className: "gap-2 px-8",
+                  className:
+                    "gap-2 px-8 border-accent text-accent hover:bg-accent hover:text-accent-foreground",
                 })}
               >
-                <Play className="h-4 w-4" />
-                Explorar Servicios
+                <BarChart3 className="h-4 w-4" />
+                Business Owners
               </Link>
             </div>
 
             <div className="mt-8 flex flex-wrap gap-x-6 gap-y-2 text-sm text-muted-foreground">
               <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="h-4 w-4 text-primary" />
-                Registro gratuito
+                <CheckCircle2 className="h-4 w-4 text-accent" />
+                Free registration
               </span>
               <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="h-4 w-4 text-primary" />
-                Diagnóstico personalizado
+                <CheckCircle2 className="h-4 w-4 text-accent" />
+                Personalized diagnosis
               </span>
               <span className="flex items-center gap-1.5">
-                <CheckCircle2 className="h-4 w-4 text-primary" />
-                Resultados en minutos
+                <CheckCircle2 className="h-4 w-4 text-accent" />
+                Results in minutes
               </span>
             </div>
           </div>
 
-          {/* Right: Hero image collage */}
+          {/* Right: Hero image */}
           <div className="relative mx-auto w-full max-w-md md:max-w-none">
             <div className="relative aspect-[4/5] overflow-hidden rounded-3xl shadow-2xl shadow-primary/10">
               <Image
                 src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&h=1000&fit=crop&crop=center"
-                alt="Modern luxury home interior"
+                alt="Modern luxury property in Montreal"
                 fill
                 className="object-cover"
                 priority
@@ -146,19 +147,19 @@ export default function HomePage() {
               />
               <div className="absolute inset-0 bg-gradient-to-t from-primary/20 via-transparent to-transparent" />
             </div>
-            {/* Floating card 1 */}
             <div className="absolute -bottom-4 -left-4 rounded-2xl border border-primary/10 bg-card/95 p-4 shadow-xl backdrop-blur-sm sm:-left-8">
               <div className="flex items-center gap-3">
-                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100">
-                  <CheckCircle2 className="h-5 w-5 text-green-600" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-accent/15">
+                  <CheckCircle2 className="h-5 w-5 text-accent" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold">+500 Propiedades</p>
-                  <p className="text-xs text-muted-foreground">Registradas este año</p>
+                  <p className="text-sm font-semibold">500+ Properties</p>
+                  <p className="text-xs text-muted-foreground">
+                    Managed this year
+                  </p>
                 </div>
               </div>
             </div>
-            {/* Floating card 2 */}
             <div className="absolute -right-2 top-8 rounded-2xl border border-primary/10 bg-card/95 p-4 shadow-xl backdrop-blur-sm sm:-right-6">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10">
@@ -166,7 +167,7 @@ export default function HomePage() {
                 </div>
                 <div>
                   <p className="text-sm font-semibold">4.9 / 5.0</p>
-                  <p className="text-xs text-muted-foreground">Satisfacción</p>
+                  <p className="text-xs text-muted-foreground">Satisfaction</p>
                 </div>
               </div>
             </div>
@@ -174,20 +175,20 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Trusted by strip */}
+      {/* Services strip */}
       <section className="border-y border-primary/5 bg-secondary/30 px-4 py-6">
         <div className="mx-auto flex max-w-6xl flex-col items-center gap-4 sm:flex-row sm:justify-center sm:gap-12">
           <span className="text-xs font-medium uppercase tracking-widest text-muted-foreground">
-            Servicios que ofrecemos
+            Our Services
           </span>
           <div className="flex flex-wrap items-center justify-center gap-6 text-sm font-medium text-muted-foreground/70 sm:gap-10">
-            <span>Fotografía</span>
+            <span>Photography</span>
             <span className="text-primary/30">|</span>
-            <span>Tours Virtuales</span>
+            <span>Virtual Tours</span>
             <span className="text-primary/30">|</span>
             <span>SEO</span>
             <span className="text-primary/30">|</span>
-            <span>Redes Sociales</span>
+            <span>Social Media</span>
             <span className="text-primary/30">|</span>
             <span>Branding</span>
             <span className="text-primary/30">|</span>
@@ -197,26 +198,26 @@ export default function HomePage() {
       </section>
 
       {/* Services */}
-      <section id="servicios" className="relative px-4 py-24">
+      <section id="services" className="relative px-4 py-24">
         <div className="pointer-events-none absolute inset-0">
           <div className="absolute right-0 top-0 h-[400px] w-[400px] rounded-full bg-primary/3 blur-3xl" />
         </div>
         <div className="relative mx-auto max-w-6xl">
           <div className="mb-16 text-center">
             <span className="mb-3 inline-block text-sm font-medium uppercase tracking-widest text-primary">
-              Nuestros Servicios
+              Our Services
             </span>
             <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-              Soluciones para Cada Necesidad
+              Solutions for Every Need
             </h2>
             <p className="mx-auto mt-4 max-w-2xl text-muted-foreground">
-              Ya seas propietario, inquilino o empresa, tenemos las herramientas
-              y servicios perfectos para ti.
+              Whether you are a property owner, tenant, or business, we have the
+              right tools and services for you.
             </p>
           </div>
 
           <div className="grid gap-6 md:grid-cols-3">
-            {/* Propietarios */}
+            {/* Property Owners */}
             <div className="group relative overflow-hidden rounded-2xl border border-primary/10 bg-card shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/5">
               <div className="relative h-48 overflow-hidden">
                 <Image
@@ -234,37 +235,39 @@ export default function HomePage() {
                 </div>
               </div>
               <div className="p-6">
-                <h3 className="mb-2 text-xl font-semibold">Propietarios</h3>
+                <h3 className="mb-2 text-xl font-semibold">
+                  Property Owners & Investors
+                </h3>
                 <p className="mb-5 text-sm leading-relaxed text-muted-foreground">
-                  Registra tus propiedades, recibe recomendaciones de marketing y
-                  maximiza tu inversión inmobiliaria.
+                  Register your properties, get tailored marketing
+                  recommendations, and maximize your real estate investment.
                 </p>
                 <ul className="space-y-2">
                   {[
-                    "Registro con galería de fotos",
-                    "Marketing inmobiliario personalizado",
-                    "Conexión con inquilinos perfilados",
+                    "Room-by-room photo gallery",
+                    "Personalized property marketing",
+                    "Profiled tenant matching",
                   ].map((item) => (
                     <li
                       key={item}
                       className="flex items-start gap-2 text-sm text-muted-foreground"
                     >
-                      <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+                      <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent" />
                       {item}
                     </li>
                   ))}
                 </ul>
                 <Link
-                  href="/register"
+                  href="/forms/propietario"
                   className="mt-5 inline-flex items-center gap-1 text-sm font-medium text-primary transition-colors hover:text-primary/80"
                 >
-                  Registrar propiedad
+                  Start Discovery Brief
                   <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
               </div>
             </div>
 
-            {/* Inquilinos */}
+            {/* Tenants */}
             <div className="group relative overflow-hidden rounded-2xl border border-primary/10 bg-card shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/5">
               <div className="relative h-48 overflow-hidden">
                 <Image
@@ -282,22 +285,22 @@ export default function HomePage() {
                 </div>
               </div>
               <div className="p-6">
-                <h3 className="mb-2 text-xl font-semibold">Inquilinos</h3>
+                <h3 className="mb-2 text-xl font-semibold">Tenants</h3>
                 <p className="mb-5 text-sm leading-relaxed text-muted-foreground">
-                  Completa tu perfil de preferencias y te conectaremos con las
-                  mejores opciones de vivienda.
+                  Complete your preference profile and we will connect you with
+                  the best housing options in Montreal.
                 </p>
                 <ul className="space-y-2">
                   {[
-                    "Perfil de preferencias detallado",
-                    "Búsqueda personalizada inteligente",
-                    "Asesoría profesional de mudanza",
+                    "Detailed preference profile",
+                    "Smart personalized search",
+                    "Premium tenant matching",
                   ].map((item) => (
                     <li
                       key={item}
                       className="flex items-start gap-2 text-sm text-muted-foreground"
                     >
-                      <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+                      <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent" />
                       {item}
                     </li>
                   ))}
@@ -306,16 +309,16 @@ export default function HomePage() {
                   href="/register"
                   className="mt-5 inline-flex items-center gap-1 text-sm font-medium text-primary transition-colors hover:text-primary/80"
                 >
-                  Buscar vivienda
+                  Find your home
                   <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
               </div>
             </div>
 
             {/* PYMES */}
-            <div className="group relative overflow-hidden rounded-2xl border border-primary/20 bg-gradient-to-b from-primary/[0.03] to-card shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/10">
+            <div className="group relative overflow-hidden rounded-2xl border border-accent/20 bg-gradient-to-b from-accent/[0.03] to-card shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-lg hover:shadow-accent/10">
               <div className="absolute right-4 top-4 z-10">
-                <span className="rounded-full bg-primary px-3 py-1 text-xs font-medium text-primary-foreground shadow-sm">
+                <span className="rounded-full bg-accent px-3 py-1 text-xs font-medium text-accent-foreground shadow-sm">
                   Popular
                 </span>
               </div>
@@ -330,38 +333,38 @@ export default function HomePage() {
                 <div className="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent" />
                 <div className="absolute bottom-4 left-4">
                   <div className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-white/90 shadow-sm">
-                    <BarChart3 className="h-5 w-5 text-primary" />
+                    <BarChart3 className="h-5 w-5 text-accent" />
                   </div>
                 </div>
               </div>
               <div className="p-6">
                 <h3 className="mb-2 text-xl font-semibold">
-                  Empresas (PYMES)
+                  Businesses (SMBs)
                 </h3>
                 <p className="mb-5 text-sm leading-relaxed text-muted-foreground">
-                  Diagnosticamos la madurez digital de tu empresa y te
-                  recomendamos los servicios ideales.
+                  Discover how much revenue your business is leaking and get a
+                  tailored marketing plan to fix it.
                 </p>
                 <ul className="space-y-2">
                   {[
-                    "Diagnóstico empresarial completo",
-                    "Estrategias de marketing digital",
-                    "Branding y presencia online",
+                    "Sales Leak Calculator",
+                    "Digital marketing strategies",
+                    "3 action plans (Rescue / Growth / Scale)",
                   ].map((item) => (
                     <li
                       key={item}
                       className="flex items-start gap-2 text-sm text-muted-foreground"
                     >
-                      <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+                      <CheckCircle2 className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent" />
                       {item}
                     </li>
                   ))}
                 </ul>
                 <Link
-                  href="/register"
-                  className="mt-5 inline-flex items-center gap-1 text-sm font-medium text-primary transition-colors hover:text-primary/80"
+                  href="/forms/pymes"
+                  className="mt-5 inline-flex items-center gap-1 text-sm font-medium text-accent transition-colors hover:text-accent/80"
                 >
-                  Realizar diagnóstico
+                  Calculate your sales leak
                   <ArrowRight className="h-3.5 w-3.5" />
                 </Link>
               </div>
@@ -370,14 +373,14 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Feature showcase with image */}
+      {/* Feature showcase */}
       <section className="px-4 py-24">
         <div className="mx-auto grid max-w-6xl items-center gap-12 md:grid-cols-2">
           <div className="relative">
             <div className="relative aspect-[4/3] overflow-hidden rounded-2xl shadow-xl shadow-primary/10">
               <Image
                 src="https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?w=800&h=600&fit=crop&crop=face"
-                alt="Professional woman with laptop"
+                alt="Professional business consultant"
                 fill
                 className="object-cover"
                 sizes="(max-width: 768px) 100vw, 50vw"
@@ -385,13 +388,13 @@ export default function HomePage() {
             </div>
             <div className="absolute -bottom-6 -right-4 rounded-2xl border border-primary/10 bg-card p-5 shadow-xl sm:-right-8">
               <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
-                  <BarChart3 className="h-6 w-6 text-primary" />
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent/15">
+                  <TrendingUp className="h-6 w-6 text-accent" />
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-primary">95%</p>
                   <p className="text-xs text-muted-foreground">
-                    Clientes satisfechas
+                    Client satisfaction
                   </p>
                 </div>
               </div>
@@ -399,34 +402,34 @@ export default function HomePage() {
           </div>
           <div>
             <span className="mb-3 inline-block text-sm font-medium uppercase tracking-widest text-primary">
-              Nuestra Misión
+              Our Mission
             </span>
             <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-              Hacemos Crecer tu Negocio con Estrategia
+              We Grow Your Business with Strategy
             </h2>
-            <p className="mt-4 text-muted-foreground leading-relaxed">
-              Cada cliente es único. Por eso nuestro sistema analiza tu
-              situación actual y crea un plan de marketing personalizado que
-              realmente funciona.
+            <p className="mt-4 leading-relaxed text-muted-foreground">
+              Every client is unique. That is why our system analyses your
+              current situation and creates a personalized marketing plan that
+              delivers real results.
             </p>
             <div className="mt-8 space-y-4">
               {[
                 {
-                  title: "Diagnóstico Inteligente",
-                  desc: "Evaluamos tu presencia digital y nivel de urgencia.",
+                  title: "Smart Diagnosis",
+                  desc: "We evaluate your digital presence and urgency level.",
                 },
                 {
-                  title: "Recomendaciones Personalizadas",
-                  desc: "Servicios seleccionados según tus necesidades reales.",
+                  title: "Personalized Recommendations",
+                  desc: "Services selected based on your real needs.",
                 },
                 {
-                  title: "Resultados Medibles",
-                  desc: "Seguimiento transparente del impacto en tu negocio.",
+                  title: "Measurable Results",
+                  desc: "Transparent tracking of the impact on your business.",
                 },
               ].map((item) => (
                 <div key={item.title} className="flex gap-4">
-                  <div className="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary/10">
-                    <CheckCircle2 className="h-3.5 w-3.5 text-primary" />
+                  <div className="mt-1 flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accent/15">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-accent" />
                   </div>
                   <div>
                     <h4 className="text-sm font-semibold">{item.title}</h4>
@@ -441,16 +444,16 @@ export default function HomePage() {
 
       {/* Benefits */}
       <section
-        id="beneficios"
+        id="benefits"
         className="border-y border-primary/10 bg-gradient-to-b from-secondary/50 to-background px-4 py-24"
       >
         <div className="mx-auto max-w-6xl">
           <div className="mb-16 text-center">
             <span className="mb-3 inline-block text-sm font-medium uppercase tracking-widest text-primary">
-              Por Qué Elegirnos
+              Why Choose Us
             </span>
             <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-              Todo lo Que Necesitas en un Solo Lugar
+              Everything You Need in One Place
             </h2>
           </div>
 
@@ -458,23 +461,23 @@ export default function HomePage() {
             {[
               {
                 icon: Zap,
-                title: "Rápido y Eficiente",
-                desc: "Diagnóstico y recomendaciones en minutos, no en semanas.",
+                title: "Fast & Efficient",
+                desc: "Diagnosis and recommendations in minutes, not weeks.",
               },
               {
-                icon: Heart,
-                title: "Personalizado",
-                desc: "Cada recomendación es única, basada en tu situación real.",
+                icon: TrendingUp,
+                title: "Personalized",
+                desc: "Every recommendation is unique, based on your real situation.",
               },
               {
                 icon: Shield,
-                title: "Confiable",
-                desc: "Datos seguros y servicios verificados para tu tranquilidad.",
+                title: "Reliable",
+                desc: "Secure data and verified services for your peace of mind.",
               },
               {
                 icon: Star,
-                title: "Resultados Reales",
-                desc: "Estrategias probadas que generan crecimiento tangible.",
+                title: "Real Results",
+                desc: "Proven strategies that generate tangible growth.",
               },
             ].map((item) => (
               <div
@@ -495,35 +498,35 @@ export default function HomePage() {
       </section>
 
       {/* Testimonials */}
-      <section id="testimonios" className="px-4 py-24">
+      <section id="testimonials" className="px-4 py-24">
         <div className="mx-auto max-w-6xl">
           <div className="mb-16 text-center">
             <span className="mb-3 inline-block text-sm font-medium uppercase tracking-widest text-primary">
-              Testimonios
+              Testimonials
             </span>
             <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-              Lo Que Dicen Nuestros Clientes
+              What Our Clients Say
             </h2>
           </div>
 
           <div className="grid gap-6 md:grid-cols-3">
             {[
               {
-                name: "María García",
-                role: "Propietaria",
-                text: "Gracias a WebMarketing logré alquilar mi apartamento en tiempo récord. Las fotos profesionales y la estrategia digital hicieron toda la diferencia.",
+                name: "Sarah Mitchell",
+                role: "Property Owner",
+                text: "Thanks to WebMarketing, I rented my apartment in record time. The professional photos and digital strategy made all the difference.",
                 img: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=100&h=100&fit=crop&crop=face",
               },
               {
-                name: "Carolina Ruiz",
-                role: "Empresaria PYMES",
-                text: "El diagnóstico empresarial fue revelador. Ahora tengo una estrategia digital clara y mis ventas han aumentado significativamente.",
+                name: "Caroline Tremblay",
+                role: "Business Owner",
+                text: "The Sales Leak Calculator was eye-opening. Now I have a clear digital strategy and my sales have increased significantly.",
                 img: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=100&h=100&fit=crop&crop=face",
               },
               {
-                name: "Ana Martínez",
-                role: "Inquilina",
-                text: "Encontré mi hogar ideal en menos de una semana. El perfil de preferencias me conectó con exactamente lo que buscaba.",
+                name: "Anna Chen",
+                role: "Tenant",
+                text: "I found my ideal home in less than a week. The preference profile connected me with exactly what I was looking for.",
                 img: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=100&h=100&fit=crop&crop=face",
               },
             ].map((testimonial) => (
@@ -569,7 +572,6 @@ export default function HomePage() {
       <section className="px-4 py-24">
         <div className="mx-auto max-w-4xl">
           <div className="relative overflow-hidden rounded-3xl shadow-xl shadow-primary/20">
-            {/* Background image */}
             <div className="absolute inset-0">
               <Image
                 src="https://images.unsplash.com/photo-1600585154526-990dced4db0d?w=1200&h=600&fit=crop&crop=center"
@@ -578,15 +580,15 @@ export default function HomePage() {
                 className="object-cover"
                 sizes="(max-width: 768px) 100vw, 900px"
               />
-              <div className="absolute inset-0 bg-gradient-to-r from-primary/90 to-rose-400/85" />
+              <div className="absolute inset-0 bg-gradient-to-r from-primary/90 to-accent/85" />
             </div>
             <div className="relative px-8 py-16 text-center text-primary-foreground sm:px-16">
               <h2 className="text-3xl font-bold sm:text-4xl">
-                Comienza Tu Transformación Hoy
+                Start Your Transformation Today
               </h2>
               <p className="mx-auto mt-4 max-w-xl text-lg text-white/85">
-                Regístrate gratis y descubre cómo podemos ayudarte a alcanzar
-                tus metas de marketing.
+                Sign up for free and discover how we can help you achieve your
+                marketing goals.
               </p>
               <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
                 <Link
@@ -597,7 +599,7 @@ export default function HomePage() {
                     className: "gap-2 px-8 font-semibold shadow-lg",
                   })}
                 >
-                  Crear Cuenta Gratis
+                  Create Free Account
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </div>
@@ -618,28 +620,27 @@ export default function HomePage() {
             </div>
             <div className="flex gap-6 text-sm text-muted-foreground">
               <Link
-                href="#servicios"
+                href="#services"
                 className="transition-colors hover:text-primary"
               >
-                Servicios
+                Services
               </Link>
               <Link
-                href="#beneficios"
+                href="#benefits"
                 className="transition-colors hover:text-primary"
               >
-                Beneficios
+                Benefits
               </Link>
               <Link
-                href="#testimonios"
+                href="#testimonials"
                 className="transition-colors hover:text-primary"
               >
-                Testimonios
+                Testimonials
               </Link>
             </div>
           </div>
           <div className="mt-8 border-t border-primary/10 pt-6 text-center text-xs text-muted-foreground">
-            &copy; {new Date().getFullYear()} WebMarketing. Todos los derechos
-            reservados.
+            &copy; {new Date().getFullYear()} WebMarketing. All rights reserved.
           </div>
         </div>
       </footer>
