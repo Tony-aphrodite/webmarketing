@@ -40,5 +40,12 @@ ALTER TABLE tenant_preferences
   ALTER COLUMN bathrooms_needed TYPE NUMERIC USING bathrooms_needed::NUMERIC;
 
 -- ============================================================
+-- 5. PYMES_DIAGNOSIS: Add contact_position column
+-- ============================================================
+
+ALTER TABLE pymes_diagnosis
+  ADD COLUMN IF NOT EXISTS contact_position TEXT;
+
+-- ============================================================
 -- DONE! Run this after migration_v4_captacion.sql
 -- ============================================================

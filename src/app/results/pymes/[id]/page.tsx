@@ -26,6 +26,9 @@ const PLAN_DETAILS: Record<
   {
     name: string;
     price: string;
+    upfront: string;
+    installment: string;
+    duration: string;
     tagline: string;
     features: string[];
     color: string;
@@ -35,15 +38,17 @@ const PLAN_DETAILS: Record<
 > = {
   rescue: {
     name: "Rescue",
-    price: "$1,500",
+    price: "$1,500 CAD",
+    upfront: "$750 CAD upfront",
+    installment: "$250 CAD/mo × 3 months",
+    duration: "Minimum 30 days",
     tagline: "Emergency digital rescue for critical gaps",
     features: [
-      "Complete digital audit",
-      "Google Business Profile setup & optimization",
-      "Basic SEO foundation (5 target keywords)",
-      "Social media starter kit (2 platforms)",
-      "Monthly performance report",
-      "Email support",
+      "Emergency digital audit",
+      "Google Business Profile optimization",
+      "Basic SEO correction",
+      "Social media rescue (2 platforms)",
+      "30-day action plan",
     ],
     color: "text-red-600",
     bgColor: "bg-red-50",
@@ -51,17 +56,19 @@ const PLAN_DETAILS: Record<
   },
   growth: {
     name: "Growth",
-    price: "$2,500",
+    price: "$2,500 CAD",
+    upfront: "$1,000 CAD upfront",
+    installment: "$375 CAD/mo × 4 months",
+    duration: "Minimum 90 days",
     tagline: "Comprehensive growth strategy for scaling businesses",
     features: [
-      "Everything in Rescue, plus:",
-      "Advanced SEO strategy (15 target keywords)",
-      "Content marketing plan & 4 blog posts/month",
+      "Complete digital audit",
+      "Website optimization or landing page",
+      "SEO strategy (on-page + local)",
       "Social media management (3 platforms)",
-      "Google Ads setup & management",
-      "Lead generation funnel",
-      "Bi-weekly strategy calls",
-      "Priority email & chat support",
+      "Google Ads basic campaign",
+      "Monthly performance reports",
+      "90-day growth roadmap",
     ],
     color: "text-orange-600",
     bgColor: "bg-orange-50",
@@ -69,18 +76,22 @@ const PLAN_DETAILS: Record<
   },
   scale: {
     name: "Scale",
-    price: "$3,800",
+    price: "$3,800 CAD",
+    upfront: "$1,500 CAD upfront",
+    installment: "$460 CAD/mo × 5 months",
+    duration: "Minimum 6 months",
     tagline: "Full digital transformation for market leaders",
     features: [
-      "Everything in Growth, plus:",
-      "Full SEO dominance (30+ keywords)",
-      "Video content production (2/month)",
-      "Social media management (5 platforms)",
-      "Multi-channel ad campaigns (Google + Meta)",
-      "CRM integration & automation",
+      "Full digital transformation audit",
+      "Website redesign or new build",
+      "Advanced SEO (on-page + off-page + technical)",
+      "Social media management (all platforms)",
+      "Google Ads + Meta Ads campaigns",
+      "Email marketing automation",
+      "CRM integration",
       "Conversion rate optimization",
-      "Weekly strategy calls",
-      "Dedicated account manager",
+      "Monthly strategy sessions",
+      "6-month scaling roadmap",
     ],
     color: "text-green-600",
     bgColor: "bg-green-50",
@@ -275,11 +286,14 @@ export default async function PymesResultsPage({
             <CardDescription>{plan.tagline}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="flex items-baseline gap-2">
+            <div className="space-y-1">
               <span className={`text-4xl font-bold ${plan.color}`}>
                 {plan.price}
               </span>
-              <span className="text-muted-foreground">CAD / month</span>
+              <p className="text-sm text-muted-foreground">
+                {plan.upfront} + {plan.installment}
+              </p>
+              <p className="text-sm text-muted-foreground">{plan.duration}</p>
             </div>
             <ul className="space-y-2">
               {plan.features.map((feature, i) => (

@@ -23,7 +23,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { BarChart3, TrendingDown, Users, ArrowRight } from "lucide-react";
+import { BarChart3, TrendingDown, Users, ArrowRight, CheckCircle2 } from "lucide-react";
 
 const SECTORS = [
   { value: "retail", label: "Retail / Commerce" },
@@ -222,6 +222,7 @@ function CaptacionForm({ onBack }: { onBack: () => void }) {
   const [captStep, setCaptStep] = useState(0);
   const [captLoading, setCaptLoading] = useState(false);
   const [captError, setCaptError] = useState<string | null>(null);
+  const [captSuccess, setCaptSuccess] = useState(false);
   const [captData, setCaptData] = useState<Record<string, string | number | string[]>>({
     business_goals: [],
     current_channels: [],
@@ -294,7 +295,7 @@ function CaptacionForm({ onBack }: { onBack: () => void }) {
         body: JSON.stringify({ source: "pymes_captacion" }),
       });
 
-      router.push("/dashboard");
+      setCaptSuccess(true);
     } catch (e) {
       setCaptError("Failed to save. Please try again.");
       console.error(e);
@@ -305,6 +306,42 @@ function CaptacionForm({ onBack }: { onBack: () => void }) {
 
   const currentStepDef = CAPTACION_STEPS[captStep];
   const progress = Math.round(((captStep + 1) / CAPTACION_STEPS.length) * 100);
+
+  if (captSuccess) {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-background to-secondary/20 px-4 py-8">
+        <Card className="w-full max-w-xl">
+          <CardHeader className="text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
+              <CheckCircle2 className="h-8 w-8 text-green-600" />
+            </div>
+            <CardTitle className="text-2xl">Submission Received!</CardTitle>
+            <CardDescription>
+              Thank you for completing the Client Acquisition form. Our team will review your information and prepare a customized acquisition strategy.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="rounded-lg border bg-muted/50 p-4 space-y-2">
+              <p className="text-sm font-medium">What happens next?</p>
+              <ul className="text-sm text-muted-foreground space-y-1 list-disc ml-4">
+                <li>Our team reviews your business profile and target audience</li>
+                <li>We design a tailored client acquisition strategy</li>
+                <li>You will receive an email to schedule a consultation meeting</li>
+              </ul>
+            </div>
+            <div className="flex flex-col gap-2">
+              <Button onClick={() => router.push("/dashboard")} className="w-full">
+                Go to Dashboard
+              </Button>
+              <Button variant="outline" onClick={onBack} className="w-full">
+                Back to Assessments
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-background to-secondary/20 px-4 py-8">
@@ -512,6 +549,7 @@ export default function PymesCalculatorPage() {
         .insert({
           user_id: user.id,
           company_name: data.company_name,
+          contact_position: data.contact_position || null,
           sector: data.sector,
           employee_count: "N/A",
           monthly_revenue: data.monthly_revenue,
@@ -690,6 +728,14 @@ export default function PymesCalculatorPage() {
                   )}
                 </div>
                 <div className="space-y-2">
+                  <Label htmlFor="contact_position">Your position / Job title</Label>
+                  <Input
+                    id="contact_position"
+                    placeholder="e.g. CEO, Marketing Manager"
+                    {...register("contact_position")}
+                  />
+                </div>
+                <div className="space-y-2">
                   <Label>Industry sector</Label>
                   <Select
                     value={watch("sector") as string | undefined}
@@ -827,37 +873,43 @@ export default function PymesCalculatorPage() {
                           {results.recommendedPlan === "scale" &&
                             "$3,800 CAD - Full digital transformation"}
                         </p>
+                        <p className="text-xs text-muted-foreground">
+                          {results.recommendedPlan === "rescue" && "$750 upfront + $250/mo × 3 months · Min. 30 days"}
+                          {results.recommendedPlan === "growth" && "$1,000 upfront + $375/mo × 4 months · Min. 90 days"}
+                          {results.recommendedPlan === "scale" && "$1,500 upfront + $460/mo × 5 months · Min. 6 months"}
+                        </p>
                         {results.recommendedPlan === "rescue" && (
                           <ul className="text-xs text-muted-foreground space-y-1 list-disc ml-4">
-                            <li>Website audit & quick fixes</li>
+                            <li>Emergency digital audit</li>
                             <li>Google Business Profile optimization</li>
-                            <li>Basic SEO setup</li>
-                            <li>Social media rescue plan (1 platform)</li>
-                            <li>Lead capture form setup</li>
+                            <li>Basic SEO correction</li>
+                            <li>Social media rescue (2 platforms)</li>
                             <li>30-day action plan</li>
                           </ul>
                         )}
                         {results.recommendedPlan === "growth" && (
                           <ul className="text-xs text-muted-foreground space-y-1 list-disc ml-4">
-                            <li>Everything in Rescue, plus:</li>
-                            <li>Multi-platform social media strategy</li>
-                            <li>Content marketing plan (3 months)</li>
-                            <li>Email marketing automation setup</li>
-                            <li>Conversion rate optimization</li>
+                            <li>Complete digital audit</li>
+                            <li>Website optimization or landing page</li>
+                            <li>SEO strategy (on-page + local)</li>
+                            <li>Social media management (3 platforms)</li>
+                            <li>Google Ads basic campaign</li>
                             <li>Monthly performance reports</li>
-                            <li>Paid ads strategy (Google/Meta)</li>
+                            <li>90-day growth roadmap</li>
                           </ul>
                         )}
                         {results.recommendedPlan === "scale" && (
                           <ul className="text-xs text-muted-foreground space-y-1 list-disc ml-4">
-                            <li>Everything in Growth, plus:</li>
-                            <li>Full brand identity redesign</li>
-                            <li>Advanced marketing automation</li>
-                            <li>CRM integration & setup</li>
-                            <li>Customer retention programs</li>
-                            <li>Advanced analytics dashboard</li>
-                            <li>Quarterly strategy reviews</li>
-                            <li>Dedicated account manager</li>
+                            <li>Full digital transformation audit</li>
+                            <li>Website redesign or new build</li>
+                            <li>Advanced SEO (on-page + off-page + technical)</li>
+                            <li>Social media management (all platforms)</li>
+                            <li>Google Ads + Meta Ads campaigns</li>
+                            <li>Email marketing automation</li>
+                            <li>CRM integration</li>
+                            <li>Conversion rate optimization</li>
+                            <li>Monthly strategy sessions</li>
+                            <li>6-month scaling roadmap</li>
                           </ul>
                         )}
                       </div>

@@ -240,6 +240,7 @@ export type TenantFormData = z.infer<typeof tenantFormSchema>;
 export const pymesCalculatorSchema = z.object({
   // Company info
   company_name: z.string().min(2, "Company name is required"),
+  contact_position: z.string().optional(),
   sector: z.enum(
     [
       "retail",
