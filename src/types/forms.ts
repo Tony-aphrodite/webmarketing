@@ -74,6 +74,70 @@ export const ownerFormSchema = z.object({
 export type OwnerFormData = z.infer<typeof ownerFormSchema>;
 
 // ===========================================
+// Property-Only Form (for adding additional properties)
+// Skips owner profile — only property details + zone + consents
+// ===========================================
+export const propertyOnlySchema = z.object({
+  // ─── Property Details (PDF 5.2.1.1) ───
+  property_type: z.string().min(1, "Select property type"),
+  monthly_rent: z.coerce.number().min(300, "Minimum $300").max(8000, "Maximum $8000"),
+  area_sqft: z.coerce.number().positive().optional().or(z.literal("")),
+  area_unit: z.enum(["sqft", "m2"]).default("sqft"),
+  occupancy_status: z.enum(["vacant", "occupied", "renovation", "new_construction"]).default("vacant"),
+  vacancy_date: z.string().optional(),
+  availability_date: z.string().optional(),
+  bedrooms: z.string().min(1, "Select bedrooms"),
+  bathrooms: z.string().min(1, "Select bathrooms"),
+  amenities: z.array(z.string()).default([]),
+  common_areas: z.array(z.string()).default([]),
+  dishwasher: z.boolean().default(false),
+  pet_friendly: z.boolean().default(false),
+  smart_home: z.boolean().default(false),
+  smart_home_features: z.array(z.string()).default([]),
+  smart_home_other: z.string().optional(),
+  shared_unit: z.boolean().default(false),
+  levels: z.string().optional(),
+  levels_other: z.string().optional(),
+  furnished: z.boolean().default(false),
+  utilities_included: z.boolean().default(false),
+  style: z.string().optional(),
+  style_other: z.string().optional(),
+  amenities_other: z.string().optional(),
+  listing_platforms: z.array(z.string()).default([]),
+  listing_platforms_other: z.string().optional(),
+
+  // ─── Zone Info (PDF 5.2.1.2) ───
+  address: z.string().min(1, "Address is required"),
+  zone_city: z.string().min(1, "City is required"),
+  province: z.string().default("British Columbia"),
+  postal_code: z.string().optional(),
+  near_parks: z.boolean().default(false),
+  near_churches: z.boolean().default(false),
+  near_skytrain: z.boolean().default(false),
+  skytrain_lines: z.array(z.string()).default([]),
+  near_bus: z.boolean().default(false),
+  social_life: z.string().optional(),
+  near_mall: z.boolean().default(false),
+  nearby_supermarkets: z.array(z.string()).default([]),
+
+  // ─── Legal Consents ───
+  consent_image_usage: z.boolean().refine((v) => v === true, {
+    message: "You must consent to image usage and editing",
+  }),
+  consent_data_processing: z.boolean().refine((v) => v === true, {
+    message: "You must consent to rights and privacy declaration",
+  }),
+  consent_marketing: z.boolean().refine((v) => v === true, {
+    message: "You must consent to electronic communications",
+  }),
+  consent_third_party: z.boolean().refine((v) => v === true, {
+    message: "You must accept terms and conditions",
+  }),
+});
+
+export type PropertyOnlyFormData = z.infer<typeof propertyOnlySchema>;
+
+// ===========================================
 // Tenant Form (with 8 premium criteria)
 // British Columbia focused
 // ===========================================

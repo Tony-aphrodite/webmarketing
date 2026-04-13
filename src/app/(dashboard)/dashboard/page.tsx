@@ -8,7 +8,8 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
-import { Building2, FileText, Heart } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Building2, FileText, Heart, Crown, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 
 const ROLE_LABELS: Record<string, string> = {
@@ -19,6 +20,133 @@ const ROLE_LABELS: Record<string, string> = {
   inquilino_premium: "Premium Tenant",
   pymes: "Business Owner",
   admin: "Administrator",
+};
+
+// ─── Owner Service Tiers ─────────────────────────────
+const OWNER_TIERS: Record<
+  string,
+  {
+    name: string;
+    tagline: string;
+    features: string[];
+    color: string;
+    bgColor: string;
+    borderColor: string;
+  }
+> = {
+  basic: {
+    name: "Basic",
+    tagline: "Essential property management for single-property owners",
+    features: [
+      "Professional property listing",
+      "Tenant screening & matching",
+      "Basic photography guidance",
+      "Standard listing optimization",
+      "Email support",
+    ],
+    color: "text-blue-600",
+    bgColor: "bg-blue-50",
+    borderColor: "border-blue-200",
+  },
+  preferred_owners: {
+    name: "Preferred Owners",
+    tagline: "Enhanced services for growing property portfolios",
+    features: [
+      "Everything in Basic, plus:",
+      "Professional photography session",
+      "Priority tenant matching",
+      "Multi-property dashboard",
+      "Market analysis reports",
+      "Priority email & chat support",
+    ],
+    color: "text-emerald-600",
+    bgColor: "bg-emerald-50",
+    borderColor: "border-emerald-200",
+  },
+  elite: {
+    name: "Elite Assets & Legacy",
+    tagline: "Full-service management for investment portfolios",
+    features: [
+      "Everything in Preferred, plus:",
+      "Dedicated account manager",
+      "Premium photography & virtual tours",
+      "Revenue optimization strategy",
+      "Legal compliance review",
+      "Quarterly portfolio analysis",
+      "Concierge-level support",
+    ],
+    color: "text-amber-600",
+    bgColor: "bg-amber-50",
+    borderColor: "border-amber-200",
+  },
+};
+
+// ─── PYMES Plans ─────────────────────────────────────
+const PYMES_PLANS: Record<
+  string,
+  {
+    name: string;
+    price: string;
+    tagline: string;
+    features: string[];
+    color: string;
+    bgColor: string;
+    borderColor: string;
+  }
+> = {
+  rescue: {
+    name: "Rescue",
+    price: "$1,500",
+    tagline: "Emergency digital rescue for critical gaps",
+    features: [
+      "Complete digital audit",
+      "Google Business Profile setup & optimization",
+      "Basic SEO foundation (5 target keywords)",
+      "Social media starter kit (2 platforms)",
+      "Monthly performance report",
+      "Email support",
+    ],
+    color: "text-red-600",
+    bgColor: "bg-red-50",
+    borderColor: "border-red-200",
+  },
+  growth: {
+    name: "Growth",
+    price: "$2,500",
+    tagline: "Comprehensive growth strategy for scaling businesses",
+    features: [
+      "Everything in Rescue, plus:",
+      "Advanced SEO strategy (15 target keywords)",
+      "Content marketing plan & 4 blog posts/month",
+      "Social media management (3 platforms)",
+      "Google Ads setup & management",
+      "Lead generation funnel",
+      "Bi-weekly strategy calls",
+      "Priority email & chat support",
+    ],
+    color: "text-orange-600",
+    bgColor: "bg-orange-50",
+    borderColor: "border-orange-200",
+  },
+  scale: {
+    name: "Scale",
+    price: "$3,800",
+    tagline: "Full digital transformation for market leaders",
+    features: [
+      "Everything in Growth, plus:",
+      "Full SEO dominance (30+ keywords)",
+      "Video content production (2/month)",
+      "Social media management (5 platforms)",
+      "Multi-channel ad campaigns (Google + Meta)",
+      "CRM integration & automation",
+      "Conversion rate optimization",
+      "Weekly strategy calls",
+      "Dedicated account manager",
+    ],
+    color: "text-green-600",
+    bgColor: "bg-green-50",
+    borderColor: "border-green-200",
+  },
 };
 
 export default async function DashboardPage() {
@@ -37,20 +165,46 @@ export default async function DashboardPage() {
 
   if (!profile) redirect("/login");
 
+  const isOwnerRole =
+    profile.role === "propietario" ||
+    profile.role === "propietario_preferido" ||
+    profile.role === "inversionista";
+
+  const isTenantRole =
+    profile.role === "inquilino" || profile.role === "inquilino_premium";
+
+  const isPymesRole = profile.role === "pymes";
+
   // Fetch stats based on role
   let propertyCount = 0;
   let serviceCount = 0;
+  let ownerTier: string | null = null;
+  let pymesPlan: string | null = null;
 
-  if (
-    profile.role === "propietario" ||
-    profile.role === "propietario_preferido" ||
-    profile.role === "inversionista"
-  ) {
+  if (isOwnerRole) {
     const { count } = await supabase
       .from("properties")
       .select("*", { count: "exact", head: true })
       .eq("owner_id", user.id);
     propertyCount = count || 0;
+
+    // Determine tier from property count
+    if (propertyCount >= 4) ownerTier = "elite";
+    else if (propertyCount >= 2) ownerTier = "preferred_owners";
+    else if (propertyCount >= 1) ownerTier = "basic";
+  }
+
+  if (isPymesRole) {
+    // Get the most recent diagnosis
+    const { data: diagnosis } = await supabase
+      .from("pymes_diagnosis")
+      .select("recommended_plan")
+      .eq("user_id", user.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single();
+
+    pymesPlan = diagnosis?.recommended_plan || null;
   }
 
   const { count: svcCount } = await supabase
@@ -59,10 +213,9 @@ export default async function DashboardPage() {
     .eq("is_active", true);
   serviceCount = svcCount || 0;
 
-  const isOwnerRole =
-    profile.role === "propietario" ||
-    profile.role === "propietario_preferido" ||
-    profile.role === "inversionista";
+  // Resolve plan details for display
+  const ownerPlan = ownerTier ? OWNER_TIERS[ownerTier] : null;
+  const pymesPlanDetails = pymesPlan ? PYMES_PLANS[pymesPlan] : null;
 
   return (
     <div className="space-y-6">
@@ -122,6 +275,125 @@ export default async function DashboardPage() {
         </Card>
       </div>
 
+      {/* ═══ Assigned Plan / Tier ═══ */}
+      {ownerPlan && (
+        <Card className={`${ownerPlan.borderColor} ${ownerPlan.bgColor}`}>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Crown className={`h-5 w-5 ${ownerPlan.color}`} />
+              <CardTitle className="text-lg">Your Service Tier</CardTitle>
+            </div>
+            <CardDescription>{ownerPlan.tagline}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-center gap-3">
+              <Badge className={`${ownerPlan.bgColor} ${ownerPlan.color} border ${ownerPlan.borderColor} text-sm px-3 py-1`}>
+                {ownerPlan.name}
+              </Badge>
+              <span className="text-sm text-muted-foreground">
+                Based on {propertyCount} {propertyCount === 1 ? "property" : "properties"}
+              </span>
+            </div>
+            <ul className="space-y-1.5">
+              {ownerPlan.features.map((feature, i) => (
+                <li key={i} className="flex items-start gap-2 text-sm">
+                  <CheckCircle2 className={`mt-0.5 h-4 w-4 shrink-0 ${ownerPlan.color}`} />
+                  {feature}
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
+
+      {pymesPlanDetails && (
+        <Card className={`${pymesPlanDetails.borderColor} ${pymesPlanDetails.bgColor}`}>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Crown className={`h-5 w-5 ${pymesPlanDetails.color}`} />
+              <CardTitle className="text-lg">Your Recommended Plan</CardTitle>
+            </div>
+            <CardDescription>{pymesPlanDetails.tagline}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <div className="flex items-baseline gap-2">
+              <span className={`text-3xl font-bold ${pymesPlanDetails.color}`}>
+                {pymesPlanDetails.price}
+              </span>
+              <span className="text-muted-foreground">CAD / month</span>
+            </div>
+            <ul className="space-y-1.5">
+              {pymesPlanDetails.features.map((feature, i) => (
+                <li key={i} className="flex items-start gap-2 text-sm">
+                  <CheckCircle2 className={`mt-0.5 h-4 w-4 shrink-0 ${pymesPlanDetails.color}`} />
+                  {feature}
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
+
+      {isTenantRole && (
+        <Card className={profile.is_premium_tenant ? "border-amber-200 bg-amber-50" : "border-blue-200 bg-blue-50"}>
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Crown className={`h-5 w-5 ${profile.is_premium_tenant ? "text-amber-600" : "text-blue-600"}`} />
+              <CardTitle className="text-lg">Your Tenant Status</CardTitle>
+            </div>
+            <CardDescription>
+              {profile.is_premium_tenant
+                ? "You qualify as a Premium Tenant with priority matching"
+                : "Complete your profile to unlock Premium Tenant benefits"}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Badge className={profile.is_premium_tenant
+              ? "bg-amber-50 text-amber-600 border border-amber-200 text-sm px-3 py-1"
+              : "bg-blue-50 text-blue-600 border border-blue-200 text-sm px-3 py-1"
+            }>
+              {profile.is_premium_tenant ? "Premium Tenant" : "Standard Tenant"}
+            </Badge>
+            {profile.is_premium_tenant && profile.premium_criteria_met && (
+              <p className="mt-2 text-sm text-muted-foreground">
+                {profile.premium_criteria_met} of 8 premium criteria met
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* No plan assigned yet — prompt to complete form */}
+      {isOwnerRole && !ownerPlan && (
+        <Card className="border-dashed">
+          <CardContent className="flex flex-col items-center py-8 text-center">
+            <Crown className="mb-3 h-8 w-8 text-muted-foreground" />
+            <p className="font-medium">No service tier assigned yet</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Complete your Discovery Brief to get your service tier.
+            </p>
+            <Link href="/forms/propietario" className={buttonVariants({ className: "mt-4" })}>
+              Complete Discovery Brief
+            </Link>
+          </CardContent>
+        </Card>
+      )}
+
+      {isPymesRole && !pymesPlanDetails && (
+        <Card className="border-dashed">
+          <CardContent className="flex flex-col items-center py-8 text-center">
+            <Crown className="mb-3 h-8 w-8 text-muted-foreground" />
+            <p className="font-medium">No plan assigned yet</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Take the Sales Leak Diagnosis to get your recommended plan.
+            </p>
+            <Link href="/forms/pymes" className={buttonVariants({ className: "mt-4" })}>
+              Start Diagnosis
+            </Link>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Quick actions */}
       <Card>
         <CardHeader>
@@ -136,12 +408,12 @@ export default async function DashboardPage() {
               Discovery Brief
             </Link>
           )}
-          {(profile.role === "inquilino" || profile.role === "inquilino_premium") && (
+          {isTenantRole && (
             <Link href="/forms/inquilino" className={buttonVariants()}>
               Update Preferences
             </Link>
           )}
-          {profile.role === "pymes" && (
+          {isPymesRole && (
             <Link href="/forms/pymes" className={buttonVariants()}>
               Sales Leak Calculator
             </Link>

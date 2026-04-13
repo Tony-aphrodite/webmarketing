@@ -35,7 +35,7 @@ export default async function PropertiesPage() {
             Manage your registered properties
           </p>
         </div>
-        <Link href="/forms/propietario" className={buttonVariants()}>
+        <Link href="/forms/propietario/add-property" className={buttonVariants()}>
           <Plus className="mr-2 h-4 w-4" />
           New Property
         </Link>
