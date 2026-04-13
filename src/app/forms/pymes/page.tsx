@@ -23,7 +23,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { BarChart3, TrendingDown, Users, ArrowRight, CheckCircle2 } from "lucide-react";
+import { BarChart3, TrendingDown, Users, ArrowRight, CheckCircle2, Calendar } from "lucide-react";
 
 const SECTORS = [
   { value: "retail", label: "Retail / Commerce" },
@@ -330,10 +330,14 @@ function CaptacionForm({ onBack }: { onBack: () => void }) {
               </ul>
             </div>
             <div className="flex flex-col gap-2">
-              <Button onClick={() => router.push("/dashboard")} className="w-full">
+              <Button onClick={() => router.push("/dashboard/services")} className="w-full gap-2">
+                <Calendar className="h-4 w-4" />
+                Schedule a Consultation
+              </Button>
+              <Button variant="outline" onClick={() => router.push("/dashboard")} className="w-full">
                 Go to Dashboard
               </Button>
-              <Button variant="outline" onClick={onBack} className="w-full">
+              <Button variant="ghost" onClick={onBack} className="w-full">
                 Back to Assessments
               </Button>
             </div>
