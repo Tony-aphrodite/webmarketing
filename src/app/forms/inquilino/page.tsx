@@ -253,6 +253,12 @@ export default function TenantFormPage() {
   const skytrainLines = watch("skytrain_lines") as string[];
   const smartHomeFeatures = watch("smart_home_features") as string[];
   const employmentType = watch("employment_type") as string | undefined;
+  const numberOfPeople = watch("number_of_people") as string | undefined;
+  const bedroomsNeeded = watch("bedrooms_needed") as string | undefined;
+  const bathroomsNeeded = watch("bathrooms_needed") as string | undefined;
+  const contractDuration = watch("contract_duration") as string | undefined;
+  const levelsPreferred = watch("levels_preferred") as string | undefined;
+  const stylePreference = watch("style_preference") as string | undefined;
   const nearSkytrain = watch("near_skytrain") as boolean;
   const smartHomeInterest = watch("smart_home_interest") as boolean;
 
@@ -422,7 +428,13 @@ export default function TenantFormPage() {
           </div>
         </CardHeader>
 
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <form onSubmit={handleSubmit(onSubmit, () => {
+          const errorFields = Object.keys(errors);
+          if (errorFields.length > 0) {
+            setError(`Please fill in the required fields: ${errorFields.map(f => f.replace(/_/g, " ")).join(", ")}`);
+          }
+          scrollToFirstError();
+        })}>
           <CardContent className="space-y-4">
             {error && (
               <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
@@ -462,7 +474,7 @@ export default function TenantFormPage() {
                   <div className="space-y-3 rounded-md border p-4">
                     <div className="space-y-2">
                       <Label>Type of institution</Label>
-                      <Select onValueChange={(val: string | null) => val && setValue("institution_type", val)}>
+                      <Select value={watch("institution_type") as string | undefined} onValueChange={(val: string | null) => val && setValue("institution_type", val)}>
                         <SelectTrigger>
                           <SelectValue placeholder="Select institution type" />
                         </SelectTrigger>
@@ -486,20 +498,22 @@ export default function TenantFormPage() {
                   </div>
                 )}
 
-                <div className="flex items-center gap-2">
-                  <Checkbox
-                    id="employment_verifiable"
-                    checked={watch("employment_verifiable")}
-                    onCheckedChange={(c) => setValue("employment_verifiable", c === true)}
-                  />
-                  <Label htmlFor="employment_verifiable" className="font-normal">
-                    My employment/enrollment is verifiable (can provide proof)
-                  </Label>
-                </div>
+                {employmentType !== "international_student" && (
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id="employment_verifiable"
+                      checked={watch("employment_verifiable")}
+                      onCheckedChange={(c) => setValue("employment_verifiable", c === true)}
+                    />
+                    <Label htmlFor="employment_verifiable" className="font-normal">
+                      My employment/enrollment is verifiable (can provide proof)
+                    </Label>
+                  </div>
+                )}
 
                 <div className="space-y-2">
                   <Label>How many people are you looking for housing?</Label>
-                  <Select onValueChange={(val: string | null) => val && setValue("number_of_people", val)}>
+                  <Select value={numberOfPeople} onValueChange={(val: string | null) => val && setValue("number_of_people", val)}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select number of people" />
                     </SelectTrigger>
@@ -593,7 +607,7 @@ export default function TenantFormPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Bedrooms</Label>
-                    <Select onValueChange={(val: string | null) => val && setValue("bedrooms_needed", val)}>
+                    <Select value={bedroomsNeeded} onValueChange={(val: string | null) => val && setValue("bedrooms_needed", val)}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select" />
                       </SelectTrigger>
@@ -611,7 +625,7 @@ export default function TenantFormPage() {
                   </div>
                   <div className="space-y-2">
                     <Label>Bathrooms</Label>
-                    <Select onValueChange={(val: string | null) => val && setValue("bathrooms_needed", val)}>
+                    <Select value={bathroomsNeeded} onValueChange={(val: string | null) => val && setValue("bathrooms_needed", val)}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select" />
                       </SelectTrigger>
@@ -655,7 +669,7 @@ export default function TenantFormPage() {
                   </div>
                   <div className="space-y-2">
                     <Label>Levels / Floor</Label>
-                    <Select onValueChange={(val: string | null) => val && setValue("levels_preferred", val)}>
+                    <Select value={levelsPreferred} onValueChange={(val: string | null) => val && setValue("levels_preferred", val)}>
                       <SelectTrigger>
                         <SelectValue placeholder="Any" />
                       </SelectTrigger>
@@ -676,7 +690,7 @@ export default function TenantFormPage() {
 
                 <div className="space-y-2">
                   <Label>Style preference</Label>
-                  <Select onValueChange={(val: string | null) => val && setValue("style_preference", val as TenantFormData["style_preference"])}>
+                  <Select value={stylePreference} onValueChange={(val: string | null) => val && setValue("style_preference", val as TenantFormData["style_preference"])}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select style" />
                     </SelectTrigger>
@@ -799,7 +813,7 @@ export default function TenantFormPage() {
 
                 <div className="space-y-2">
                   <Label>Lease contract duration</Label>
-                  <Select onValueChange={(val: string | null) => val && setValue("contract_duration", val)}>
+                  <Select value={contractDuration} onValueChange={(val: string | null) => val && setValue("contract_duration", val)}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select duration" />
                     </SelectTrigger>

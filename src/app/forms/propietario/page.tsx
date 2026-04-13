@@ -387,7 +387,13 @@ export default function OwnerFormPage() {
       </div>
 
       <Card className="w-full max-w-2xl">
-        <form onSubmit={handleSubmit(onSubmit, scrollToFirstError)}>
+        <form onSubmit={handleSubmit(onSubmit, () => {
+          const errorFields = Object.keys(errors);
+          if (errorFields.length > 0) {
+            setError(`Please fill in the required fields: ${errorFields.map(f => f.replace(/_/g, " ")).join(", ")}`);
+          }
+          scrollToFirstError();
+        })}>
           <CardHeader>
             <CardTitle className="text-xl">
               {step === 1 && "Owner Profile"}
@@ -531,6 +537,12 @@ export default function OwnerFormPage() {
                             setValue("rents", newRents);
                           }}
                         />
+                        {rents[i] > 0 && rents[i] < 300 && (
+                          <p className="text-sm text-destructive">Minimum rent is $300 CAD</p>
+                        )}
+                        {rents[i] > 8000 && (
+                          <p className="text-sm text-destructive">Maximum rent is $8,000 CAD</p>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -550,7 +562,7 @@ export default function OwnerFormPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Property type</Label>
-                    <Select onValueChange={(val: string | null) => val && setValue("property_type", val)}>
+                    <Select value={watch("property_type") as string | undefined} onValueChange={(val: string | null) => val && setValue("property_type", val)}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select type" />
                       </SelectTrigger>
@@ -601,7 +613,7 @@ export default function OwnerFormPage() {
                 <div className="grid grid-cols-3 gap-4">
                   <div className="space-y-2">
                     <Label>Bedrooms</Label>
-                    <Select onValueChange={(val: string | null) => val && setValue("bedrooms", val)}>
+                    <Select value={watch("bedrooms") as string | undefined} onValueChange={(val: string | null) => val && setValue("bedrooms", val)}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select" />
                       </SelectTrigger>
@@ -617,7 +629,7 @@ export default function OwnerFormPage() {
                   </div>
                   <div className="space-y-2">
                     <Label>Bathrooms</Label>
-                    <Select onValueChange={(val: string | null) => val && setValue("bathrooms", val)}>
+                    <Select value={watch("bathrooms") as string | undefined} onValueChange={(val: string | null) => val && setValue("bathrooms", val)}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select" />
                       </SelectTrigger>
@@ -650,7 +662,7 @@ export default function OwnerFormPage() {
 
                 <div className="space-y-2">
                   <Label>Style</Label>
-                  <Select onValueChange={(val: string | null) => val && setValue("style", val)}>
+                  <Select value={selectedStyle} onValueChange={(val: string | null) => val && setValue("style", val)}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select style" />
                     </SelectTrigger>
@@ -668,7 +680,7 @@ export default function OwnerFormPage() {
 
                 <div className="space-y-2">
                   <Label>Levels / Floor</Label>
-                  <Select onValueChange={(val: string | null) => val && setValue("levels", val)}>
+                  <Select value={selectedLevels} onValueChange={(val: string | null) => val && setValue("levels", val)}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select" />
                     </SelectTrigger>

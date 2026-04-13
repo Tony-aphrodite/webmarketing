@@ -47,7 +47,7 @@ export default async function PropertiesPage() {
             <p className="mb-4 text-muted-foreground">
               You haven&apos;t registered any properties yet
             </p>
-            <Link href="/forms/propietario" className={buttonVariants()}>
+            <Link href="/forms/propietario/add-property" className={buttonVariants()}>
               Register my first property
             </Link>
           </CardContent>

@@ -129,20 +129,305 @@ function calculateResults(data: PymesCalculatorData) {
 const URGENCY_MESSAGES: Record<string, { emoji: string; title: string; body: string }> = {
   critical: {
     emoji: "🟡",
-    title: "Riesgo de estancamiento peligroso,",
-    body: "Estás trabajando para el negocio y no al revés. Tienes fugas de dinero, necesitas mejorar tu marketing urgente,",
+    title: "Dangerous stagnation risk,",
+    body: "You are working for the business, not the other way around. You have revenue leaks and need to improve your marketing urgently,",
   },
   high: {
     emoji: "🟠",
-    title: "Crecimiento frenado,",
-    body: "Tu negocio tiene potencial pero estás dejando oportunidades sobre la mesa. Con ajustes estratégicos puedes acelerar tu crecimiento,",
+    title: "Growth stalled,",
+    body: "Your business has potential but you are leaving opportunities on the table. With strategic adjustments you can accelerate your growth,",
   },
   moderate: {
     emoji: "🟢",
-    title: "Buen camino, optimiza para escalar,",
-    body: "Tu negocio tiene bases sólidas. Es momento de escalar con estrategias avanzadas de marketing digital,",
+    title: "On the right track, optimize to scale,",
+    body: "Your business has solid foundations. It is time to scale with advanced digital marketing strategies,",
   },
 };
+
+// ═══════════════════════════════════════════════════════
+// Client Acquisition Form (PDF 5.1.2)
+// ═══════════════════════════════════════════════════════
+const CAPTACION_STEPS = [
+  {
+    title: "Business Profile",
+    fields: [
+      { name: "business_name", label: "Business name", type: "text", required: true },
+      { name: "industry", label: "Industry / Sector", type: "select", required: true,
+        options: SECTORS },
+      { name: "years_in_business", label: "Years in business", type: "number", required: true },
+      { name: "business_goals", label: "Main business goals (select all that apply)", type: "multi",
+        options: [
+          "Increase revenue",
+          "Get more clients",
+          "Improve brand awareness",
+          "Launch new product/service",
+          "Expand to new market",
+          "Improve client retention",
+        ] },
+    ],
+  },
+  {
+    title: "Target Audience",
+    fields: [
+      { name: "target_age_range", label: "Target customer age range", type: "select", required: true,
+        options: [
+          { value: "18_25", label: "18-25" },
+          { value: "26_35", label: "26-35" },
+          { value: "36_50", label: "36-50" },
+          { value: "51_65", label: "51-65" },
+          { value: "65_plus", label: "65+" },
+          { value: "all_ages", label: "All ages" },
+        ] },
+      { name: "target_location", label: "Target customer location", type: "text", required: true },
+      { name: "target_income", label: "Target customer income level", type: "select", required: false,
+        options: [
+          { value: "low", label: "Budget-conscious" },
+          { value: "medium", label: "Middle income" },
+          { value: "high", label: "High income" },
+          { value: "premium", label: "Premium / Luxury" },
+        ] },
+      { name: "ideal_customer_description", label: "Describe your ideal customer", type: "textarea", required: true },
+    ],
+  },
+  {
+    title: "Current Marketing",
+    fields: [
+      { name: "current_channels", label: "Current marketing channels (select all)", type: "multi",
+        options: [
+          "Social media (organic)",
+          "Social media (paid ads)",
+          "Google Ads",
+          "Email marketing",
+          "Content / Blog",
+          "Referrals / Word of mouth",
+          "Events / Networking",
+          "None",
+        ] },
+      { name: "monthly_marketing_budget", label: "Monthly marketing budget (CAD)", type: "number", required: false },
+      { name: "biggest_challenge", label: "Biggest marketing challenge", type: "select", required: true,
+        options: [
+          { value: "no_leads", label: "Not generating enough leads" },
+          { value: "low_conversion", label: "Low conversion rate" },
+          { value: "no_strategy", label: "No clear strategy" },
+          { value: "no_budget", label: "Limited budget" },
+          { value: "no_time", label: "No time to manage marketing" },
+          { value: "other", label: "Other" },
+        ] },
+    ],
+  },
+];
+
+function CaptacionForm({ onBack }: { onBack: () => void }) {
+  const router = useRouter();
+  const [captStep, setCaptStep] = useState(0);
+  const [captLoading, setCaptLoading] = useState(false);
+  const [captError, setCaptError] = useState<string | null>(null);
+  const [captData, setCaptData] = useState<Record<string, string | number | string[]>>({
+    business_goals: [],
+    current_channels: [],
+  });
+
+  function updateField(name: string, value: string | number | string[]) {
+    setCaptData((prev) => ({ ...prev, [name]: value }));
+  }
+
+  function toggleMulti(name: string, value: string) {
+    const arr = (captData[name] as string[]) || [];
+    const next = arr.includes(value) ? arr.filter((v) => v !== value) : [...arr, value];
+    updateField(name, next);
+  }
+
+  function validateStep(): string | null {
+    const stepDef = CAPTACION_STEPS[captStep];
+    for (const field of stepDef.fields) {
+      if (!field.required) continue;
+      const val = captData[field.name];
+      if (field.type === "multi") {
+        if (!val || (val as string[]).length === 0) return `Please fill in: ${field.label}`;
+      } else {
+        if (!val || val === "") return `Please fill in: ${field.label}`;
+      }
+    }
+    return null;
+  }
+
+  function nextCaptStep() {
+    const err = validateStep();
+    if (err) { setCaptError(err); return; }
+    setCaptError(null);
+    setCaptStep(captStep + 1);
+  }
+
+  async function submitCaptacion() {
+    const err = validateStep();
+    if (err) { setCaptError(err); return; }
+
+    setCaptLoading(true);
+    setCaptError(null);
+    try {
+      const supabase = createClient();
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) { router.push("/login"); return; }
+
+      const { error: insertError } = await supabase
+        .from("pymes_captacion")
+        .insert({
+          user_id: user.id,
+          business_name: captData.business_name,
+          industry: captData.industry,
+          years_in_business: captData.years_in_business,
+          business_goals: captData.business_goals,
+          target_age_range: captData.target_age_range,
+          target_location: captData.target_location,
+          target_income: captData.target_income || null,
+          ideal_customer_description: captData.ideal_customer_description,
+          current_channels: captData.current_channels,
+          monthly_marketing_budget: captData.monthly_marketing_budget || null,
+          biggest_challenge: captData.biggest_challenge,
+        });
+
+      if (insertError) throw insertError;
+
+      await fetch("/api/leads", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ source: "pymes_captacion" }),
+      });
+
+      router.push("/dashboard");
+    } catch (e) {
+      setCaptError("Failed to save. Please try again.");
+      console.error(e);
+    } finally {
+      setCaptLoading(false);
+    }
+  }
+
+  const currentStepDef = CAPTACION_STEPS[captStep];
+  const progress = Math.round(((captStep + 1) / CAPTACION_STEPS.length) * 100);
+
+  return (
+    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-background to-secondary/20 px-4 py-8">
+      <div className="mb-8 w-full max-w-xl">
+        <div className="mb-2 flex items-center justify-between text-xs text-muted-foreground">
+          <span className="flex items-center gap-1">
+            <Users className="h-3.5 w-3.5" />
+            Client Acquisition — Step {captStep + 1} of {CAPTACION_STEPS.length}
+          </span>
+          <span>{progress}%</span>
+        </div>
+        <div className="h-2 w-full rounded-full bg-muted">
+          <div className="h-2 rounded-full bg-primary transition-all duration-500" style={{ width: `${progress}%` }} />
+        </div>
+      </div>
+
+      <Card className="w-full max-w-xl">
+        <CardHeader>
+          <CardTitle className="text-xl">{currentStepDef.title}</CardTitle>
+          <CardDescription>
+            {captStep === 0 && "Tell us about your business profile and goals."}
+            {captStep === 1 && "Define your ideal target audience."}
+            {captStep === 2 && "Tell us about your current marketing efforts."}
+          </CardDescription>
+        </CardHeader>
+
+        <CardContent className="space-y-4">
+          {captError && (
+            <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{captError}</div>
+          )}
+
+          {currentStepDef.fields.map((field) => (
+            <div key={field.name} className="space-y-2">
+              <Label>{field.label}{field.required && " *"}</Label>
+
+              {field.type === "text" && (
+                <Input
+                  value={(captData[field.name] as string) || ""}
+                  onChange={(e) => updateField(field.name, e.target.value)}
+                  placeholder={`Enter ${field.label.toLowerCase()}`}
+                />
+              )}
+
+              {field.type === "number" && (
+                <Input
+                  type="number"
+                  value={(captData[field.name] as number) || ""}
+                  onChange={(e) => updateField(field.name, parseInt(e.target.value) || 0)}
+                  placeholder="0"
+                />
+              )}
+
+              {field.type === "textarea" && (
+                <textarea
+                  className="flex min-h-[80px] w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                  value={(captData[field.name] as string) || ""}
+                  onChange={(e) => updateField(field.name, e.target.value)}
+                  placeholder={`Describe...`}
+                  rows={3}
+                />
+              )}
+
+              {field.type === "select" && field.options && (
+                <Select
+                  value={(captData[field.name] as string) || undefined}
+                  onValueChange={(val: string | null) => val && updateField(field.name, val)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {field.options.map((opt) => {
+                      const v = typeof opt === "string" ? opt : opt.value;
+                      const l = typeof opt === "string" ? opt : opt.label;
+                      return <SelectItem key={v} value={v}>{l}</SelectItem>;
+                    })}
+                  </SelectContent>
+                </Select>
+              )}
+
+              {field.type === "multi" && field.options && (
+                <div className="grid grid-cols-2 gap-2">
+                  {(field.options as string[]).map((opt) => (
+                    <label key={opt} className="flex items-center gap-2 text-sm cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={((captData[field.name] as string[]) || []).includes(opt)}
+                        onChange={() => toggleMulti(field.name, opt)}
+                        className="rounded border-input"
+                      />
+                      {opt}
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))}
+        </CardContent>
+
+        <div className="flex justify-between px-6 pb-6">
+          {captStep > 0 ? (
+            <Button type="button" variant="ghost" onClick={() => { setCaptStep(captStep - 1); setCaptError(null); }}>
+              Back
+            </Button>
+          ) : (
+            <Button type="button" variant="ghost" onClick={onBack}>
+              Back to selection
+            </Button>
+          )}
+          {captStep < CAPTACION_STEPS.length - 1 ? (
+            <Button type="button" onClick={nextCaptStep}>
+              Next
+            </Button>
+          ) : (
+            <Button type="button" onClick={submitCaptacion} disabled={captLoading}>
+              {captLoading ? "Submitting..." : "Submit"}
+            </Button>
+          )}
+        </div>
+      </Card>
+    </div>
+  );
+}
 
 export default function PymesCalculatorPage() {
   const router = useRouter();
@@ -301,7 +586,7 @@ export default function PymesCalculatorPage() {
                 <li>- Recommended plan (Rescue / Growth / Scale)</li>
               </ul>
               <div className="mt-4 flex items-center gap-1 text-sm font-medium text-accent">
-                Start diagnosis <ArrowRight className="h-3.5 w-3.5" />
+                Start diagnosis Free <ArrowRight className="h-3.5 w-3.5" />
               </div>
             </button>
 
@@ -334,33 +619,10 @@ export default function PymesCalculatorPage() {
     );
   }
 
-  // ─── Captacion form (placeholder) ───────────────────
+  // ─── Captacion form (PDF 5.1.2) ─────────────────────
   if (formType === "captacion") {
     return (
-      <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-background to-secondary/20 px-4 py-8">
-        <Card className="w-full max-w-xl">
-          <CardHeader>
-            <CardTitle>Client Acquisition Form</CardTitle>
-            <CardDescription>
-              This form will help us design a targeted client acquisition strategy for your business.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <p className="text-sm text-muted-foreground">
-              The client acquisition form is being developed. For now, please use the
-              Sales Leak Diagnosis to get your personalized marketing plan.
-            </p>
-            <div className="flex gap-3">
-              <Button variant="outline" onClick={() => setFormType("selector")}>
-                Back to selection
-              </Button>
-              <Button onClick={() => { setFormType("diagnosis"); setStep(1); }}>
-                Take Sales Leak Diagnosis
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <CaptacionForm onBack={() => setFormType("selector")} />
     );
   }
 
@@ -428,6 +690,7 @@ export default function PymesCalculatorPage() {
                 <div className="space-y-2">
                   <Label>Industry sector</Label>
                   <Select
+                    value={watch("sector") as string | undefined}
                     onValueChange={(val: string | null) =>
                       val && setValue(
                         "sector",
@@ -497,9 +760,6 @@ export default function PymesCalculatorPage() {
                             currentQuestion.field as keyof PymesCalculatorData,
                             opt.value as never
                           );
-                          if (step < 8) {
-                            setStep(step + 1);
-                          }
                         }}
                         className={`rounded-lg border p-3 text-left text-sm transition-all hover:border-accent hover:bg-accent/5 ${
                           fieldValue === opt.value
@@ -543,16 +803,16 @@ export default function PymesCalculatorPage() {
                           <span className="text-2xl">{msg.emoji}</span>{" "}
                           <strong>{msg.title}</strong> {msg.body}{" "}
                           <strong>
-                            estas dejando de percibir ${results.estimatedLoss.toLocaleString()} CAD anuales
+                            you are missing out on ${results.estimatedLoss.toLocaleString()} CAD annually
                           </strong>{" "}
-                          por ineficiencia en marketing y procesos
+                          due to marketing and process inefficiencies
                         </p>
                         <p className="mt-3 text-sm text-muted-foreground">
                           Score: {results.totalScore} / 35
                         </p>
                       </div>
 
-                      <div className="rounded-lg border p-4">
+                      <div className="rounded-lg border p-4 space-y-3">
                         <p className="text-sm font-medium">Recommended Plan</p>
                         <p className="text-lg font-bold capitalize text-accent">
                           Plan {results.recommendedPlan}
@@ -565,6 +825,39 @@ export default function PymesCalculatorPage() {
                           {results.recommendedPlan === "scale" &&
                             "$3,800 CAD - Full digital transformation"}
                         </p>
+                        {results.recommendedPlan === "rescue" && (
+                          <ul className="text-xs text-muted-foreground space-y-1 list-disc ml-4">
+                            <li>Website audit & quick fixes</li>
+                            <li>Google Business Profile optimization</li>
+                            <li>Basic SEO setup</li>
+                            <li>Social media rescue plan (1 platform)</li>
+                            <li>Lead capture form setup</li>
+                            <li>30-day action plan</li>
+                          </ul>
+                        )}
+                        {results.recommendedPlan === "growth" && (
+                          <ul className="text-xs text-muted-foreground space-y-1 list-disc ml-4">
+                            <li>Everything in Rescue, plus:</li>
+                            <li>Multi-platform social media strategy</li>
+                            <li>Content marketing plan (3 months)</li>
+                            <li>Email marketing automation setup</li>
+                            <li>Conversion rate optimization</li>
+                            <li>Monthly performance reports</li>
+                            <li>Paid ads strategy (Google/Meta)</li>
+                          </ul>
+                        )}
+                        {results.recommendedPlan === "scale" && (
+                          <ul className="text-xs text-muted-foreground space-y-1 list-disc ml-4">
+                            <li>Everything in Growth, plus:</li>
+                            <li>Full brand identity redesign</li>
+                            <li>Advanced marketing automation</li>
+                            <li>CRM integration & setup</li>
+                            <li>Customer retention programs</li>
+                            <li>Advanced analytics dashboard</li>
+                            <li>Quarterly strategy reviews</li>
+                            <li>Dedicated account manager</li>
+                          </ul>
+                        )}
                       </div>
                     </>
                   );

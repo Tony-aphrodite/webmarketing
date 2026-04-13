@@ -20,6 +20,8 @@ export default function LoginPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [resetMode, setResetMode] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -54,6 +56,82 @@ export default function LoginPage() {
     router.refresh();
   }
 
+  async function handleForgotPassword(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+
+    const formData = new FormData(e.currentTarget);
+    const email = formData.get("reset_email") as string;
+
+    const supabase = createClient();
+    const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/login`,
+    });
+
+    if (resetError) {
+      setError(resetError.message);
+    } else {
+      setResetSent(true);
+    }
+    setLoading(false);
+  }
+
+  if (resetMode) {
+    return (
+      <Card>
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl">Reset Password</CardTitle>
+          <CardDescription>
+            Enter your email and we&apos;ll send you a link to reset your password.
+          </CardDescription>
+        </CardHeader>
+        {resetSent ? (
+          <CardContent className="space-y-4">
+            <div className="rounded-md bg-green-50 p-3 text-sm text-green-700">
+              Password reset link sent! Please check your email inbox.
+            </div>
+            <Button variant="outline" className="w-full" onClick={() => { setResetMode(false); setResetSent(false); }}>
+              Back to Sign In
+            </Button>
+          </CardContent>
+        ) : (
+          <form onSubmit={handleForgotPassword}>
+            <CardContent className="space-y-4">
+              {error && (
+                <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+                  {error}
+                </div>
+              )}
+              <div className="space-y-2">
+                <Label htmlFor="reset_email">Email address</Label>
+                <Input
+                  id="reset_email"
+                  name="reset_email"
+                  type="email"
+                  placeholder="email@example.com"
+                  required
+                />
+              </div>
+            </CardContent>
+            <CardFooter className="flex flex-col gap-4">
+              <Button type="submit" className="w-full" disabled={loading}>
+                {loading ? "Sending..." : "Send Reset Link"}
+              </Button>
+              <button
+                type="button"
+                className="text-sm text-primary underline"
+                onClick={() => { setResetMode(false); setError(null); }}
+              >
+                Back to Sign In
+              </button>
+            </CardFooter>
+          </form>
+        )}
+      </Card>
+    );
+  }
+
   return (
     <Card>
       <CardHeader className="text-center">
@@ -80,7 +158,16 @@ export default function LoginPage() {
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="password">Password</Label>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="password">Password</Label>
+              <button
+                type="button"
+                className="text-xs text-primary hover:underline"
+                onClick={() => { setResetMode(true); setError(null); }}
+              >
+                Forgot password?
+              </button>
+            </div>
             <Input
               id="password"
               name="password"

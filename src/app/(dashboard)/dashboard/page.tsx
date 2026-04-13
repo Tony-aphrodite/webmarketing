@@ -294,14 +294,25 @@ export default async function DashboardPage() {
                 Based on {propertyCount} {propertyCount === 1 ? "property" : "properties"}
               </span>
             </div>
-            <ul className="space-y-1.5">
-              {ownerPlan.features.map((feature, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm">
+            <div className="space-y-2">
+              <p className="text-sm font-medium">Recommendations</p>
+              <ul className="space-y-1.5">
+                <li className="flex items-start gap-2 text-sm">
                   <CheckCircle2 className={`mt-0.5 h-4 w-4 shrink-0 ${ownerPlan.color}`} />
-                  {feature}
+                  Professional photography for your listing
                 </li>
-              ))}
-            </ul>
+                <li className="flex items-start gap-2 text-sm">
+                  <CheckCircle2 className={`mt-0.5 h-4 w-4 shrink-0 ${ownerPlan.color}`} />
+                  Listing optimization checklist
+                </li>
+              </ul>
+            </div>
+            <div className="pt-2 border-t">
+              <p className="text-xs text-muted-foreground">
+                See your full plan details and features in the{" "}
+                <Link href="/dashboard/services" className="text-primary underline">Services</Link> section.
+              </p>
+            </div>
           </CardContent>
         </Card>
       )}
@@ -330,6 +341,14 @@ export default async function DashboardPage() {
                 </li>
               ))}
             </ul>
+            <div className="pt-3">
+              <Link
+                href="/dashboard/services"
+                className={buttonVariants({ className: "w-full" })}
+              >
+                Acquire Plan
+              </Link>
+            </div>
           </CardContent>
         </Card>
       )}
