@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -17,9 +17,38 @@ import {
 
 export default function ResetPasswordPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
+  const [ready, setReady] = useState(false);
+
+  // Exchange the auth code on the CLIENT side where the code_verifier cookie lives
+  useEffect(() => {
+    const code = searchParams.get("code");
+    if (code) {
+      const supabase = createClient();
+      supabase.auth.exchangeCodeForSession(code).then(({ error: exchangeError }) => {
+        if (exchangeError) {
+          router.push("/login?error=recovery_failed");
+        } else {
+          setReady(true);
+          // Clean the URL
+          window.history.replaceState({}, "", "/reset-password");
+        }
+      });
+    } else {
+      // No code param — check if user already has a valid session (came from another route)
+      const supabase = createClient();
+      supabase.auth.getSession().then(({ data: { session } }) => {
+        if (session) {
+          setReady(true);
+        } else {
+          router.push("/login");
+        }
+      });
+    }
+  }, [searchParams, router]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -53,6 +82,17 @@ export default function ResetPasswordPage() {
       setSuccess(true);
     }
     setLoading(false);
+  }
+
+  if (!ready) {
+    return (
+      <Card>
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl">Verifying...</CardTitle>
+          <CardDescription>Please wait while we verify your reset link.</CardDescription>
+        </CardHeader>
+      </Card>
+    );
   }
 
   if (success) {
