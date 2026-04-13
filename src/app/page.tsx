@@ -30,22 +30,28 @@ export default function HomePage() {
           </div>
           <nav className="hidden items-center gap-6 md:flex">
             <Link
+              href="#how-it-works"
+              className="text-sm text-muted-foreground transition-colors hover:text-primary"
+            >
+              How it Works
+            </Link>
+            <Link
               href="#services"
               className="text-sm text-muted-foreground transition-colors hover:text-primary"
             >
               Services
             </Link>
             <Link
-              href="#benefits"
+              href="#about"
               className="text-sm text-muted-foreground transition-colors hover:text-primary"
             >
-              Benefits
+              About Us
             </Link>
             <Link
-              href="#testimonials"
+              href="#contact"
               className="text-sm text-muted-foreground transition-colors hover:text-primary"
             >
-              Testimonials
+              Contact
             </Link>
           </nav>
           <div className="flex items-center gap-3">
@@ -197,6 +203,115 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* How it Works (PDF 2.1) */}
+      <section id="how-it-works" className="px-4 py-24">
+        <div className="mx-auto max-w-6xl">
+          <div className="mb-16 text-center">
+            <span className="mb-3 inline-block text-sm font-medium uppercase tracking-widest text-primary">
+              How it Works
+            </span>
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+              Simple Steps to Get Started
+            </h2>
+          </div>
+
+          <div className="grid gap-8 md:grid-cols-2">
+            {/* PYMES flow */}
+            <div className="rounded-2xl border border-accent/20 bg-accent/[0.03] p-6">
+              <h3 className="mb-4 text-lg font-semibold text-accent">
+                For Businesses (SMBs)
+              </h3>
+              <div className="space-y-4">
+                {[
+                  { step: "1", text: "Take your free diagnosis" },
+                  { step: "2", text: "Get your personalized session (free)" },
+                  { step: "3", text: "We quote and propose your best course of action" },
+                  { step: "4", text: "Let's go for that goal" },
+                ].map((item) => (
+                  <div key={item.step} className="flex items-start gap-3">
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-accent text-xs font-bold text-accent-foreground">
+                      {item.step}
+                    </div>
+                    <p className="text-sm text-muted-foreground pt-0.5">{item.text}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Owners flow (1-3 properties) */}
+            <div className="rounded-2xl border border-primary/20 bg-primary/[0.03] p-6">
+              <h3 className="mb-4 text-lg font-semibold text-primary">
+                For Property Owners (1-3 properties)
+              </h3>
+              <div className="space-y-4">
+                {[
+                  { step: "1", text: "List your property" },
+                  { step: "2", text: "Receive interested tenants" },
+                  { step: "3", text: "Choose and secure your rental" },
+                ].map((item) => (
+                  <div key={item.step} className="flex items-start gap-3">
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                      {item.step}
+                    </div>
+                    <p className="text-sm text-muted-foreground pt-0.5">{item.text}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Investors flow (4+ properties) */}
+            <div className="rounded-2xl border border-primary/20 bg-primary/[0.03] p-6">
+              <h3 className="mb-4 text-lg font-semibold text-primary">
+                For Investors (4+ properties)
+              </h3>
+              <div className="space-y-4">
+                {[
+                  { step: "1", text: "Fill in your investment profile" },
+                  { step: "2", text: "Access your personalized investment portfolio" },
+                  { step: "3", text: "We publish your assets" },
+                  { step: "4", text: "Monetize your investment" },
+                ].map((item) => (
+                  <div key={item.step} className="flex items-start gap-3">
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                      {item.step}
+                    </div>
+                    <p className="text-sm text-muted-foreground pt-0.5">{item.text}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Tenants flow */}
+            <div className="rounded-2xl border border-primary/20 bg-primary/[0.03] p-6">
+              <h3 className="mb-4 text-lg font-semibold text-primary">
+                For Tenants
+              </h3>
+              <div className="space-y-4">
+                {[
+                  { step: "1", text: "Tell us your preferences" },
+                  { step: "2", text: "Receive properties matching your preferences" },
+                  { step: "3", text: "Choose and secure your new home" },
+                ].map((item) => (
+                  <div key={item.step} className="flex items-start gap-3">
+                    <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">
+                      {item.step}
+                    </div>
+                    <p className="text-sm text-muted-foreground pt-0.5">{item.text}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-12 text-center">
+            <p className="text-lg font-medium text-muted-foreground">
+              Marketing that maximizes your profitability &mdash;{" "}
+              <span className="font-semibold text-primary">Your property, your money</span>
+            </p>
+          </div>
+        </div>
+      </section>
+
       {/* Services */}
       <section id="services" className="relative px-4 py-24">
         <div className="pointer-events-none absolute inset-0">
@@ -288,7 +403,7 @@ export default function HomePage() {
                 <h3 className="mb-2 text-xl font-semibold">Tenants</h3>
                 <p className="mb-5 text-sm leading-relaxed text-muted-foreground">
                   Complete your preference profile and we will connect you with
-                  the best housing options in Montreal.
+                  the best housing options in British Columbia.
                 </p>
                 <ul className="space-y-2">
                   {[
@@ -373,8 +488,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Feature showcase */}
-      <section className="px-4 py-24">
+      {/* About Us / Mission (PDF 2.2) */}
+      <section id="about" className="px-4 py-24">
         <div className="mx-auto grid max-w-6xl items-center gap-12 md:grid-cols-2">
           <div className="relative">
             <div className="relative aspect-[4/3] overflow-hidden rounded-2xl shadow-xl shadow-primary/10">
@@ -402,11 +517,15 @@ export default function HomePage() {
           </div>
           <div>
             <span className="mb-3 inline-block text-sm font-medium uppercase tracking-widest text-primary">
-              Our Mission
+              Why These Partners
             </span>
             <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-              We Grow Your Business with Strategy
+              Our Mission
             </h2>
+            <p className="mt-4 text-lg leading-relaxed text-muted-foreground italic">
+              &ldquo;Building our dreams together, being passionate about our
+              clients&rsquo; projects through a human and close service.&rdquo;
+            </p>
             <p className="mt-4 leading-relaxed text-muted-foreground">
               Every client is unique. That is why our system analyses your
               current situation and creates a personalized marketing plan that
@@ -608,6 +727,89 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* Contact Form (PDF 2.3) */}
+      <section id="contact" className="px-4 py-24">
+        <div className="mx-auto max-w-xl">
+          <div className="mb-10 text-center">
+            <span className="mb-3 inline-block text-sm font-medium uppercase tracking-widest text-primary">
+              Get in Touch
+            </span>
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+              Contact Us
+            </h2>
+            <p className="mt-4 text-muted-foreground">
+              Have a question? Send us a message and our team will get back to
+              you shortly.
+            </p>
+          </div>
+
+          <form
+            action="/api/contact"
+            method="POST"
+            className="space-y-4 rounded-2xl border border-primary/10 bg-card p-8 shadow-sm"
+          >
+            <div className="space-y-2">
+              <label htmlFor="contact_name" className="text-sm font-medium">
+                Full name
+              </label>
+              <input
+                id="contact_name"
+                name="name"
+                type="text"
+                required
+                placeholder="John Smith"
+                className="flex h-10 w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+              />
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="contact_phone" className="text-sm font-medium">
+                Phone
+              </label>
+              <input
+                id="contact_phone"
+                name="phone"
+                type="tel"
+                required
+                placeholder="+1 604 000 0000"
+                className="flex h-10 w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+              />
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="contact_email" className="text-sm font-medium">
+                Email
+              </label>
+              <input
+                id="contact_email"
+                name="email"
+                type="email"
+                required
+                placeholder="email@example.com"
+                className="flex h-10 w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+              />
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="contact_subject" className="text-sm font-medium">
+                Subject
+              </label>
+              <textarea
+                id="contact_subject"
+                name="subject"
+                required
+                rows={4}
+                placeholder="How can we help you?"
+                className="flex w-full rounded-lg border border-input bg-transparent px-3 py-2 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+              />
+            </div>
+            <button
+              type="submit"
+              className="inline-flex h-10 w-full items-center justify-center rounded-lg bg-primary px-6 text-sm font-medium text-primary-foreground shadow-sm transition-colors hover:bg-primary/90"
+            >
+              Send Message
+            </button>
+          </form>
+        </div>
+      </section>
+
       {/* Footer */}
       <footer className="border-t border-primary/10 bg-secondary/30 px-4 py-12">
         <div className="mx-auto max-w-6xl">
@@ -619,23 +821,17 @@ export default function HomePage() {
               <span className="text-sm font-semibold">WebMarketing</span>
             </div>
             <div className="flex gap-6 text-sm text-muted-foreground">
-              <Link
-                href="#services"
-                className="transition-colors hover:text-primary"
-              >
+              <Link href="#how-it-works" className="transition-colors hover:text-primary">
+                How it Works
+              </Link>
+              <Link href="#services" className="transition-colors hover:text-primary">
                 Services
               </Link>
-              <Link
-                href="#benefits"
-                className="transition-colors hover:text-primary"
-              >
-                Benefits
+              <Link href="#about" className="transition-colors hover:text-primary">
+                About Us
               </Link>
-              <Link
-                href="#testimonials"
-                className="transition-colors hover:text-primary"
-              >
-                Testimonials
+              <Link href="#contact" className="transition-colors hover:text-primary">
+                Contact
               </Link>
             </div>
           </div>

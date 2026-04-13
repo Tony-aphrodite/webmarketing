@@ -1,115 +1,155 @@
 import { z } from "zod";
 
 // ===========================================
-// Discovery Brief (Owner / Investor form)
-// Typeform-style: 11 questions + consents
+// Owner / Investor Form (PDF 5.2.1)
+// Owner Profile + Property Details + Zone
 // ===========================================
-export const discoveryBriefSchema = z.object({
-  // Q1: Property objective
-  property_objective: z.enum(["rent", "sell", "both", "not_sure"], {
-    message: "Please select a property objective",
-  }),
-  // Q2: Property type
-  property_type: z.enum(
-    ["apartment", "condo", "house", "townhouse", "duplex", "commercial"],
-    { message: "Please select a property type" }
-  ),
-  // Q3: Current state
-  current_state: z.enum(
-    ["occupied", "vacant", "under_renovation", "new_construction"],
-    { message: "Please select the current state" }
-  ),
-  // Q4: Monthly rent (conditional, if rental)
-  monthly_rent: z.coerce.number().positive("Must be greater than 0").optional(),
-  // Q5: Main challenge
-  main_challenge: z.enum(
-    [
-      "find_tenants",
-      "improve_visibility",
-      "increase_value",
-      "manage_portfolio",
-      "other",
-    ],
-    { message: "Please select your main challenge" }
-  ),
-  // Q6: How many properties?
-  property_count: z.coerce
-    .number()
-    .int()
-    .min(1, "Must own at least 1 property"),
-  // Q7: Has professional photos?
-  has_professional_photos: z.boolean().default(false),
-  // Q8: Currently listed where?
-  current_listings: z.array(z.string()).default([]),
-  // Q9: Monthly marketing budget
-  marketing_budget: z
-    .enum(["under_500", "500_1000", "1000_2500", "2500_5000", "over_5000"])
-    .optional(),
-  // Q10: Timeline
-  timeline: z
-    .enum(["immediate", "1_3_months", "3_6_months", "no_rush"])
-    .optional(),
-  // Q11: Additional comments
-  additional_comments: z.string().optional(),
+export const ownerFormSchema = z.object({
+  // ─── Owner Profile (PDF 5.2.1) ───
+  property_count: z.coerce.number().int().min(1, "Must own at least 1 property"),
+  objectives: z.array(z.string()).min(1, "Select at least one objective"),
+  // Per-property: city and rent (arrays matching property_count)
+  cities: z.array(z.string()).min(1, "Enter city for each property"),
+  rents: z.array(z.coerce.number().min(300).max(8000)).min(1, "Enter rent for each property"),
 
-  // Legal consents (all 4 required)
-  consent_data_processing: z.boolean().refine((v) => v === true, {
-    message: "You must consent to data processing",
-  }),
+  // ─── Property Details (PDF 5.2.1.1) ─── first property
+  property_type: z.string().min(1, "Select property type"),
+  area_sqft: z.coerce.number().positive().optional().or(z.literal("")),
+  area_unit: z.enum(["sqft", "m2"]).default("sqft"),
+  availability_date: z.string().optional(),
+  bedrooms: z.string().min(1, "Select bedrooms"),
+  bathrooms: z.string().min(1, "Select bathrooms"),
+  amenities: z.array(z.string()).default([]),
+  common_areas: z.array(z.string()).default([]),
+  dishwasher: z.boolean().default(false),
+  pet_friendly: z.boolean().default(false),
+  smart_home: z.boolean().default(false),
+  smart_home_features: z.array(z.string()).default([]),
+  shared_unit: z.boolean().default(false),
+  levels: z.string().optional(),
+  furnished: z.boolean().default(false),
+  utilities_included: z.boolean().default(false),
+  style: z.string().optional(),
+
+  // ─── Zone Info (PDF 5.2.1.2) ───
+  address: z.string().min(1, "Address is required"),
+  zone_city: z.string().min(1, "City is required"),
+  province: z.string().default("British Columbia"),
+  postal_code: z.string().optional(),
+  near_parks: z.boolean().default(false),
+  near_churches: z.boolean().default(false),
+  near_skytrain: z.boolean().default(false),
+  skytrain_lines: z.array(z.string()).default([]),
+  near_bus: z.boolean().default(false),
+  social_life: z.string().optional(),
+  near_mall: z.boolean().default(false),
+  nearby_supermarkets: z.array(z.string()).default([]),
+
+  // ─── Legal Consents (4 checkboxes per PDF) ───
   consent_image_usage: z.boolean().refine((v) => v === true, {
-    message: "You must consent to image usage",
+    message: "You must consent to image usage and editing",
+  }),
+  consent_data_processing: z.boolean().refine((v) => v === true, {
+    message: "You must consent to rights and privacy declaration",
   }),
   consent_marketing: z.boolean().refine((v) => v === true, {
-    message: "You must consent to marketing communications",
+    message: "You must consent to electronic communications",
   }),
   consent_third_party: z.boolean().refine((v) => v === true, {
-    message: "You must consent to third-party data sharing",
+    message: "You must accept terms and conditions",
   }),
 });
 
-export type DiscoveryBriefData = z.infer<typeof discoveryBriefSchema>;
+export type OwnerFormData = z.infer<typeof ownerFormSchema>;
 
 // ===========================================
 // Tenant Form (with 8 premium criteria)
+// British Columbia focused
 // ===========================================
 export const tenantFormSchema = z.object({
-  // Basic preferences
-  preferred_city: z.string().default("Montreal"),
-  preferred_zones: z.array(z.string()).default([]),
-  min_budget: z.coerce.number().positive("Minimum budget must be greater than 0"),
-  max_budget: z.coerce.number().positive("Maximum budget must be greater than 0"),
-  bedrooms_needed: z.coerce.number().int().min(1, "At least 1 bedroom required"),
-  bathrooms_needed: z.coerce.number().int().min(1).optional(),
-  move_in_date: z.string().min(1, "Move-in date is required"),
-
-  // Premium classification criteria (8 fields)
+  // Employment & situation
   employment_type: z.enum(
-    ["employed_stable", "self_employed", "student", "retired", "other"],
-    { message: "Please select employment type" }
+    ["full_time", "part_time", "contract", "self_employed", "international_student"],
+    { message: "Please select your current situation" }
   ),
+  institution_type: z.string().optional(),
+  institution_name: z.string().optional(),
   employment_verifiable: z.boolean().default(false),
-  seeks_premium_amenities: z.boolean().default(false),
-  preferred_amenities: z.array(z.string()).default([]),
-  prefers_urban_zone: z.boolean().default(false),
-  smart_home_interest: z.boolean().default(false),
-  style_preference: z
-    .enum(["modern", "classic", "minimalist", "industrial", "other"])
-    .optional(),
-  contract_duration: z.enum(
-    ["6_months", "12_months", "18_months", "24_months"],
-    { message: "Please select contract duration" }
-  ),
 
-  // Other
+  // People
+  number_of_people: z.string().min(1, "Please select how many people"),
+
+  // Property type desired (multi-select)
+  property_type_desired: z.array(z.string()).min(1, "Select at least one property type"),
+
+  // Smart home
+  smart_home_interest: z.boolean().default(false),
+  smart_home_features: z.array(z.string()).default([]),
+
+  // Style & pet
+  style_preference: z
+    .enum(["modern", "classic", "minimalist", "elegant", "other"])
+    .optional(),
   pet_friendly: z.boolean().default(false),
+
+  // Levels & furnished & utilities
+  levels_preferred: z.string().optional(),
+  furnished: z.boolean().default(false),
+  utilities_included: z.boolean().default(false),
+
+  // Zone / City preference (BC)
+  preferred_zones: z.array(z.string()).min(1, "Select at least one zone"),
+
+  // Budget
+  min_budget: z.coerce.number().min(400, "Minimum $400"),
+  max_budget: z.coerce.number().max(8000, "Maximum $8000"),
+
+  // Move-in
+  move_in_date: z.string().min(1, "Move-in date is required"),
+  move_in_flexible: z.boolean().default(false),
+
+  // Amenities
+  preferred_amenities: z.array(z.string()).default([]),
+
+  // Size (optional)
+  size_sqft: z.coerce.number().positive().optional().or(z.literal("")),
+  size_unit: z.enum(["sqft", "m2"]).default("sqft"),
+
+  // Bedrooms / Bathrooms
+  bedrooms_needed: z.string().min(1, "Select bedrooms"),
+  bathrooms_needed: z.string().min(1, "Select bathrooms"),
+
+  // Common areas
+  common_areas: z.array(z.string()).default([]),
+
+  // Contract duration
+  contract_duration: z.string().min(1, "Select contract duration"),
+
+  // Location preferences
+  near_bus: z.boolean().default(false),
+  near_skytrain: z.boolean().default(false),
+  skytrain_lines: z.array(z.string()).default([]),
+  near_social: z.boolean().default(false),
+  near_banks: z.boolean().default(false),
+  near_downtown: z.boolean().default(false),
+  prefers_urban_zone: z.boolean().default(false),
+
+  // Parking
   parking_needed: z.boolean().default(false),
+
+  // Additional
   additional_requirements: z.string().optional(),
 
-  // Consents (2-level)
+  // Level 1 consent (required)
   consent_data_processing: z.boolean().refine((v) => v === true, {
     message: "You must consent to data processing",
   }),
-  consent_marketing: z.boolean().default(false), // Optional second level
+  // Level 2 detailed consents
+  consent_screening: z.boolean().default(false),
+  consent_references: z.boolean().default(false),
+  consent_communications: z.boolean().default(false),
+  consent_truthfulness: z.boolean().default(false),
+  consent_marketing: z.boolean().default(false),
 });
 
 export type TenantFormData = z.infer<typeof tenantFormSchema>;

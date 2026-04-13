@@ -37,11 +37,11 @@ const SECTORS = [
 ];
 
 const LIKERT_OPTIONS = [
-  { value: 1, label: "1 - Very poor" },
-  { value: 2, label: "2 - Poor" },
+  { value: 1, label: "1 - No / Very poor" },
+  { value: 2, label: "2 - Weak" },
   { value: 3, label: "3 - Average" },
   { value: 4, label: "4 - Good" },
-  { value: 5, label: "5 - Excellent" },
+  { value: 5, label: "5 - Excellent / Yes" },
 ];
 
 interface QuestionDef {
@@ -54,45 +54,45 @@ interface QuestionDef {
 const QUESTIONS: QuestionDef[] = [
   {
     field: "q1_online_presence",
-    block: "Digital Visibility",
-    question: "How would you rate your business's online presence?",
-    helpText: "1 = Non-existent, 5 = Excellent & well-maintained",
+    block: "SALES",
+    question: "Is your flow of new clients constant and predictable month to month?",
+    helpText: "1 = No, very irregular / 5 = Yes, constant and predictable",
   },
   {
     field: "q2_seo_positioning",
-    block: "Digital Visibility",
-    question: "How well does your business rank on search engines?",
-    helpText: "1 = Not at all, 5 = Top positions on Google",
+    block: "SALES",
+    question: "Do you have an automated system to follow up with prospects?",
+    helpText: "1 = No system at all / 5 = Yes, fully automated follow-up",
   },
   {
     field: "q3_lead_generation",
-    block: "Lead Generation",
-    question: "How effective is your current lead generation?",
-    helpText: "1 = No leads coming in, 5 = Steady flow of qualified leads",
+    block: "BRAND",
+    question: "Is your value proposition so clear that a child would understand it in 10 seconds?",
+    helpText: "1 = Not clear at all / 5 = Absolutely clear and compelling",
   },
   {
     field: "q4_lead_conversion",
-    block: "Lead Generation",
-    question: "What percentage of leads convert to customers?",
-    helpText: "1 = Under 5%, 5 = Over 40%",
+    block: "BRAND",
+    question: "Does your visual identity look more professional than your direct competition?",
+    helpText: "1 = No, it looks amateur / 5 = Yes, clearly more professional",
   },
   {
     field: "q5_client_retention",
-    block: "Retention & Loyalty",
-    question: "How well do you retain existing clients?",
-    helpText: "1 = High churn rate, 5 = Excellent retention",
+    block: "SYSTEMS",
+    question: "Can your business operate for a week without you intervening operationally?",
+    helpText: "1 = No, it depends on me entirely / 5 = Yes, it runs on its own",
   },
   {
     field: "q6_repeat_purchases",
-    block: "Retention & Loyalty",
-    question: "How often do clients make repeat purchases?",
-    helpText: "1 = Rarely, 5 = Frequently & predictably",
+    block: "SYSTEMS",
+    question: "Do you measure the exact cost of acquiring each new client?",
+    helpText: "1 = No idea what it costs / 5 = Yes, I know the exact CAC",
   },
   {
     field: "q7_marketing_strategy",
-    block: "Marketing Strategy",
-    question: "How structured is your marketing strategy?",
-    helpText: "1 = No strategy, 5 = Fully planned & executed",
+    block: "FUTURE",
+    question: "Cost of inaction: How serious would it be to continue the same way for 12 months?",
+    helpText: "1 = Not critical at all / 5 = Extremely critical, could threaten the business",
   },
 ];
 
