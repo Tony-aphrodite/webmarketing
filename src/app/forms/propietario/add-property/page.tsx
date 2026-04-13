@@ -129,6 +129,7 @@ export default function AddPropertyPage() {
     defaultValues: {
       province: "British Columbia",
       occupancy_status: "vacant",
+      area_unit: "sqft",
       amenities: [],
       common_areas: [],
       smart_home_features: [],
@@ -334,7 +335,7 @@ export default function AddPropertyPage() {
               <>
                 <div className="space-y-2">
                   <Label>Property Type</Label>
-                  <Select onValueChange={(val: string | null) => val && setValue("property_type", val)}>
+                  <Select value={watch("property_type") as string | undefined} onValueChange={(val: string | null) => val && setValue("property_type", val)}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select property type" />
                     </SelectTrigger>
@@ -368,8 +369,8 @@ export default function AddPropertyPage() {
                 <div className="space-y-2">
                   <Label>Occupancy Status</Label>
                   <Select
+                    value={watch("occupancy_status") as string | undefined}
                     onValueChange={(val: string | null) => val && setValue("occupancy_status", val as PropertyOnlyFormData["occupancy_status"])}
-                    defaultValue="vacant"
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select status" />
@@ -396,7 +397,7 @@ export default function AddPropertyPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>Bedrooms</Label>
-                    <Select onValueChange={(val: string | null) => val && setValue("bedrooms", val)}>
+                    <Select value={watch("bedrooms") as string | undefined} onValueChange={(val: string | null) => val && setValue("bedrooms", val)}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select" />
                       </SelectTrigger>
@@ -412,7 +413,7 @@ export default function AddPropertyPage() {
                   </div>
                   <div className="space-y-2">
                     <Label>Bathrooms</Label>
-                    <Select onValueChange={(val: string | null) => val && setValue("bathrooms", val)}>
+                    <Select value={watch("bathrooms") as string | undefined} onValueChange={(val: string | null) => val && setValue("bathrooms", val)}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select" />
                       </SelectTrigger>
@@ -435,7 +436,7 @@ export default function AddPropertyPage() {
                   </div>
                   <div className="space-y-2">
                     <Label>Unit</Label>
-                    <Select onValueChange={(val: string | null) => val && setValue("area_unit", val as "sqft" | "m2")} defaultValue="sqft">
+                    <Select value={(watch("area_unit") as string | undefined) || "sqft"} onValueChange={(val: string | null) => val && setValue("area_unit", val as "sqft" | "m2")}>
                       <SelectTrigger>
                         <SelectValue />
                       </SelectTrigger>
@@ -450,7 +451,7 @@ export default function AddPropertyPage() {
                 {/* Style */}
                 <div className="space-y-2">
                   <Label>Style</Label>
-                  <Select onValueChange={(val: string | null) => val && setValue("style", val)}>
+                  <Select value={watch("style") as string | undefined} onValueChange={(val: string | null) => val && setValue("style", val)}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select style" />
                     </SelectTrigger>
@@ -468,7 +469,7 @@ export default function AddPropertyPage() {
                 {/* Levels */}
                 <div className="space-y-2">
                   <Label>Levels / Floor</Label>
-                  <Select onValueChange={(val: string | null) => val && setValue("levels", val)}>
+                  <Select value={watch("levels") as string | undefined} onValueChange={(val: string | null) => val && setValue("levels", val)}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select" />
                     </SelectTrigger>
@@ -604,7 +605,7 @@ export default function AddPropertyPage() {
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label>City</Label>
-                    <Select onValueChange={(val: string | null) => val && setValue("zone_city", val)}>
+                    <Select value={watch("zone_city") as string | undefined} onValueChange={(val: string | null) => val && setValue("zone_city", val)}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select city" />
                       </SelectTrigger>
@@ -677,7 +678,7 @@ export default function AddPropertyPage() {
                 {/* Social Life */}
                 <div className="space-y-2">
                   <Label>Social Life / Nightlife</Label>
-                  <Select onValueChange={(val: string | null) => val && setValue("social_life", val)}>
+                  <Select value={watch("social_life") as string | undefined} onValueChange={(val: string | null) => val && setValue("social_life", val)}>
                     <SelectTrigger>
                       <SelectValue placeholder="Select" />
                     </SelectTrigger>
