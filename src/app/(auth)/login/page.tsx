@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
@@ -22,6 +22,18 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
   const [resetMode, setResetMode] = useState(false);
   const [resetSent, setResetSent] = useState(false);
+
+  // Detect Supabase recovery session via hash fragment or existing session
+  useEffect(() => {
+    const supabase = createClient();
+    // Listen for PASSWORD_RECOVERY event (triggered when hash fragment contains recovery token)
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+      if (event === "PASSWORD_RECOVERY") {
+        router.push("/reset-password");
+      }
+    });
+    return () => subscription.unsubscribe();
+  }, [router]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -66,7 +78,7 @@ export default function LoginPage() {
 
     const supabase = createClient();
     const { error: resetError } = await supabase.auth.resetPasswordForEmail(email, {
-      redirectTo: `${window.location.origin}/api/auth/callback?type=recovery`,
+      redirectTo: `${window.location.origin}/auth/confirm?next=/reset-password`,
     });
 
     if (resetError) {
