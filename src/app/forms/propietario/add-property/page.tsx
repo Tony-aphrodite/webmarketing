@@ -241,7 +241,7 @@ export default function AddPropertyPage() {
         postal_code: data.postal_code || null,
         monthly_rent: data.monthly_rent,
         bedrooms: parseInt(data.bedrooms),
-        bathrooms: parseFloat(data.bathrooms.replace(" Bath", "")),
+        bathrooms: Math.floor(parseFloat(data.bathrooms.replace(" Bath", ""))),
         area_sqft: typeof data.area_sqft === "number" ? data.area_sqft : null,
         amenities: data.amenities,
         common_areas: data.common_areas,
