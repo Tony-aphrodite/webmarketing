@@ -77,5 +77,15 @@ ALTER TABLE properties
   ALTER COLUMN province SET DEFAULT 'British Columbia';
 
 -- ============================================================
+-- 5. PROPERTIES - Add Steve feedback fields (v3.1)
+--    occupancy_status, vacancy_date, listing_platforms
+-- ============================================================
+
+ALTER TABLE properties
+  ADD COLUMN IF NOT EXISTS occupancy_status TEXT DEFAULT 'vacant',
+  ADD COLUMN IF NOT EXISTS vacancy_date DATE,
+  ADD COLUMN IF NOT EXISTS listing_platforms TEXT[] DEFAULT '{}';
+
+-- ============================================================
 -- DONE! Run this after migration_v2_mvp.sql
 -- ============================================================

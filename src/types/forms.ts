@@ -6,6 +6,7 @@ import { z } from "zod";
 // ===========================================
 export const ownerFormSchema = z.object({
   // ─── Owner Profile (PDF 5.2.1) ───
+  user_type: z.enum(["owner", "investor"], { message: "Please select if you are an owner or investor" }),
   property_count: z.coerce.number().int().min(1, "Must own at least 1 property"),
   objectives: z.array(z.string()).min(1, "Select at least one objective"),
   // Per-property: city and rent (arrays matching property_count)
@@ -16,6 +17,8 @@ export const ownerFormSchema = z.object({
   property_type: z.string().min(1, "Select property type"),
   area_sqft: z.coerce.number().positive().optional().or(z.literal("")),
   area_unit: z.enum(["sqft", "m2"]).default("sqft"),
+  occupancy_status: z.enum(["vacant", "occupied", "renovation", "new_construction"]).default("vacant"),
+  vacancy_date: z.string().optional(),
   availability_date: z.string().optional(),
   bedrooms: z.string().min(1, "Select bedrooms"),
   bathrooms: z.string().min(1, "Select bathrooms"),
@@ -25,11 +28,19 @@ export const ownerFormSchema = z.object({
   pet_friendly: z.boolean().default(false),
   smart_home: z.boolean().default(false),
   smart_home_features: z.array(z.string()).default([]),
+  smart_home_other: z.string().optional(),
   shared_unit: z.boolean().default(false),
   levels: z.string().optional(),
+  levels_other: z.string().optional(),
   furnished: z.boolean().default(false),
   utilities_included: z.boolean().default(false),
   style: z.string().optional(),
+  style_other: z.string().optional(),
+  amenities_other: z.string().optional(),
+
+  // ─── Listing Platforms (Steve #9) ───
+  listing_platforms: z.array(z.string()).default([]),
+  listing_platforms_other: z.string().optional(),
 
   // ─── Zone Info (PDF 5.2.1.2) ───
   address: z.string().min(1, "Address is required"),
@@ -85,15 +96,18 @@ export const tenantFormSchema = z.object({
   // Smart home
   smart_home_interest: z.boolean().default(false),
   smart_home_features: z.array(z.string()).default([]),
+  smart_home_other: z.string().optional(),
 
   // Style & pet
   style_preference: z
     .enum(["modern", "classic", "minimalist", "elegant", "other"])
     .optional(),
+  style_other: z.string().optional(),
   pet_friendly: z.boolean().default(false),
 
   // Levels & furnished & utilities
   levels_preferred: z.string().optional(),
+  levels_other: z.string().optional(),
   furnished: z.boolean().default(false),
   utilities_included: z.boolean().default(false),
 
@@ -110,6 +124,7 @@ export const tenantFormSchema = z.object({
 
   // Amenities
   preferred_amenities: z.array(z.string()).default([]),
+  amenities_other: z.string().optional(),
 
   // Size (optional)
   size_sqft: z.coerce.number().positive().optional().or(z.literal("")),

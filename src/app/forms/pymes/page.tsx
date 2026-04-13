@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -23,7 +23,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { BarChart3 } from "lucide-react";
+import { BarChart3, TrendingDown, Users, ArrowRight } from "lucide-react";
 
 const SECTORS = [
   { value: "retail", label: "Retail / Commerce" },
@@ -125,9 +125,29 @@ function calculateResults(data: PymesCalculatorData) {
   return { totalScore, estimatedLoss, urgencyLevel, recommendedPlan };
 }
 
+// ─── Urgency messages per PDF 5.1.1.1 ────────────────
+const URGENCY_MESSAGES: Record<string, { emoji: string; title: string; body: string }> = {
+  critical: {
+    emoji: "🟡",
+    title: "Riesgo de estancamiento peligroso,",
+    body: "Estás trabajando para el negocio y no al revés. Tienes fugas de dinero, necesitas mejorar tu marketing urgente,",
+  },
+  high: {
+    emoji: "🟠",
+    title: "Crecimiento frenado,",
+    body: "Tu negocio tiene potencial pero estás dejando oportunidades sobre la mesa. Con ajustes estratégicos puedes acelerar tu crecimiento,",
+  },
+  moderate: {
+    emoji: "🟢",
+    title: "Buen camino, optimiza para escalar,",
+    body: "Tu negocio tiene bases sólidas. Es momento de escalar con estrategias avanzadas de marketing digital,",
+  },
+};
+
 export default function PymesCalculatorPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [formType, setFormType] = useState<"selector" | "diagnosis" | "captacion">("selector");
   const [step, setStep] = useState(1); // 1: company info, 2-8: questions, 9: submit
   const [error, setError] = useState<string | null>(null);
 
@@ -154,6 +174,28 @@ export default function PymesCalculatorPage() {
 
   const totalSteps = 9; // 1 company + 7 questions + 1 review
   const progress = Math.round((step / totalSteps) * 100);
+
+  // Browser back button navigates to previous step (#30)
+  const handlePopState = useCallback(() => {
+    if (formType !== "selector") {
+      setStep((prev) => {
+        if (prev > 1) return prev - 1;
+        setFormType("selector");
+        return 1;
+      });
+    }
+  }, [formType]);
+
+  useEffect(() => {
+    if (formType !== "selector") {
+      window.history.pushState({ step }, "", `#step-${step}`);
+    }
+  }, [step, formType]);
+
+  useEffect(() => {
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [handlePopState]);
 
   async function nextStep() {
     if (step === 1) {
@@ -222,6 +264,106 @@ export default function PymesCalculatorPage() {
 
   const currentQuestion = step >= 2 && step <= 8 ? QUESTIONS[step - 2] : null;
 
+  // ─── Form Selector (#24) ─────────────────────────────
+  if (formType === "selector") {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-background to-secondary/20 px-4 py-8">
+        <div className="w-full max-w-2xl space-y-6">
+          <div className="text-center">
+            <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-1.5 text-sm font-medium text-accent">
+              <BarChart3 className="h-4 w-4" />
+              Marketing Empresarial
+            </div>
+            <h1 className="text-3xl font-bold tracking-tight">Choose Your Assessment</h1>
+            <p className="mt-2 text-muted-foreground">
+              Select the type of assessment that best fits your business needs.
+            </p>
+          </div>
+
+          <div className="grid gap-4 md:grid-cols-2">
+            {/* Diagnosis form */}
+            <button
+              type="button"
+              onClick={() => { setFormType("diagnosis"); setStep(1); }}
+              className="group rounded-2xl border border-accent/20 bg-card p-6 text-left transition-all hover:-translate-y-1 hover:shadow-lg hover:shadow-accent/10 hover:border-accent/40"
+            >
+              <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-accent/10">
+                <TrendingDown className="h-6 w-6 text-accent" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Sales Leak Diagnosis</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Discover how much revenue your business is leaking due to marketing inefficiencies.
+                Get a personalized plan based on your score.
+              </p>
+              <ul className="space-y-1 text-xs text-muted-foreground">
+                <li>- 7 diagnostic questions</li>
+                <li>- Estimated annual loss calculation</li>
+                <li>- Recommended plan (Rescue / Growth / Scale)</li>
+              </ul>
+              <div className="mt-4 flex items-center gap-1 text-sm font-medium text-accent">
+                Start diagnosis <ArrowRight className="h-3.5 w-3.5" />
+              </div>
+            </button>
+
+            {/* Captacion form */}
+            <button
+              type="button"
+              onClick={() => { setFormType("captacion"); setStep(1); }}
+              className="group rounded-2xl border border-primary/20 bg-card p-6 text-left transition-all hover:-translate-y-1 hover:shadow-lg hover:shadow-primary/10 hover:border-primary/40"
+            >
+              <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10">
+                <Users className="h-6 w-6 text-primary" />
+              </div>
+              <h3 className="text-lg font-semibold mb-2">Client Acquisition</h3>
+              <p className="text-sm text-muted-foreground mb-4">
+                Tell us about your business and ideal customer so we can design a targeted
+                client acquisition strategy.
+              </p>
+              <ul className="space-y-1 text-xs text-muted-foreground">
+                <li>- Business profile & goals</li>
+                <li>- Target audience definition</li>
+                <li>- Custom acquisition strategy</li>
+              </ul>
+              <div className="mt-4 flex items-center gap-1 text-sm font-medium text-primary">
+                Start acquisition form <ArrowRight className="h-3.5 w-3.5" />
+              </div>
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ─── Captacion form (placeholder) ───────────────────
+  if (formType === "captacion") {
+    return (
+      <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-background to-secondary/20 px-4 py-8">
+        <Card className="w-full max-w-xl">
+          <CardHeader>
+            <CardTitle>Client Acquisition Form</CardTitle>
+            <CardDescription>
+              This form will help us design a targeted client acquisition strategy for your business.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <p className="text-sm text-muted-foreground">
+              The client acquisition form is being developed. For now, please use the
+              Sales Leak Diagnosis to get your personalized marketing plan.
+            </p>
+            <div className="flex gap-3">
+              <Button variant="outline" onClick={() => setFormType("selector")}>
+                Back to selection
+              </Button>
+              <Button onClick={() => { setFormType("diagnosis"); setStep(1); }}>
+                Take Sales Leak Diagnosis
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-background to-secondary/20 px-4 py-8">
       {/* Progress */}
@@ -286,8 +428,8 @@ export default function PymesCalculatorPage() {
                 <div className="space-y-2">
                   <Label>Industry sector</Label>
                   <Select
-                    onValueChange={(val) =>
-                      setValue(
+                    onValueChange={(val: string | null) =>
+                      val && setValue(
                         "sector",
                         val as PymesCalculatorData["sector"]
                       )
@@ -373,7 +515,7 @@ export default function PymesCalculatorPage() {
               </div>
             )}
 
-            {/* Step 9: Review */}
+            {/* Step 9: Review - PDF 5.1.1.1 format (#26) */}
             {step === 9 && (
               <div className="space-y-4">
                 {(() => {
@@ -384,10 +526,12 @@ export default function PymesCalculatorPage() {
                   )
                     return null;
                   const results = calculateResults(formValues as PymesCalculatorData);
+                  const msg = URGENCY_MESSAGES[results.urgencyLevel];
                   return (
                     <>
+                      {/* PDF 5.1.1.1 style urgency message */}
                       <div
-                        className={`rounded-lg border p-4 ${
+                        className={`rounded-lg border p-5 ${
                           results.urgencyLevel === "critical"
                             ? "border-red-200 bg-red-50"
                             : results.urgencyLevel === "high"
@@ -395,35 +539,16 @@ export default function PymesCalculatorPage() {
                               : "border-green-200 bg-green-50"
                         }`}
                       >
-                        <p className="text-sm font-medium uppercase tracking-wide">
-                          Urgency Level
+                        <p className="text-lg leading-relaxed">
+                          <span className="text-2xl">{msg.emoji}</span>{" "}
+                          <strong>{msg.title}</strong> {msg.body}{" "}
+                          <strong>
+                            estas dejando de percibir ${results.estimatedLoss.toLocaleString()} CAD anuales
+                          </strong>{" "}
+                          por ineficiencia en marketing y procesos
                         </p>
-                        <p
-                          className={`text-2xl font-bold capitalize ${
-                            results.urgencyLevel === "critical"
-                              ? "text-red-600"
-                              : results.urgencyLevel === "high"
-                                ? "text-orange-600"
-                                : "text-green-600"
-                          }`}
-                        >
-                          {results.urgencyLevel}
-                        </p>
-                        <p className="mt-1 text-sm text-muted-foreground">
+                        <p className="mt-3 text-sm text-muted-foreground">
                           Score: {results.totalScore} / 35
-                        </p>
-                      </div>
-
-                      <div className="rounded-lg border bg-primary/5 p-4">
-                        <p className="text-sm font-medium">
-                          Estimated Annual Loss
-                        </p>
-                        <p className="text-2xl font-bold text-primary">
-                          ${results.estimatedLoss.toLocaleString()} CAD
-                        </p>
-                        <p className="mt-1 text-xs text-muted-foreground">
-                          Based on: ${formValues.monthly_revenue?.toLocaleString()}/mo
-                          x 30% x 12 months
                         </p>
                       </div>
 
@@ -459,7 +584,13 @@ export default function PymesCalculatorPage() {
                 Back
               </Button>
             ) : (
-              <div />
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setFormType("selector")}
+              >
+                Back to selection
+              </Button>
             )}
             {step === 9 ? (
               <Button type="submit" disabled={loading}>

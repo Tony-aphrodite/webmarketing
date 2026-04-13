@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -25,6 +25,35 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { FileText } from "lucide-react";
+
+// ─── Legal document texts ────────────────────────────
+const LEGAL_DOCS: Record<string, { title: string; text: string }> = {
+  consent_data_processing: {
+    title: "Data Processing, Screening & Communications Consent",
+    text: "In accordance with the Personal Information Protection Act (PIPA) of British Columbia and the Personal Information Protection and Electronic Documents Act (PIPEDA) of Canada, you consent to the collection, use, and processing of your personal information for the purpose of tenant matching, background screening, reference verification, and electronic communications. Your data is stored securely and will not be shared with unauthorized third parties. You may withdraw consent at any time by contacting privacy@webmarketing.ca. This consent covers: (1) Background and credit screening via authorized services, (2) Verification of references provided, (3) Electronic communications regarding property matches and service updates, and (4) Marketing communications (optional). You have the right to access, correct, and request deletion of your personal data.",
+  },
+  consent_screening: {
+    title: "Background Screening Consent (PIPA/PIPEDA)",
+    text: "You authorize WebMarketing and its designated screening partners to conduct background checks, including but not limited to: credit history verification, criminal record checks, and previous rental history verification. This screening is conducted in compliance with the Personal Information Protection Act (PIPA) of British Columbia and PIPEDA. Results are confidential and used solely for tenant qualification purposes.",
+  },
+  consent_references: {
+    title: "Reference Verification Consent",
+    text: "You authorize WebMarketing to contact the references you have provided, including previous landlords, employers, and personal references, to verify the information provided in your application. All information obtained will be kept confidential and used solely for the purpose of evaluating your tenancy application.",
+  },
+  consent_communications: {
+    title: "Electronic Communications Consent (CASL)",
+    text: "In compliance with Canada's Anti-Spam Legislation (CASL), you consent to receive commercial electronic messages from WebMarketing including service updates, property match notifications, and relevant information about your tenancy search. You may unsubscribe at any time.",
+  },
+  consent_truthfulness: {
+    title: "Declaration of Truthfulness",
+    text: "You declare that all information provided in this form is true, accurate, and complete to the best of your knowledge. You understand that providing false or misleading information may result in the termination of services and potential legal consequences.",
+  },
+  consent_marketing: {
+    title: "Marketing Communications Consent (Optional)",
+    text: "You optionally consent to receive marketing communications, newsletters, and promotional offers from WebMarketing and its partners. This consent is not required for service and can be withdrawn at any time.",
+  },
+};
 
 // ─── BC Cities (PDF 5.3.1) ──────────────────────────
 const BC_ZONES = [
@@ -175,6 +204,8 @@ export default function TenantFormPage() {
   const [error, setError] = useState<string | null>(null);
   const [otherZone, setOtherZone] = useState("");
   const [showConsentDetails, setShowConsentDetails] = useState(false);
+  const [expandedLegal, setExpandedLegal] = useState<string | null>(null);
+  const formRef = useRef<HTMLDivElement>(null);
 
   const {
     register,
@@ -232,15 +263,46 @@ export default function TenantFormPage() {
     setValue(field, next as never);
   }
 
+  // Scroll to first error field (#6, #12, #20)
+  function scrollToFirstError() {
+    setTimeout(() => {
+      const firstError = formRef.current?.querySelector("[data-error='true'], .text-destructive");
+      if (firstError) {
+        firstError.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }, 100);
+  }
+
   async function nextStep() {
     let fieldsToValidate: (keyof TenantFormData)[] = [];
-    if (step === 1) fieldsToValidate = ["employment_type", "number_of_people"];
-    if (step === 2) fieldsToValidate = ["property_type_desired", "preferred_zones", "bedrooms_needed", "bathrooms_needed"];
+    if (step === 1) fieldsToValidate = ["employment_type", "number_of_people", "property_type_desired"];
+    if (step === 2) fieldsToValidate = ["preferred_zones", "bedrooms_needed", "bathrooms_needed"];
     if (step === 3) fieldsToValidate = ["min_budget", "max_budget", "move_in_date", "contract_duration"];
 
     const valid = fieldsToValidate.length === 0 || (await trigger(fieldsToValidate));
-    if (valid) setStep(step + 1);
+    if (valid) {
+      setStep(step + 1);
+    } else {
+      scrollToFirstError();
+    }
   }
+
+  // Browser back button navigates to previous step (#30)
+  const handlePopState = useCallback(() => {
+    setStep((prev) => {
+      if (prev > 1) return prev - 1;
+      return prev;
+    });
+  }, []);
+
+  useEffect(() => {
+    window.history.pushState({ step }, "", `#step-${step}`);
+  }, [step]);
+
+  useEffect(() => {
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [handlePopState]);
 
   async function onSubmit(data: TenantFormData) {
     setLoading(true);
@@ -342,7 +404,7 @@ export default function TenantFormPage() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-8">
+    <div ref={formRef} className="mx-auto max-w-2xl px-4 py-8">
       <Card>
         <CardHeader>
           <CardTitle>Tenant Profile</CardTitle>
@@ -605,6 +667,10 @@ export default function TenantFormPage() {
                         ))}
                       </SelectContent>
                     </Select>
+                    {/* #8: Other text field for levels */}
+                    {(watch("levels_preferred") as string) === "Other" && (
+                      <Input placeholder="Please specify the level/floor" {...register("levels_other")} className="mt-1" />
+                    )}
                   </div>
                 </div>
 
@@ -622,6 +688,10 @@ export default function TenantFormPage() {
                       ))}
                     </SelectContent>
                   </Select>
+                  {/* #8: Other text field for style */}
+                  {(watch("style_preference") as string) === "other" && (
+                    <Input placeholder="Please specify your style preference" {...register("style_other")} />
+                  )}
                 </div>
 
                 <div className="flex flex-wrap gap-x-6 gap-y-2">
@@ -662,6 +732,10 @@ export default function TenantFormPage() {
                         <Label htmlFor={`sh-${f}`} className="text-sm font-normal">{f}</Label>
                       </div>
                     ))}
+                    {/* #8: Other text field for smart home */}
+                    {smartHomeFeatures.includes("Other") && (
+                      <Input placeholder="Please specify smart home features" {...register("smart_home_other")} className="ml-6" />
+                    )}
                   </div>
                 )}
               </>
@@ -756,6 +830,10 @@ export default function TenantFormPage() {
                       </div>
                     ))}
                   </div>
+                  {/* #8: Other text field for amenities */}
+                  {amenities.includes("Other") && (
+                    <Input placeholder="Please specify other amenities" {...register("amenities_other")} />
+                  )}
                 </div>
 
                 <div className="space-y-3">
@@ -861,13 +939,30 @@ export default function TenantFormPage() {
                       checked={watch("consent_data_processing")}
                       onCheckedChange={(c) => setValue("consent_data_processing", c === true)}
                     />
-                    <Label htmlFor="consent_main" className="text-sm font-medium leading-relaxed">
-                      I agree to the Terms of Service and Privacy Policy and consent to
-                      tenant screening and electronic communications. (Required)
-                    </Label>
+                    <div className="flex-1">
+                      <Label htmlFor="consent_main" className="text-sm font-medium leading-relaxed">
+                        I agree to the Terms of Service and Privacy Policy and consent to
+                        tenant screening and electronic communications. (Required)
+                      </Label>
+                      {/* #29: Read full document */}
+                      <button
+                        type="button"
+                        className="mt-1 flex items-center gap-1 text-xs text-primary hover:underline"
+                        onClick={() => setExpandedLegal(expandedLegal === "consent_data_processing" ? null : "consent_data_processing")}
+                      >
+                        <FileText className="h-3 w-3" />
+                        {expandedLegal === "consent_data_processing" ? "Hide full document" : "Read full document"}
+                      </button>
+                      {expandedLegal === "consent_data_processing" && (
+                        <div className="mt-2 rounded-md bg-muted/50 p-3 text-xs leading-relaxed text-muted-foreground">
+                          <p className="font-medium text-foreground mb-1">{LEGAL_DOCS.consent_data_processing.title}</p>
+                          {LEGAL_DOCS.consent_data_processing.text}
+                        </div>
+                      )}
+                    </div>
                   </div>
                   {errors.consent_data_processing && (
-                    <p className="text-sm text-destructive">
+                    <p className="text-sm text-destructive" data-error="true">
                       {errors.consent_data_processing.message}
                     </p>
                   )}
@@ -912,15 +1007,38 @@ export default function TenantFormPage() {
                           label: "Consent to marketing communications (optional)",
                         },
                       ].map(({ id, field, label }) => (
-                        <div key={id} className="flex items-start gap-3">
-                          <Checkbox
-                            id={id}
-                            checked={watch(field) as boolean}
-                            onCheckedChange={(c) => setValue(field, c === true)}
-                          />
-                          <Label htmlFor={id} className="text-sm font-normal leading-relaxed">
-                            {label}
-                          </Label>
+                        <div key={id} className="rounded-lg border p-3">
+                          <div className="flex items-start gap-3">
+                            <Checkbox
+                              id={id}
+                              checked={watch(field) as boolean}
+                              onCheckedChange={(c) => setValue(field, c === true)}
+                            />
+                            <div className="flex-1">
+                              <Label htmlFor={id} className="text-sm font-normal leading-relaxed">
+                                {label}
+                              </Label>
+                              {/* #29: Read full document for each consent */}
+                              {LEGAL_DOCS[field] && (
+                                <>
+                                  <button
+                                    type="button"
+                                    className="mt-1 flex items-center gap-1 text-xs text-primary hover:underline"
+                                    onClick={() => setExpandedLegal(expandedLegal === field ? null : field)}
+                                  >
+                                    <FileText className="h-3 w-3" />
+                                    {expandedLegal === field ? "Hide full document" : "Read full document"}
+                                  </button>
+                                  {expandedLegal === field && (
+                                    <div className="mt-2 rounded-md bg-muted/50 p-3 text-xs leading-relaxed text-muted-foreground">
+                                      <p className="font-medium text-foreground mb-1">{LEGAL_DOCS[field].title}</p>
+                                      {LEGAL_DOCS[field].text}
+                                    </div>
+                                  )}
+                                </>
+                              )}
+                            </div>
+                          </div>
                         </div>
                       ))}
                     </div>

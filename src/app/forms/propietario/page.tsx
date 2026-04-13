@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -24,7 +24,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Building2, ArrowLeft, ArrowRight } from "lucide-react";
+import { Building2, ArrowLeft, ArrowRight, FileText } from "lucide-react";
 
 // ─── Objectives (PDF 5.2.1 - 8 options) ─────────────
 const OBJECTIVES = [
@@ -46,6 +46,20 @@ const PROPERTY_TYPES = [
   { value: "basement", label: "Basement" },
   { value: "studio", label: "Studio / Apartastudio" },
   { value: "rooms_only", label: "Rooms only" },
+];
+
+// ─── Occupancy Status ───────────────────────────────
+const OCCUPANCY_OPTIONS = [
+  { value: "vacant", label: "Vacant" },
+  { value: "occupied", label: "Currently occupied" },
+  { value: "renovation", label: "Under renovation" },
+  { value: "new_construction", label: "New construction" },
+];
+
+// ─── Listing Platforms (Steve #9) ───────────────────
+const LISTING_PLATFORMS = [
+  "Zumper", "Craigslist", "Zillow", "Kijiji", "Facebook Marketplace",
+  "Realtor.ca", "Rentals.ca", "PadMapper", "Other",
 ];
 
 // ─── Amenities (PDF 5.2.1.1 - 16+) ─────────────────
@@ -91,6 +105,26 @@ const BC_CITIES = [
   "Kelowna", "Langley", "Abbotsford",
 ];
 
+// ─── Legal document texts ────────────────────────────
+const LEGAL_DOCS: Record<string, { title: string; text: string }> = {
+  consent_image_usage: {
+    title: "Image Usage & Editing Authorization",
+    text: "By accepting this consent, you authorize WebMarketing and its partners to use, reproduce, edit, and publish photographs, videos, and other visual content of your property for commercial, promotional, and marketing purposes. This includes but is not limited to: listing platforms, social media, advertisements, brochures, and website content. You confirm that you have the legal right to grant this authorization. This consent remains in effect for the duration of the service agreement and may be revoked in writing with 30 days notice.",
+  },
+  consent_data_processing: {
+    title: "Rights & Privacy Declaration",
+    text: "In accordance with the Personal Information Protection Act (PIPA) of British Columbia and the Personal Information Protection and Electronic Documents Act (PIPEDA) of Canada, we collect and process your personal information solely for the purpose of providing our marketing and property management services. Your data will be stored securely and will not be shared with third parties without your explicit consent, except as required by law. You have the right to access, correct, and request deletion of your personal data at any time by contacting our privacy officer at privacy@webmarketing.ca.",
+  },
+  consent_marketing: {
+    title: "Electronic Communications (CASL)",
+    text: "In compliance with Canada's Anti-Spam Legislation (CASL), by providing your consent you agree to receive commercial electronic messages from WebMarketing including but not limited to: service updates, marketing recommendations, property performance reports, promotional offers, and newsletters. You may unsubscribe from these communications at any time by clicking the unsubscribe link in any email or by contacting us directly. Your consent to receive these communications is not a condition of service.",
+  },
+  consent_third_party: {
+    title: "Terms & Conditions",
+    text: "By accepting these terms and conditions, you agree to the following: (1) All information provided in this form is accurate and truthful. (2) You are the legal owner or authorized representative of the property/properties listed. (3) You authorize WebMarketing to act on your behalf for marketing and tenant placement purposes as outlined in your service plan. (4) Service fees are based on the assigned plan tier and are calculated as a percentage of monthly rent as described in the plan details. (5) Either party may terminate the agreement with 30 days written notice. (6) Disputes will be resolved under the laws of British Columbia, Canada.",
+  },
+};
+
 const TOTAL_STEPS = 5;
 
 function getServiceTier(count: number): string {
@@ -104,6 +138,8 @@ export default function OwnerFormPage() {
   const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
   const [error, setError] = useState<string | null>(null);
+  const [expandedLegal, setExpandedLegal] = useState<string | null>(null);
+  const formRef = useRef<HTMLDivElement>(null);
 
   const {
     register,
@@ -125,6 +161,7 @@ export default function OwnerFormPage() {
       smart_home_features: [],
       skytrain_lines: [],
       nearby_supermarkets: [],
+      listing_platforms: [],
       pet_friendly: false,
       smart_home: false,
       shared_unit: false,
@@ -142,6 +179,7 @@ export default function OwnerFormPage() {
       consent_marketing: false,
       consent_third_party: false,
       area_unit: "sqft",
+      occupancy_status: "vacant",
     },
   });
 
@@ -151,11 +189,15 @@ export default function OwnerFormPage() {
   const smartHomeFeatures = watch("smart_home_features") as string[];
   const skytrainLines = watch("skytrain_lines") as string[];
   const supermarkets = watch("nearby_supermarkets") as string[];
+  const listingPlatforms = watch("listing_platforms") as string[];
   const propertyCount = (watch("property_count") as number) || 1;
   const cities = watch("cities") as string[];
   const rents = watch("rents") as number[];
   const smartHome = watch("smart_home") as boolean;
   const nearSkytrain = watch("near_skytrain") as boolean;
+  const occupancyStatus = watch("occupancy_status") as string;
+  const selectedStyle = watch("style") as string | undefined;
+  const selectedLevels = watch("levels") as string | undefined;
 
   function toggleArray(field: keyof OwnerFormData, value: string, arr: string[]) {
     const next = arr.includes(value)
@@ -174,10 +216,23 @@ export default function OwnerFormPage() {
     setValue("rents", newRents.slice(0, count));
   }
 
+  // Scroll to first error field (#6, #12, #20)
+  function scrollToFirstError() {
+    setTimeout(() => {
+      const firstError = formRef.current?.querySelector("[data-error='true'], .text-destructive");
+      if (firstError) {
+        firstError.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+    }, 100);
+  }
+
   async function nextStep() {
     let valid = true;
     if (step === 1) {
-      valid = await trigger(["property_count", "objectives"]);
+      valid = await trigger(["user_type", "property_count", "objectives"]);
+    }
+    if (step === 2) {
+      valid = await trigger(["cities", "rents"]);
     }
     if (step === 3) {
       valid = await trigger(["property_type", "bedrooms", "bathrooms"]);
@@ -185,8 +240,29 @@ export default function OwnerFormPage() {
     if (step === 4) {
       valid = await trigger(["address", "zone_city"]);
     }
-    if (valid) setStep(step + 1);
+    if (valid) {
+      setStep(step + 1);
+    } else {
+      scrollToFirstError();
+    }
   }
+
+  // Browser back button navigates to previous step (#30)
+  const handlePopState = useCallback(() => {
+    setStep((prev) => {
+      if (prev > 1) return prev - 1;
+      return prev;
+    });
+  }, []);
+
+  useEffect(() => {
+    window.history.pushState({ step }, "", `#step-${step}`);
+  }, [step]);
+
+  useEffect(() => {
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, [handlePopState]);
 
   async function onSubmit(data: OwnerFormData) {
     setLoading(true);
@@ -210,12 +286,12 @@ export default function OwnerFormPage() {
           user_id: user.id,
           property_objective: "rent",
           property_type: data.property_type,
-          current_state: "vacant",
+          current_state: data.occupancy_status,
           monthly_rent: data.rents[0] || null,
           main_challenge: "find_tenants",
           property_count: data.property_count,
           has_professional_photos: false,
-          current_listings: [],
+          current_listings: data.listing_platforms,
           objectives: data.objectives,
           cities: data.cities,
           rents: data.rents,
@@ -262,7 +338,7 @@ export default function OwnerFormPage() {
         near_mall: data.near_mall,
         nearby_supermarkets: data.nearby_supermarkets,
         service_tier: tier,
-        is_available: true,
+        is_available: data.occupancy_status === "vacant",
       });
 
       if (propError) throw propError;
@@ -292,13 +368,13 @@ export default function OwnerFormPage() {
   const progress = Math.round((step / TOTAL_STEPS) * 100);
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-background to-secondary/20 px-4 py-8">
+    <div ref={formRef} className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-b from-background to-secondary/20 px-4 py-8">
       {/* Progress */}
       <div className="mb-8 w-full max-w-2xl">
         <div className="flex items-center justify-between text-xs text-muted-foreground mb-2">
           <span className="flex items-center gap-1">
             <Building2 className="h-3.5 w-3.5" />
-            Owner Profile
+            Owner Profile &mdash; Step {step} of {TOTAL_STEPS}
           </span>
           <span>{progress}%</span>
         </div>
@@ -311,7 +387,7 @@ export default function OwnerFormPage() {
       </div>
 
       <Card className="w-full max-w-2xl">
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <form onSubmit={handleSubmit(onSubmit, scrollToFirstError)}>
           <CardHeader>
             <CardTitle className="text-xl">
               {step === 1 && "Owner Profile"}
@@ -321,7 +397,7 @@ export default function OwnerFormPage() {
               {step === 5 && "Legal Consents"}
             </CardTitle>
             <CardDescription>
-              {step === 1 && "Tell us about your properties and objectives."}
+              {step === 1 && "Tell us about yourself and your property objectives."}
               {step === 2 && "Enter the city and desired rent for each property."}
               {step === 3 && "Describe your first property. You can add more from your dashboard."}
               {step === 4 && "Location details help us match tenants to your property."}
@@ -339,6 +415,34 @@ export default function OwnerFormPage() {
             {/* ═══ Step 1: Owner Profile ═══ */}
             {step === 1 && (
               <>
+                {/* #14: Investor or Owner */}
+                <div className="space-y-2">
+                  <Label>Are you a property owner or an investor?</Label>
+                  <div className="grid grid-cols-2 gap-3">
+                    {[
+                      { value: "owner", label: "Property Owner", desc: "I own 1-3 properties for rental income" },
+                      { value: "investor", label: "Investor", desc: "I own 4+ properties as investment assets" },
+                    ].map((opt) => (
+                      <button
+                        key={opt.value}
+                        type="button"
+                        onClick={() => setValue("user_type", opt.value as "owner" | "investor")}
+                        className={`rounded-lg border p-4 text-left transition-all ${
+                          (watch("user_type") as string) === opt.value
+                            ? "border-primary bg-primary/5 ring-2 ring-primary/20"
+                            : "border-muted hover:border-primary/30"
+                        }`}
+                      >
+                        <p className="font-medium text-sm">{opt.label}</p>
+                        <p className="text-xs text-muted-foreground mt-1">{opt.desc}</p>
+                      </button>
+                    ))}
+                  </div>
+                  {errors.user_type && (
+                    <p className="text-sm text-destructive" data-error="true">{errors.user_type.message}</p>
+                  )}
+                </div>
+
                 <div className="space-y-2">
                   <Label htmlFor="property_count">Number of properties</Label>
                   <Input
@@ -351,7 +455,7 @@ export default function OwnerFormPage() {
                     })}
                   />
                   {errors.property_count && (
-                    <p className="text-sm text-destructive">{errors.property_count.message}</p>
+                    <p className="text-sm text-destructive" data-error="true">{errors.property_count.message}</p>
                   )}
                   <p className="text-xs text-muted-foreground">
                     Your service tier: <strong>{getServiceTier(propertyCount)}</strong>
@@ -375,7 +479,7 @@ export default function OwnerFormPage() {
                     ))}
                   </div>
                   {errors.objectives && (
-                    <p className="text-sm text-destructive">{errors.objectives.message}</p>
+                    <p className="text-sm text-destructive" data-error="true">{errors.objectives.message}</p>
                   )}
                 </div>
               </>
@@ -414,7 +518,7 @@ export default function OwnerFormPage() {
                         </Select>
                       </div>
                       <div className="space-y-1">
-                        <Label className="text-xs">Monthly rent (CAD)</Label>
+                        <Label className="text-xs">Monthly rent (CAD $300-$8,000)</Label>
                         <Input
                           type="number"
                           min={300}
@@ -432,7 +536,10 @@ export default function OwnerFormPage() {
                   </div>
                 ))}
                 {errors.cities && (
-                  <p className="text-sm text-destructive">{errors.cities.message}</p>
+                  <p className="text-sm text-destructive" data-error="true">{errors.cities.message}</p>
+                )}
+                {errors.rents && (
+                  <p className="text-sm text-destructive" data-error="true">{errors.rents.message}</p>
                 )}
               </>
             )}
@@ -454,13 +561,41 @@ export default function OwnerFormPage() {
                       </SelectContent>
                     </Select>
                     {errors.property_type && (
-                      <p className="text-sm text-destructive">{errors.property_type.message}</p>
+                      <p className="text-sm text-destructive" data-error="true">{errors.property_type.message}</p>
                     )}
                   </div>
                   <div className="space-y-2">
-                    <Label>Availability date</Label>
-                    <Input type="date" {...register("availability_date")} />
+                    <Label>Current occupancy status</Label>
+                    <Select
+                      value={occupancyStatus}
+                      onValueChange={(val: string | null) => val && setValue("occupancy_status", val as OwnerFormData["occupancy_status"])}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {OCCUPANCY_OPTIONS.map((o) => (
+                          <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
+                </div>
+
+                {/* #18: When occupied, ask when it becomes available */}
+                {occupancyStatus === "occupied" && (
+                  <div className="space-y-2 rounded-md border border-amber-200 bg-amber-50 p-3 dark:border-amber-800 dark:bg-amber-950/30">
+                    <Label>When does the property become available?</Label>
+                    <Input type="date" {...register("vacancy_date")} />
+                    <p className="text-xs text-muted-foreground">
+                      Approximate date when the current tenant moves out.
+                    </p>
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <Label>Availability date (for new tenants)</Label>
+                  <Input type="date" {...register("availability_date")} />
                 </div>
 
                 <div className="grid grid-cols-3 gap-4">
@@ -477,7 +612,7 @@ export default function OwnerFormPage() {
                       </SelectContent>
                     </Select>
                     {errors.bedrooms && (
-                      <p className="text-sm text-destructive">{errors.bedrooms.message}</p>
+                      <p className="text-sm text-destructive" data-error="true">{errors.bedrooms.message}</p>
                     )}
                   </div>
                   <div className="space-y-2">
@@ -493,7 +628,7 @@ export default function OwnerFormPage() {
                       </SelectContent>
                     </Select>
                     {errors.bathrooms && (
-                      <p className="text-sm text-destructive">{errors.bathrooms.message}</p>
+                      <p className="text-sm text-destructive" data-error="true">{errors.bathrooms.message}</p>
                     )}
                   </div>
                   <div className="space-y-2">
@@ -525,6 +660,10 @@ export default function OwnerFormPage() {
                       ))}
                     </SelectContent>
                   </Select>
+                  {/* #8: Other text field for style */}
+                  {selectedStyle === "other" && (
+                    <Input placeholder="Please specify the style" {...register("style_other")} />
+                  )}
                 </div>
 
                 <div className="space-y-2">
@@ -539,6 +678,10 @@ export default function OwnerFormPage() {
                       ))}
                     </SelectContent>
                   </Select>
+                  {/* #8: Other text field for levels */}
+                  {selectedLevels === "Other" && (
+                    <Input placeholder="Please specify the level/floor" {...register("levels_other")} />
+                  )}
                 </div>
 
                 <div className="flex flex-wrap gap-x-6 gap-y-2">
@@ -580,6 +723,10 @@ export default function OwnerFormPage() {
                         <Label htmlFor={`sh-${f}`} className="text-sm font-normal">{f}</Label>
                       </div>
                     ))}
+                    {/* #8: Other text field for smart home */}
+                    {smartHomeFeatures.includes("Other") && (
+                      <Input placeholder="Please specify smart home features" {...register("smart_home_other")} className="ml-6" />
+                    )}
                   </div>
                 )}
 
@@ -597,6 +744,10 @@ export default function OwnerFormPage() {
                       </div>
                     ))}
                   </div>
+                  {/* #8: Other text field for amenities */}
+                  {amenities.includes("Other") && (
+                    <Input placeholder="Please specify other amenities" {...register("amenities_other")} />
+                  )}
                 </div>
 
                 <div className="space-y-3">
@@ -613,6 +764,27 @@ export default function OwnerFormPage() {
                       </div>
                     ))}
                   </div>
+                </div>
+
+                {/* #9: Where is your property listed? */}
+                <div className="space-y-3">
+                  <Label>Where is your property currently listed?</Label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {LISTING_PLATFORMS.map((p) => (
+                      <div key={p} className="flex items-center gap-2">
+                        <Checkbox
+                          id={`lp-${p}`}
+                          checked={listingPlatforms.includes(p)}
+                          onCheckedChange={() => toggleArray("listing_platforms", p, listingPlatforms)}
+                        />
+                        <Label htmlFor={`lp-${p}`} className="text-sm font-normal">{p}</Label>
+                      </div>
+                    ))}
+                  </div>
+                  {/* #8: Other text field for listing platforms */}
+                  {listingPlatforms.includes("Other") && (
+                    <Input placeholder="Please specify other platforms" {...register("listing_platforms_other")} />
+                  )}
                 </div>
               </>
             )}
@@ -637,7 +809,7 @@ export default function OwnerFormPage() {
                       </SelectContent>
                     </Select>
                     {errors.zone_city && (
-                      <p className="text-sm text-destructive">{errors.zone_city.message}</p>
+                      <p className="text-sm text-destructive" data-error="true">{errors.zone_city.message}</p>
                     )}
                   </div>
                   <div className="space-y-2">
@@ -650,7 +822,7 @@ export default function OwnerFormPage() {
                   <Label htmlFor="address">Address</Label>
                   <Input id="address" placeholder="123 Main St" {...register("address")} />
                   {errors.address && (
-                    <p className="text-sm text-destructive">{errors.address.message}</p>
+                    <p className="text-sm text-destructive" data-error="true">{errors.address.message}</p>
                   )}
                 </div>
 
@@ -749,19 +921,36 @@ export default function OwnerFormPage() {
                     label: "I accept the terms and conditions.",
                   },
                 ].map(({ id, field, label }) => (
-                  <div key={id}>
+                  <div key={id} className="rounded-lg border p-3">
                     <div className="flex items-start gap-3">
                       <Checkbox
                         id={id}
                         checked={watch(field) as boolean}
                         onCheckedChange={(c) => setValue(field, c === true)}
                       />
-                      <Label htmlFor={id} className="text-sm font-normal leading-relaxed">
-                        {label}
-                      </Label>
+                      <div className="flex-1">
+                        <Label htmlFor={id} className="text-sm font-normal leading-relaxed">
+                          {label}
+                        </Label>
+                        {/* #29: Read full document button */}
+                        <button
+                          type="button"
+                          className="mt-1 flex items-center gap-1 text-xs text-primary hover:underline"
+                          onClick={() => setExpandedLegal(expandedLegal === field ? null : field)}
+                        >
+                          <FileText className="h-3 w-3" />
+                          {expandedLegal === field ? "Hide full document" : "Read full document"}
+                        </button>
+                        {expandedLegal === field && LEGAL_DOCS[field] && (
+                          <div className="mt-2 rounded-md bg-muted/50 p-3 text-xs leading-relaxed text-muted-foreground">
+                            <p className="font-medium text-foreground mb-1">{LEGAL_DOCS[field].title}</p>
+                            {LEGAL_DOCS[field].text}
+                          </div>
+                        )}
+                      </div>
                     </div>
                     {errors[field] && (
-                      <p className="mt-1 ml-7 text-sm text-destructive">
+                      <p className="mt-1 ml-7 text-sm text-destructive" data-error="true">
                         {(errors[field] as { message?: string })?.message}
                       </p>
                     )}

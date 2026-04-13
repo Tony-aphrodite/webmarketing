@@ -107,6 +107,7 @@ export default function HomePage() {
                   className: "gap-2 px-8 shadow-lg shadow-primary/25",
                 })}
               >
+                <Building2 className="h-4 w-4" />
                 Property Owners
                 <ArrowRight className="h-4 w-4" />
               </Link>
@@ -114,13 +115,13 @@ export default function HomePage() {
                 href="/forms/pymes"
                 className={buttonVariants({
                   size: "lg",
-                  variant: "outline",
                   className:
-                    "gap-2 px-8 border-accent text-accent hover:bg-accent hover:text-accent-foreground",
+                    "gap-2 px-8 bg-accent text-accent-foreground shadow-lg shadow-accent/25 hover:bg-accent/90",
                 })}
               >
                 <BarChart3 className="h-4 w-4" />
                 Business Owners
+                <ArrowRight className="h-4 w-4" />
               </Link>
             </div>
 
@@ -145,7 +146,7 @@ export default function HomePage() {
             <div className="relative aspect-[4/5] overflow-hidden rounded-3xl shadow-2xl shadow-primary/10">
               <Image
                 src="https://images.unsplash.com/photo-1600585154340-be6161a56a0c?w=800&h=1000&fit=crop&crop=center"
-                alt="Modern luxury property in Montreal"
+                alt="Modern luxury property in British Columbia"
                 fill
                 className="object-cover"
                 priority
@@ -159,7 +160,7 @@ export default function HomePage() {
                   <CheckCircle2 className="h-5 w-5 text-accent" />
                 </div>
                 <div>
-                  <p className="text-sm font-semibold">500+ Properties</p>
+                  <p className="text-sm font-semibold">100+ Properties</p>
                   <p className="text-xs text-muted-foreground">
                     Managed this year
                   </p>
