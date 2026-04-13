@@ -14,14 +14,14 @@ export const ownerFormSchema = z.object({
   rents: z.array(z.coerce.number().min(300).max(8000)).min(1, "Enter rent for each property"),
 
   // ─── Property Details (PDF 5.2.1.1) ─── first property
-  property_type: z.string().min(1, "Select property type"),
+  property_type: z.string({ message: "Select property type" }).min(1, "Select property type"),
   area_sqft: z.coerce.number().positive().optional().or(z.literal("")),
   area_unit: z.enum(["sqft", "m2"]).default("sqft"),
   occupancy_status: z.enum(["vacant", "occupied", "renovation", "new_construction"]).default("vacant"),
   vacancy_date: z.string().optional(),
   availability_date: z.string().optional(),
-  bedrooms: z.string().min(1, "Select bedrooms"),
-  bathrooms: z.string().min(1, "Select bathrooms"),
+  bedrooms: z.string({ message: "Select bedrooms" }).min(1, "Select bedrooms"),
+  bathrooms: z.string({ message: "Select bathrooms" }).min(1, "Select bathrooms"),
   amenities: z.array(z.string()).default([]),
   common_areas: z.array(z.string()).default([]),
   dishwasher: z.boolean().default(false),
@@ -43,8 +43,8 @@ export const ownerFormSchema = z.object({
   listing_platforms_other: z.string().optional(),
 
   // ─── Zone Info (PDF 5.2.1.2) ───
-  address: z.string().min(1, "Address is required"),
-  zone_city: z.string().min(1, "City is required"),
+  address: z.string({ message: "Address is required" }).min(1, "Address is required"),
+  zone_city: z.string({ message: "City is required" }).min(1, "City is required"),
   province: z.string().default("British Columbia"),
   postal_code: z.string().optional(),
   near_parks: z.boolean().default(false),
@@ -79,15 +79,15 @@ export type OwnerFormData = z.infer<typeof ownerFormSchema>;
 // ===========================================
 export const propertyOnlySchema = z.object({
   // ─── Property Details (PDF 5.2.1.1) ───
-  property_type: z.string().min(1, "Select property type"),
+  property_type: z.string({ message: "Select property type" }).min(1, "Select property type"),
   monthly_rent: z.coerce.number().min(300, "Minimum $300").max(8000, "Maximum $8000"),
   area_sqft: z.coerce.number().positive().optional().or(z.literal("")),
   area_unit: z.enum(["sqft", "m2"]).default("sqft"),
   occupancy_status: z.enum(["vacant", "occupied", "renovation", "new_construction"]).default("vacant"),
   vacancy_date: z.string().optional(),
   availability_date: z.string().optional(),
-  bedrooms: z.string().min(1, "Select bedrooms"),
-  bathrooms: z.string().min(1, "Select bathrooms"),
+  bedrooms: z.string({ message: "Select bedrooms" }).min(1, "Select bedrooms"),
+  bathrooms: z.string({ message: "Select bathrooms" }).min(1, "Select bathrooms"),
   amenities: z.array(z.string()).default([]),
   common_areas: z.array(z.string()).default([]),
   dishwasher: z.boolean().default(false),
@@ -107,8 +107,8 @@ export const propertyOnlySchema = z.object({
   listing_platforms_other: z.string().optional(),
 
   // ─── Zone Info (PDF 5.2.1.2) ───
-  address: z.string().min(1, "Address is required"),
-  zone_city: z.string().min(1, "City is required"),
+  address: z.string({ message: "Address is required" }).min(1, "Address is required"),
+  zone_city: z.string({ message: "City is required" }).min(1, "City is required"),
   province: z.string().default("British Columbia"),
   postal_code: z.string().optional(),
   near_parks: z.boolean().default(false),
@@ -152,7 +152,7 @@ export const tenantFormSchema = z.object({
   employment_verifiable: z.boolean().default(false),
 
   // People
-  number_of_people: z.string().min(1, "Please select how many people"),
+  number_of_people: z.string({ message: "Please select how many people" }).min(1, "Please select how many people"),
 
   // Property type desired (multi-select)
   property_type_desired: z.array(z.string()).min(1, "Select at least one property type"),
@@ -183,7 +183,7 @@ export const tenantFormSchema = z.object({
   max_budget: z.coerce.number().max(8000, "Maximum $8000"),
 
   // Move-in
-  move_in_date: z.string().min(1, "Move-in date is required"),
+  move_in_date: z.string({ message: "Move-in date is required" }).min(1, "Move-in date is required"),
   move_in_flexible: z.boolean().default(false),
 
   // Amenities
@@ -195,14 +195,14 @@ export const tenantFormSchema = z.object({
   size_unit: z.enum(["sqft", "m2"]).default("sqft"),
 
   // Bedrooms / Bathrooms
-  bedrooms_needed: z.string().min(1, "Select bedrooms"),
-  bathrooms_needed: z.string().min(1, "Select bathrooms"),
+  bedrooms_needed: z.string({ message: "Select bedrooms" }).min(1, "Select bedrooms"),
+  bathrooms_needed: z.string({ message: "Select bathrooms" }).min(1, "Select bathrooms"),
 
   // Common areas
   common_areas: z.array(z.string()).default([]),
 
   // Contract duration
-  contract_duration: z.string().min(1, "Select contract duration"),
+  contract_duration: z.string({ message: "Select contract duration" }).min(1, "Select contract duration"),
 
   // Location preferences
   near_bus: z.boolean().default(false),
