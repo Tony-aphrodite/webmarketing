@@ -30,24 +30,27 @@ function ResetPasswordPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [ready, setReady] = useState(false);
+  const [crossBrowserError, setCrossBrowserError] = useState(false);
 
-  // Exchange the auth code on the CLIENT side where the code_verifier cookie lives
   useEffect(() => {
     const code = searchParams.get("code");
+    const supabase = createClient();
+
     if (code) {
-      const supabase = createClient();
+      // Try PKCE code exchange (works only in same browser)
       supabase.auth.exchangeCodeForSession(code).then(({ error: exchangeError }) => {
         if (exchangeError) {
-          router.push("/login?error=recovery_failed");
+          // PKCE failed — likely opened in a different browser.
+          // Show a helpful message instead of just erroring out.
+          setCrossBrowserError(true);
         } else {
           setReady(true);
-          // Clean the URL
           window.history.replaceState({}, "", "/reset-password");
         }
       });
     } else {
-      // No code param — check if user already has a valid session (came from another route)
-      const supabase = createClient();
+      // No code param — check if user already has a valid session
+      // (e.g. came from /auth/confirm token_hash flow)
       supabase.auth.getSession().then(({ data: { session } }) => {
         if (session) {
           setReady(true);
@@ -90,6 +93,34 @@ function ResetPasswordPage() {
       setSuccess(true);
     }
     setLoading(false);
+  }
+
+  // Cross-browser error: user opened the link in a different browser
+  if (crossBrowserError) {
+    return (
+      <Card>
+        <CardHeader className="text-center">
+          <CardTitle className="text-2xl">Link Opened in Different Browser</CardTitle>
+          <CardDescription>
+            For security, you must open the reset link in the same browser
+            where you requested it.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="rounded-md bg-amber-50 p-3 text-sm text-amber-700">
+            It looks like you opened this link from a different browser or
+            email client. Please copy the link and paste it into the browser
+            where you clicked &ldquo;Forgot password&rdquo;, or request a new
+            reset link below.
+          </div>
+        </CardContent>
+        <CardFooter>
+          <Button className="w-full" onClick={() => router.push("/login")}>
+            Request a New Reset Link
+          </Button>
+        </CardFooter>
+      </Card>
+    );
   }
 
   if (!ready) {
