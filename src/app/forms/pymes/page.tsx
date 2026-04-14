@@ -690,7 +690,12 @@ export default function PymesCalculatorPage() {
       </div>
 
       <Card className="w-full max-w-xl">
-        <form onSubmit={handleSubmit(onSubmit)}>
+        <form onSubmit={handleSubmit(onSubmit, (validationErrors) => {
+          const firstField = Object.keys(validationErrors)[0];
+          const firstError = validationErrors[firstField as keyof typeof validationErrors];
+          setError(`Validation error: ${firstError?.message || firstField}`);
+          console.error("Form validation errors:", validationErrors);
+        })}>
           <CardHeader>
             <CardTitle className="text-xl">
               {step === 1
@@ -810,7 +815,8 @@ export default function PymesCalculatorPage() {
                         onClick={() => {
                           setValue(
                             currentQuestion.field as keyof PymesCalculatorData,
-                            opt.value as never
+                            opt.value as never,
+                            { shouldValidate: true }
                           );
                         }}
                         className={`rounded-lg border p-3 text-left text-sm transition-all hover:border-accent hover:bg-accent/5 ${
