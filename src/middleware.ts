@@ -30,12 +30,14 @@ export async function middleware(request: NextRequest) {
   } = await supabase.auth.getUser();
 
   // Redirect unauthenticated users from protected routes
-  if (
-    !user &&
-    (request.nextUrl.pathname.startsWith("/dashboard") ||
-      request.nextUrl.pathname.startsWith("/admin") ||
-      request.nextUrl.pathname.startsWith("/forms"))
-  ) {
+  // Note: /forms/* is public (linked from landing page) — auth checked on submit
+  // Exception: /forms/propietario/add-property requires auth (dashboard feature)
+  const isProtected =
+    request.nextUrl.pathname.startsWith("/dashboard") ||
+    request.nextUrl.pathname.startsWith("/admin") ||
+    request.nextUrl.pathname === "/forms/propietario/add-property";
+
+  if (!user && isProtected) {
     const url = request.nextUrl.clone();
     url.pathname = "/login";
     return NextResponse.redirect(url);
@@ -67,5 +69,5 @@ export async function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/admin/:path*", "/forms/:path*", "/login", "/register"],
+  matcher: ["/dashboard/:path*", "/admin/:path*", "/forms/propietario/add-property", "/login", "/register"],
 };
