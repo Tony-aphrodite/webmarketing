@@ -349,6 +349,13 @@ export default function OwnerFormPage() {
         .update({ property_count: data.property_count })
         .eq("id", user.id);
 
+      // Run profiling (classifies role, tier, CFP, etc.)
+      await fetch("/api/profiling", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "owner" }),
+      });
+
       // Create lead
       await fetch("/api/leads", {
         method: "POST",

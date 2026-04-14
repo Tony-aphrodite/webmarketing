@@ -278,6 +278,13 @@ export default function AddPropertyPage() {
         .update({ property_count: totalProps })
         .eq("id", user.id);
 
+      // Run profiling (re-classifies role, tier, CFP for all properties)
+      await fetch("/api/profiling", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "owner" }),
+      });
+
       router.push("/dashboard/properties");
     } catch (err) {
       setError("Failed to save. Please try again.");

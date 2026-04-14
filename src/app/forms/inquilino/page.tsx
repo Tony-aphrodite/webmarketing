@@ -392,6 +392,13 @@ export default function TenantFormPage() {
         if (insertError) throw insertError;
       }
 
+      // Run profiling (premium classification + sync to profiles)
+      await fetch("/api/profiling", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type: "tenant" }),
+      });
+
       // Create lead
       await fetch("/api/leads", {
         method: "POST",
