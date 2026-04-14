@@ -101,15 +101,14 @@ const PYMES_PLANS: Record<
     name: "Rescue",
     price: "$1,500 CAD",
     upfront: "$750 CAD upfront",
-    installment: "$250 CAD/mo × 3 months",
-    duration: "Minimum 30 days",
-    tagline: "Emergency digital rescue for critical gaps",
+    installment: "$375 CAD × 2 payments",
+    duration: "Minimum 2.5 months",
+    tagline: "Intensive intervention plan to exit critical mode and move to growth",
     features: [
-      "Emergency digital audit",
-      "Google Business Profile optimization",
-      "Basic SEO correction",
-      "Social media rescue (2 platforms)",
-      "30-day action plan",
+      "Complete diagnosis",
+      "Basic optimization (Google, Social Media, SEO)",
+      "Lead capture structure",
+      "Direct advisory",
     ],
     color: "text-red-600",
     bgColor: "bg-red-50",
@@ -118,18 +117,16 @@ const PYMES_PLANS: Record<
   growth: {
     name: "Growth",
     price: "$2,500 CAD",
-    upfront: "$1,000 CAD upfront",
-    installment: "$375 CAD/mo × 4 months",
-    duration: "Minimum 90 days",
-    tagline: "Comprehensive growth strategy for scaling businesses",
+    upfront: "$1,250 CAD upfront",
+    installment: "$625 CAD × 2 payments",
+    duration: "Minimum 4–5 months",
+    tagline: "Plan to overcome stagnation, correct weaknesses and start growing",
     features: [
-      "Complete digital audit",
-      "Website optimization or landing page",
-      "SEO strategy (on-page + local)",
-      "Social media management (3 platforms)",
-      "Google Ads basic campaign",
-      "Monthly performance reports",
-      "90-day growth roadmap",
+      "Complete diagnosis",
+      "Marketing strategy",
+      "Conversion optimization",
+      "Campaign structure",
+      "Lead tracking",
     ],
     color: "text-orange-600",
     bgColor: "bg-orange-50",
@@ -138,21 +135,16 @@ const PYMES_PLANS: Record<
   scale: {
     name: "Scale",
     price: "$3,800 CAD",
-    upfront: "$1,500 CAD upfront",
-    installment: "$460 CAD/mo × 5 months",
+    upfront: "$1,520 CAD upfront",
+    installment: "$570 CAD × 4 payments",
     duration: "Minimum 6 months",
-    tagline: "Full digital transformation for market leaders",
+    tagline: "Plan to scale and maximize revenue",
     features: [
-      "Full digital transformation audit",
-      "Website redesign or new build",
-      "Advanced SEO (on-page + off-page + technical)",
-      "Social media management (all platforms)",
-      "Google Ads + Meta Ads campaigns",
-      "Email marketing automation",
-      "CRM integration",
-      "Conversion rate optimization",
-      "Monthly strategy sessions",
-      "6-month scaling roadmap",
+      "Complete diagnosis",
+      "Advanced optimization",
+      "Channel expansion",
+      "Growth strategy",
+      "Opportunity analysis",
     ],
     color: "text-green-600",
     bgColor: "bg-green-50",
@@ -355,12 +347,18 @@ export default async function DashboardPage() {
                 </li>
               ))}
             </ul>
-            <div className="pt-3">
+            <div className="flex flex-col gap-2 pt-3 sm:flex-row">
+              <Link
+                href="/dashboard/services#contact"
+                className={buttonVariants({ className: "flex-1" })}
+              >
+                Start Now
+              </Link>
               <Link
                 href="/dashboard/services"
-                className={buttonVariants({ className: "w-full" })}
+                className={buttonVariants({ variant: "outline", className: "flex-1" })}
               >
-                Acquire Plan
+                View Plan Details
               </Link>
             </div>
           </CardContent>

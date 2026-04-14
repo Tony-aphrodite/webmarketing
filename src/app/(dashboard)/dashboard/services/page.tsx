@@ -26,6 +26,12 @@ const OWNER_TIERS: Record<
     name: string;
     tagline: string;
     features: string[];
+    plans: {
+      name: string;
+      pricing: string;
+      details: string[];
+      cta: string;
+    }[];
     color: string;
     bgColor: string;
     borderColor: string;
@@ -33,13 +39,39 @@ const OWNER_TIERS: Record<
 > = {
   basic: {
     name: "Basic",
-    tagline: "Essential property management for single-property owners",
+    tagline: "Marketing that maximizes your profitability — your property, your money",
     features: [
-      "Professional property listing",
-      "Tenant screening & matching",
-      "Basic photography guidance",
-      "Standard listing optimization",
-      "Email support",
+      "Marketing campaign per property until tenant found (~16 days avg.)",
+      "Client-uploaded photos with validation",
+      "Visual recommendations prior to listing",
+      "Unit verification (on-site visit)",
+      "Tenant credit screening",
+      "RTB-1 (BC) contract drafting & signing",
+    ],
+    plans: [
+      {
+        name: "Low Price",
+        pricing: "35% of first month's rent (one-time)",
+        details: [
+          "$200 system fee upfront (deducted from the 35%)",
+          "Pay the balance only after tenant signs the lease",
+          "No monthly commissions",
+          "Optional: +$100 for priority listing placement (1 month)",
+        ],
+        cta: "Choose & Secure Your Income",
+      },
+      {
+        name: "Founders Package — Visionary Owners",
+        pricing: "30% of first month's rent (one-time, lifetime rate)",
+        details: [
+          "Exclusive rate for the first 20 owners — limited spots",
+          "$200 system fee upfront (deducted from the 30%)",
+          "Pay the balance only after tenant signs the lease",
+          "No monthly commissions",
+          "Ideal for short-term rentals (weekly, monthly, up to 6 months)",
+        ],
+        cta: "Trust & Earn",
+      },
     ],
     color: "text-blue-600",
     bgColor: "bg-blue-50",
@@ -47,14 +79,37 @@ const OWNER_TIERS: Record<
   },
   preferred_owners: {
     name: "Preferred Owners",
-    tagline: "Enhanced services for growing property portfolios",
+    tagline: "Enhanced services for growing property portfolios (2–3 properties)",
     features: [
-      "Everything in Basic, plus:",
-      "Professional photography session",
-      "Priority tenant matching",
-      "Multi-property dashboard",
-      "Market analysis reports",
-      "Priority email & chat support",
+      "Marketing campaign per property until tenant found (~15 days avg.)",
+      "Client-uploaded photos",
+      "Weekly interested-parties report",
+      "Priority credit analysis of best applicants",
+      "Full credit screening of tenants",
+      "Unit handover with inventory checklist",
+      "RTB-1 (BC) contract drafting & signing",
+    ],
+    plans: [
+      {
+        name: "Support Tier",
+        pricing: "30% 1st property / 28% 2nd & 3rd (one-time each)",
+        details: [
+          "$200 system fee per property upfront (deducted from %)",
+          "Pay the balance only after tenant signs the lease",
+          "No monthly commissions",
+        ],
+        cta: "Get Support",
+      },
+      {
+        name: "Premier Tier",
+        pricing: "Same rates with flexible installment payments",
+        details: [
+          "For owners committing 1.5+ years",
+          "1st property: 30% — $200 upfront, balance at month 2 after lease signing",
+          "2nd & 3rd: 28% — $200 upfront, 50% at month 1, 30% at month 2, 20% at month 3",
+        ],
+        cta: "Go Premier",
+      },
     ],
     color: "text-emerald-600",
     bgColor: "bg-emerald-50",
@@ -62,15 +117,36 @@ const OWNER_TIERS: Record<
   },
   elite: {
     name: "Elite Assets & Legacy",
-    tagline: "Full-service management for investment portfolios",
+    tagline: "Full-service management for investment portfolios (4+ properties)",
     features: [
-      "Everything in Preferred, plus:",
-      "Dedicated account manager",
-      "Premium photography & virtual tours",
-      "Revenue optimization strategy",
-      "Legal compliance review",
-      "Quarterly portfolio analysis",
-      "Concierge-level support",
+      "Targeted marketing campaign per property (~15 days avg.)",
+      "Professional 3D photography & virtual tour",
+      "Interior design recommendations",
+      "360° tenant verification (credit + behavioral references)",
+      "Priority search positioning",
+      "On-site unit verification & showing",
+      "Handover with detailed checklist",
+      "RTB-1 (BC) contract drafting & signing",
+      "Free rent price optimization",
+      "Free event packages (concerts, sports, seasonal)",
+      "KPI performance report per property",
+      "Local vendor alliances for repairs & maintenance",
+      "Premium portal listing + targeted campaigns",
+      "Expansion & wealth growth analysis",
+      "Premium tenant welcome program",
+      "Satisfaction surveys to reduce turnover",
+    ],
+    plans: [
+      {
+        name: "Asset Management",
+        pricing: "Portfolio-based pricing (Essentials / Signature / Lujo)",
+        details: [
+          "Single plan with 3 investment portfolios based on rent level",
+          "Includes CFP (Cash Flow Preserved) calculation per property",
+          "Includes Payback period calculation per property",
+        ],
+        cta: "Manage My Assets",
+      },
     ],
     color: "text-amber-600",
     bgColor: "bg-amber-50",
@@ -132,15 +208,14 @@ const PYMES_PLANS: Record<
     name: "Rescue",
     price: "$1,500 CAD",
     upfront: "$750 CAD upfront",
-    installment: "$250 CAD/mo × 3 months",
-    duration: "Minimum 30 days",
-    tagline: "Emergency digital rescue for critical gaps",
+    installment: "$375 CAD × 2 payments",
+    duration: "Minimum 2.5 months",
+    tagline: "Intensive intervention plan to exit critical mode and move to growth",
     features: [
-      "Emergency digital audit",
-      "Google Business Profile optimization",
-      "Basic SEO correction",
-      "Social media rescue (2 platforms)",
-      "30-day action plan",
+      "Complete diagnosis",
+      "Basic optimization (Google, Social Media, SEO)",
+      "Lead capture structure",
+      "Direct advisory",
     ],
     color: "text-red-600",
     bgColor: "bg-red-50",
@@ -149,18 +224,16 @@ const PYMES_PLANS: Record<
   growth: {
     name: "Growth",
     price: "$2,500 CAD",
-    upfront: "$1,000 CAD upfront",
-    installment: "$375 CAD/mo × 4 months",
-    duration: "Minimum 90 days",
-    tagline: "Comprehensive growth strategy for scaling businesses",
+    upfront: "$1,250 CAD upfront",
+    installment: "$625 CAD × 2 payments",
+    duration: "Minimum 4–5 months",
+    tagline: "Plan to overcome stagnation, correct weaknesses and start growing",
     features: [
-      "Complete digital audit",
-      "Website optimization or landing page",
-      "SEO strategy (on-page + local)",
-      "Social media management (3 platforms)",
-      "Google Ads basic campaign",
-      "Monthly performance reports",
-      "90-day growth roadmap",
+      "Complete diagnosis",
+      "Marketing strategy",
+      "Conversion optimization",
+      "Campaign structure",
+      "Lead tracking",
     ],
     color: "text-orange-600",
     bgColor: "bg-orange-50",
@@ -169,21 +242,16 @@ const PYMES_PLANS: Record<
   scale: {
     name: "Scale",
     price: "$3,800 CAD",
-    upfront: "$1,500 CAD upfront",
-    installment: "$460 CAD/mo × 5 months",
+    upfront: "$1,520 CAD upfront",
+    installment: "$570 CAD × 4 payments",
     duration: "Minimum 6 months",
-    tagline: "Full digital transformation for market leaders",
+    tagline: "Plan to scale and maximize revenue",
     features: [
-      "Full digital transformation audit",
-      "Website redesign or new build",
-      "Advanced SEO (on-page + off-page + technical)",
-      "Social media management (all platforms)",
-      "Google Ads + Meta Ads campaigns",
-      "Email marketing automation",
-      "CRM integration",
-      "Conversion rate optimization",
-      "Monthly strategy sessions",
-      "6-month scaling roadmap",
+      "Complete diagnosis",
+      "Advanced optimization",
+      "Channel expansion",
+      "Growth strategy",
+      "Opportunity analysis",
     ],
     color: "text-green-600",
     bgColor: "bg-green-50",
@@ -299,72 +367,114 @@ export default async function ServicesPage() {
 
       {/* ═══ Owner: Service Tier Card ═══ */}
       {isOwnerRole && tierDetails && (
-        <Card className={`${tierDetails.borderColor} ${tierDetails.bgColor}`}>
-          <CardHeader>
-            <div className="flex items-center gap-2">
-              <Crown className={`h-5 w-5 ${tierDetails.color}`} />
-              <CardTitle className="text-lg">
-                Your Service Tier: {tierDetails.name}
-              </CardTitle>
-            </div>
-            <CardDescription>{tierDetails.tagline}</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="flex flex-wrap items-center gap-3">
-              <Badge
-                className={`${tierDetails.bgColor} ${tierDetails.color} border ${tierDetails.borderColor} text-sm px-3 py-1`}
-              >
-                {tierDetails.name}
-              </Badge>
-              <span className="text-sm text-muted-foreground">
-                Based on {propertyCount}{" "}
-                {propertyCount === 1 ? "property" : "properties"}
-              </span>
-              {totalCFP > 0 && (
+        <div className="space-y-4">
+          <Card className={`${tierDetails.borderColor} ${tierDetails.bgColor}`}>
+            <CardHeader>
+              <div className="flex items-center gap-2">
+                <Crown className={`h-5 w-5 ${tierDetails.color}`} />
+                <CardTitle className="text-lg">
+                  Your Service: {tierDetails.name}
+                </CardTitle>
+              </div>
+              <CardDescription>{tierDetails.tagline}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="flex flex-wrap items-center gap-3">
+                <Badge
+                  className={`${tierDetails.bgColor} ${tierDetails.color} border ${tierDetails.borderColor} text-sm px-3 py-1`}
+                >
+                  {tierDetails.name}
+                </Badge>
                 <span className="text-sm text-muted-foreground">
-                  &middot; Total CFP: ${totalCFP.toFixed(2)} CAD/mo
+                  Based on {propertyCount}{" "}
+                  {propertyCount === 1 ? "property" : "properties"}
                 </span>
-              )}
-            </div>
+                {totalCFP > 0 && (
+                  <span className="text-sm text-muted-foreground">
+                    &middot; Total CFP: ${totalCFP.toFixed(2)} CAD/mo
+                  </span>
+                )}
+              </div>
 
-            <ul className="space-y-1.5">
-              {tierDetails.features.map((feature, i) => (
-                <li key={i} className="flex items-start gap-2 text-sm">
-                  <CheckCircle2
-                    className={`mt-0.5 h-4 w-4 shrink-0 ${tierDetails.color}`}
-                  />
-                  {feature}
-                </li>
-              ))}
-            </ul>
-
-            {/* Elite sub-tier details */}
-            {eliteDetails && (
-              <div className="mt-4 rounded-lg border bg-card p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Star className="h-4 w-4 text-amber-500" />
-                  <p className="text-sm font-medium">
-                    Elite Sub-Tier: {eliteDetails.name}
-                  </p>
-                </div>
-                <p className="text-xs text-muted-foreground mb-2">
-                  {eliteDetails.description}
-                </p>
-                <ul className="space-y-1">
-                  {eliteDetails.extras.map((extra, i) => (
-                    <li
-                      key={i}
-                      className="flex items-center gap-2 text-sm text-muted-foreground"
-                    >
-                      <CheckCircle2 className="h-3.5 w-3.5 text-amber-500" />
-                      {extra}
+              <div>
+                <p className="text-sm font-medium mb-2">Service includes:</p>
+                <ul className="space-y-1.5">
+                  {tierDetails.features.map((feature, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm">
+                      <CheckCircle2
+                        className={`mt-0.5 h-4 w-4 shrink-0 ${tierDetails.color}`}
+                      />
+                      {feature}
                     </li>
                   ))}
                 </ul>
               </div>
-            )}
-          </CardContent>
-        </Card>
+
+              {/* Elite sub-tier details */}
+              {eliteDetails && (
+                <div className="mt-4 rounded-lg border bg-card p-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <Star className="h-4 w-4 text-amber-500" />
+                    <p className="text-sm font-medium">
+                      Portfolio: {eliteDetails.name}
+                    </p>
+                  </div>
+                  <p className="text-xs text-muted-foreground mb-2">
+                    {eliteDetails.description}
+                  </p>
+                  <ul className="space-y-1">
+                    {eliteDetails.extras.map((extra, i) => (
+                      <li
+                        key={i}
+                        className="flex items-center gap-2 text-sm text-muted-foreground"
+                      >
+                        <CheckCircle2 className="h-3.5 w-3.5 text-amber-500" />
+                        {extra}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* ═══ Owner: Available Plans ═══ */}
+          <h2 className="text-xl font-semibold flex items-center gap-2">
+            <Star className="h-5 w-5 text-primary" />
+            Available Plans
+          </h2>
+          <div className={`grid gap-4 ${tierDetails.plans.length > 1 ? "md:grid-cols-2" : ""}`}>
+            {tierDetails.plans.map((plan, i) => (
+              <Card key={i} className="flex flex-col">
+                <CardHeader>
+                  <CardTitle className="text-lg">{plan.name}</CardTitle>
+                  <CardDescription className={`text-base font-semibold ${tierDetails.color}`}>
+                    {plan.pricing}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="flex-1 space-y-3">
+                  <ul className="space-y-1.5">
+                    {plan.details.map((detail, j) => (
+                      <li key={j} className="flex items-start gap-2 text-sm text-muted-foreground">
+                        <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-green-500" />
+                        {detail}
+                      </li>
+                    ))}
+                  </ul>
+                </CardContent>
+                <div className="p-6 pt-0">
+                  <Link
+                    href="/dashboard/services#contact"
+                    className={cn(buttonVariants(), "w-full gap-2")}
+                  >
+                    {plan.cta}
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                </div>
+              </Card>
+            ))}
+          </div>
+        </div>
       )}
 
       {/* ═══ Owner: No tier yet ═══ */}
@@ -424,13 +534,21 @@ export default async function ServicesPage() {
                 </li>
               ))}
             </ul>
-            <Link
-              href="/dashboard/services"
-              className={cn(buttonVariants(), "w-full gap-2")}
-            >
-              Acquire Plan
-              <ArrowRight className="h-4 w-4" />
-            </Link>
+            <div className="flex flex-col gap-2 sm:flex-row">
+              <Link
+                href="/dashboard/services#contact"
+                className={cn(buttonVariants(), "flex-1 gap-2")}
+              >
+                Start Now
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+              <Link
+                href="/dashboard/services#contact"
+                className={cn(buttonVariants({ variant: "outline" }), "flex-1 gap-2")}
+              >
+                Schedule My Rescue Session
+              </Link>
+            </div>
           </CardContent>
         </Card>
       )}
@@ -617,6 +735,26 @@ export default async function ServicesPage() {
           </CardContent>
         </Card>
       )}
+
+      {/* ═══ Contact / Schedule Section ═══ */}
+      <div id="contact" id-scroll-margin-top="80" className="scroll-mt-20">
+        <Card className="border-primary/20">
+          <CardContent className="flex flex-col items-center gap-4 py-8 text-center">
+            <h2 className="text-xl font-bold">Ready to Get Started?</h2>
+            <p className="max-w-lg text-sm text-muted-foreground">
+              Our team will contact you to review your profile, answer questions,
+              and finalize the best plan for your needs. No obligation.
+            </p>
+            <Link
+              href="/api/contact"
+              className={cn(buttonVariants({ size: "lg" }), "gap-2")}
+            >
+              Schedule a Free Consultation
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }

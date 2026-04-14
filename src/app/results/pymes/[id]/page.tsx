@@ -46,15 +46,14 @@ const PLAN_DETAILS: Record<
     price: "$1,500 CAD",
     priceNum: 1500,
     upfront: "$750 CAD upfront",
-    installment: "$250 CAD/mo × 3 months",
-    duration: "Minimum 30 days",
-    tagline: "Emergency digital rescue for critical gaps",
+    installment: "$375 CAD × 2 payments",
+    duration: "Minimum 2.5 months",
+    tagline: "Intensive intervention plan to exit critical mode and move to growth",
     features: [
-      "Emergency digital audit",
-      "Google Business Profile optimization",
-      "Basic SEO correction",
-      "Social media rescue (2 platforms)",
-      "30-day action plan",
+      "Complete diagnosis",
+      "Basic optimization (Google, Social Media, SEO)",
+      "Lead capture structure",
+      "Direct advisory",
     ],
     color: "text-red-600",
     bgColor: "bg-red-50",
@@ -64,18 +63,16 @@ const PLAN_DETAILS: Record<
     name: "Growth",
     price: "$2,500 CAD",
     priceNum: 2500,
-    upfront: "$1,000 CAD upfront",
-    installment: "$375 CAD/mo × 4 months",
-    duration: "Minimum 90 days",
-    tagline: "Comprehensive growth strategy for scaling businesses",
+    upfront: "$1,250 CAD upfront",
+    installment: "$625 CAD × 2 payments",
+    duration: "Minimum 4–5 months",
+    tagline: "Plan to overcome stagnation, correct weaknesses and start growing",
     features: [
-      "Complete digital audit",
-      "Website optimization or landing page",
-      "SEO strategy (on-page + local)",
-      "Social media management (3 platforms)",
-      "Google Ads basic campaign",
-      "Monthly performance reports",
-      "90-day growth roadmap",
+      "Complete diagnosis",
+      "Marketing strategy",
+      "Conversion optimization",
+      "Campaign structure",
+      "Lead tracking",
     ],
     color: "text-orange-600",
     bgColor: "bg-orange-50",
@@ -85,21 +82,16 @@ const PLAN_DETAILS: Record<
     name: "Scale",
     price: "$3,800 CAD",
     priceNum: 3800,
-    upfront: "$1,500 CAD upfront",
-    installment: "$460 CAD/mo × 5 months",
+    upfront: "$1,520 CAD upfront",
+    installment: "$570 CAD × 4 payments",
     duration: "Minimum 6 months",
-    tagline: "Full digital transformation for market leaders",
+    tagline: "Plan to scale and maximize revenue",
     features: [
-      "Full digital transformation audit",
-      "Website redesign or new build",
-      "Advanced SEO (on-page + off-page + technical)",
-      "Social media management (all platforms)",
-      "Google Ads + Meta Ads campaigns",
-      "Email marketing automation",
-      "CRM integration",
-      "Conversion rate optimization",
-      "Monthly strategy sessions",
-      "6-month scaling roadmap",
+      "Complete diagnosis",
+      "Advanced optimization",
+      "Channel expansion",
+      "Growth strategy",
+      "Opportunity analysis",
     ],
     color: "text-green-600",
     bgColor: "bg-green-50",
@@ -109,28 +101,18 @@ const PLAN_DETAILS: Record<
 
 // ─── All features across plans (for comparison table) ──
 const ALL_FEATURES = [
-  "Emergency digital audit",
-  "Complete digital audit",
-  "Full digital transformation audit",
-  "Google Business Profile optimization",
-  "Basic SEO correction",
-  "SEO strategy (on-page + local)",
-  "Advanced SEO (on-page + off-page + technical)",
-  "Social media rescue (2 platforms)",
-  "Social media management (3 platforms)",
-  "Social media management (all platforms)",
-  "Website optimization or landing page",
-  "Website redesign or new build",
-  "Google Ads basic campaign",
-  "Google Ads + Meta Ads campaigns",
-  "Email marketing automation",
-  "CRM integration",
-  "Conversion rate optimization",
-  "Monthly performance reports",
-  "Monthly strategy sessions",
-  "30-day action plan",
-  "90-day growth roadmap",
-  "6-month scaling roadmap",
+  "Complete diagnosis",
+  "Basic optimization (Google, Social Media, SEO)",
+  "Lead capture structure",
+  "Direct advisory",
+  "Marketing strategy",
+  "Conversion optimization",
+  "Campaign structure",
+  "Lead tracking",
+  "Advanced optimization",
+  "Channel expansion",
+  "Growth strategy",
+  "Opportunity analysis",
 ];
 
 const QUESTION_LABELS = [
@@ -561,24 +543,31 @@ export default async function PymesResultsPage({
         <div className="flex flex-col items-center gap-4 rounded-lg border bg-card p-8 text-center">
           <h2 className="text-xl font-bold">Ready to stop the leak?</h2>
           <p className="max-w-md text-sm text-muted-foreground">
-            Our team will review your diagnosis and prepare a customized action
-            plan. Schedule a free consultation to get started.
+            The data doesn&apos;t lie: maintaining your current structure isn&apos;t
+            &ldquo;free&rdquo; &mdash; it&apos;s costing you $
+            {Math.round(Number(diagnosis.monthly_revenue) * 0.3).toLocaleString()}{" "}
+            every month in lost opportunities. The good news is that this score
+            isn&apos;t final &mdash; it&apos;s a roadmap.
           </p>
-          <div className="flex gap-3">
+          <div className="flex flex-col gap-3 sm:flex-row">
             <Link
               href="/dashboard/services"
               className={cn(buttonVariants({ size: "lg" }), "gap-2")}
             >
-              Get Started with {plan.name}
+              Start Now &mdash; {plan.name} Plan
               <ArrowRight className="h-4 w-4" />
             </Link>
             <Link
-              href="/forms/pymes"
-              className={cn(buttonVariants({ variant: "outline", size: "lg" }))}
+              href="/dashboard/services#schedule"
+              className={cn(buttonVariants({ variant: "outline", size: "lg" }), "gap-2")}
             >
-              Retake Assessment
+              Schedule My Rescue Session
             </Link>
           </div>
+          <p className="max-w-md text-xs text-muted-foreground">
+            Book a free 15-minute personalized session where we break down your
+            numbers and give you an action plan to stop the leak.
+          </p>
         </div>
 
         {/* Footer note */}
