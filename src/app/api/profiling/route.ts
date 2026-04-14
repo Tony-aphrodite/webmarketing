@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { profileOwner, profileTenant } from "@/lib/profiling";
+import {
+  profileOwner,
+  profileTenant,
+  matchPropertiesForTenant,
+} from "@/lib/profiling";
 
 export async function POST(request: Request) {
   try {
@@ -35,7 +39,13 @@ export async function POST(request: Request) {
             { status: 400 }
           );
         }
-        return NextResponse.json({ success: true, ...result });
+        // Also run property matching
+        const matched = await matchPropertiesForTenant(user.id);
+        return NextResponse.json({
+          success: true,
+          ...result,
+          matchedProperties: matched.length,
+        });
       }
 
       case "pymes": {

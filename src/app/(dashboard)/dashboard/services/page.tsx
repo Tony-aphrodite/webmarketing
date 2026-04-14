@@ -17,6 +17,8 @@ import {
   Zap,
   ArrowRight,
   Star,
+  Building2,
+  MapPin,
 } from "lucide-react";
 
 // ─── Owner Service Tiers ─────────────────────────────
@@ -287,21 +289,31 @@ export default async function ServicesPage() {
 
   // ─── Owner data ────────────────────────────────
   let ownerTier: string | null = null;
-  let eliteTier: string | null = null;
   let propertyCount = 0;
   let totalCFP = 0;
+  let ownerProperties: {
+    id: string;
+    property_type: string;
+    address: string;
+    city: string;
+    monthly_rent: number | null;
+    service_tier: string | null;
+    elite_tier: string | null;
+    cfp_monthly: number | null;
+    payback_months: number | null;
+  }[] = [];
 
   if (isOwnerRole) {
     const { data: properties } = await supabase
       .from("properties")
-      .select("service_tier, elite_tier, cfp_monthly, monthly_rent")
+      .select("id, property_type, address, city, monthly_rent, service_tier, elite_tier, cfp_monthly, payback_months")
       .eq("owner_id", user.id);
 
     propertyCount = properties?.length ?? 0;
 
     if (properties && properties.length > 0) {
       ownerTier = properties[0].service_tier;
-      eliteTier = properties[0].elite_tier;
+      ownerProperties = properties;
       totalCFP = properties.reduce(
         (sum, p) => sum + (Number(p.cfp_monthly) || 0),
         0
@@ -329,6 +341,25 @@ export default async function ServicesPage() {
     pymesPlan = diagnosis?.recommended_plan || null;
   }
 
+  // ─── Tenant data: matched properties ────────────
+  let matchedProperties: {
+    id: string;
+    property_type: string;
+    address: string;
+    city: string;
+    monthly_rent: number | null;
+    bedrooms: number | null;
+    bathrooms: number | null;
+    amenities: string[] | null;
+    is_available: boolean;
+    matchScore: number;
+  }[] = [];
+
+  if (isTenantRole) {
+    const { matchPropertiesForTenant } = await import("@/lib/profiling");
+    matchedProperties = await matchPropertiesForTenant(user.id);
+  }
+
   // ─── General services ──────────────────────────
   const { data: allServices } = await supabase
     .from("services")
@@ -349,9 +380,6 @@ export default async function ServicesPage() {
 
   // ─── Owner tier details ────────────────────────
   const tierDetails = ownerTier ? OWNER_TIERS[ownerTier] : null;
-  const eliteDetails = eliteTier
-    ? ELITE_SUB_TIERS[eliteTier]
-    : null;
 
   // ─── PYMES plan details ────────────────────────
   const pymesPlanDetails = pymesPlan ? PYMES_PLANS[pymesPlan] : null;
@@ -410,29 +438,79 @@ export default async function ServicesPage() {
                 </ul>
               </div>
 
-              {/* Elite sub-tier details */}
-              {eliteDetails && (
-                <div className="mt-4 rounded-lg border bg-card p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Star className="h-4 w-4 text-amber-500" />
-                    <p className="text-sm font-medium">
-                      Portfolio: {eliteDetails.name}
+              {/* Elite: Per-property Portfolio + CFP/Payback */}
+              {ownerTier === "elite" && ownerProperties.length > 0 && (
+                <div className="mt-4 space-y-3">
+                  <p className="text-sm font-medium">Property Portfolio Breakdown</p>
+                  {ownerProperties.map((prop) => {
+                    const rent = Number(prop.monthly_rent) || 0;
+                    const cfpMonthly = Number(prop.cfp_monthly) || rent * 0.1;
+                    const cfpAnnual = cfpMonthly * 12;
+                    const cfp5yr = cfpAnnual * 5;
+                    const payback = prop.payback_months ? Number(prop.payback_months) : null;
+                    const portfolio = prop.elite_tier
+                      ? ELITE_SUB_TIERS[prop.elite_tier]
+                      : null;
+
+                    return (
+                      <div key={prop.id} className="rounded-lg border bg-card p-4">
+                        <div className="flex items-center justify-between mb-2">
+                          <div>
+                            <p className="text-sm font-medium">
+                              {prop.property_type} — {prop.city}
+                            </p>
+                            <p className="text-xs text-muted-foreground">{prop.address}</p>
+                          </div>
+                          {portfolio && (
+                            <Badge className="bg-amber-50 text-amber-600 border border-amber-200">
+                              {portfolio.name}
+                            </Badge>
+                          )}
+                        </div>
+                        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                          <div>
+                            <p className="text-xs text-muted-foreground">Rent</p>
+                            <p className="text-sm font-semibold">
+                              ${rent.toLocaleString()} CAD/mo
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">CFP Monthly</p>
+                            <p className="text-sm font-semibold text-emerald-600">
+                              ${cfpMonthly.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">CFP Annual</p>
+                            <p className="text-sm font-semibold text-emerald-600">
+                              ${cfpAnnual.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </p>
+                          </div>
+                          <div>
+                            <p className="text-xs text-muted-foreground">CFP 5 Years</p>
+                            <p className="text-sm font-semibold text-emerald-600">
+                              ${cfp5yr.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </p>
+                          </div>
+                        </div>
+                        {payback != null && (
+                          <div className="mt-2 flex items-center gap-2 rounded-md bg-primary/5 px-3 py-1.5">
+                            <Zap className="h-4 w-4 text-primary" />
+                            <p className="text-sm">
+                              <span className="font-medium">Payback:</span>{" "}
+                              {payback.toFixed(1)} months
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                  <div className="rounded-md bg-emerald-50 border border-emerald-200 p-3">
+                    <p className="text-sm font-medium text-emerald-700">
+                      Total Portfolio CFP: ${totalCFP.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CAD/mo
+                      &middot; ${(totalCFP * 12).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })} CAD/yr
                     </p>
                   </div>
-                  <p className="text-xs text-muted-foreground mb-2">
-                    {eliteDetails.description}
-                  </p>
-                  <ul className="space-y-1">
-                    {eliteDetails.extras.map((extra, i) => (
-                      <li
-                        key={i}
-                        className="flex items-center gap-2 text-sm text-muted-foreground"
-                      >
-                        <CheckCircle2 className="h-3.5 w-3.5 text-amber-500" />
-                        {extra}
-                      </li>
-                    ))}
-                  </ul>
                 </div>
               )}
             </CardContent>
@@ -637,6 +715,85 @@ export default async function ServicesPage() {
                 </li>
               </ul>
             )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* ═══ Tenant: Matched Properties ═══ */}
+      {isTenantRole && matchedProperties.length > 0 && (
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold flex items-center gap-2">
+            <Building2 className="h-5 w-5 text-primary" />
+            Properties Matched to Your Preferences
+          </h2>
+          <p className="text-sm text-muted-foreground">
+            Based on your profile, we found {matchedProperties.length}{" "}
+            {matchedProperties.length === 1 ? "property" : "properties"} that
+            match your preferences.
+          </p>
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {matchedProperties.map((prop) => (
+              <Card key={prop.id} className="overflow-hidden">
+                <div className="aspect-video bg-muted flex items-center justify-center text-muted-foreground">
+                  <Building2 className="h-8 w-8" />
+                </div>
+                <CardHeader className="pb-2">
+                  <div className="flex items-start justify-between">
+                    <CardTitle className="text-lg capitalize">
+                      {prop.property_type}
+                    </CardTitle>
+                    <Badge variant="default">Available</Badge>
+                  </div>
+                  <CardDescription className="flex items-center gap-1">
+                    <MapPin className="h-3 w-3" />
+                    {prop.city}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-2">
+                  {prop.monthly_rent && (
+                    <p className="text-lg font-bold">
+                      ${Number(prop.monthly_rent).toLocaleString()} CAD/mo
+                    </p>
+                  )}
+                  <div className="flex gap-3 text-sm text-muted-foreground">
+                    {prop.bedrooms && <span>{prop.bedrooms} bed</span>}
+                    {prop.bathrooms && <span>{prop.bathrooms} bath</span>}
+                  </div>
+                  {prop.amenities && prop.amenities.length > 0 && (
+                    <div className="flex flex-wrap gap-1">
+                      {prop.amenities.slice(0, 4).map((a, i) => (
+                        <Badge key={i} variant="secondary" className="text-xs">
+                          {a}
+                        </Badge>
+                      ))}
+                      {prop.amenities.length > 4 && (
+                        <Badge variant="secondary" className="text-xs">
+                          +{prop.amenities.length - 4}
+                        </Badge>
+                      )}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {isTenantRole && matchedProperties.length === 0 && (
+        <Card className="border-dashed">
+          <CardContent className="flex flex-col items-center py-8 text-center">
+            <Building2 className="mb-3 h-8 w-8 text-muted-foreground" />
+            <p className="font-medium">No matching properties yet</p>
+            <p className="mt-1 text-sm text-muted-foreground">
+              Update your preferences so we can find the best properties for you.
+            </p>
+            <Link
+              href="/forms/inquilino"
+              className={buttonVariants({ className: "mt-4" })}
+            >
+              Update Preferences
+            </Link>
           </CardContent>
         </Card>
       )}

@@ -5,6 +5,7 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import {
   Card,
   CardContent,
@@ -13,27 +14,53 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Shield } from "lucide-react";
 import type { Profile } from "@/types/database";
+import { ROLE_LABELS } from "@/lib/constants";
 
-const ROLE_LABELS: Record<string, string> = {
-  propietario: "Property Owner",
-  propietario_preferido: "Preferred Owner",
-  inversionista: "Investor",
-  inquilino: "Tenant",
-  inquilino_premium: "Premium Tenant",
-  pymes: "Business Owner (SMB)",
-  admin: "Administrator",
+interface ConsentState {
+  data_processing: boolean;
+  image_usage: boolean;
+  marketing: boolean;
+  third_party: boolean;
+}
+
+const CONSENT_DESCRIPTIONS: Record<keyof ConsentState, { label: string; description: string }> = {
+  data_processing: {
+    label: "Data Processing",
+    description: "Allow us to process your personal data for service delivery (required).",
+  },
+  image_usage: {
+    label: "Image Usage",
+    description: "Allow us to use uploaded property images in marketing materials.",
+  },
+  marketing: {
+    label: "Marketing Communications",
+    description: "Receive promotional emails and marketing updates.",
+  },
+  third_party: {
+    label: "Third-Party Sharing",
+    description: "Allow sharing relevant data with trusted partners.",
+  },
 };
 
 export default function ProfilePage() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [savingConsent, setSavingConsent] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
+  const [consents, setConsents] = useState<ConsentState>({
+    data_processing: false,
+    image_usage: false,
+    marketing: false,
+    third_party: false,
+  });
+
+  const supabase = createClient();
 
   useEffect(() => {
     async function loadProfile() {
-      const supabase = createClient();
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -46,10 +73,29 @@ export default function ProfilePage() {
         .single();
 
       setProfile(data);
+
+      // Load latest consents
+      const { data: consentLogs } = await supabase
+        .from("consent_logs")
+        .select("consent_type, granted")
+        .eq("user_id", user.id)
+        .order("granted_at", { ascending: false });
+
+      if (consentLogs) {
+        const latest: Partial<ConsentState> = {};
+        for (const log of consentLogs) {
+          const key = log.consent_type as keyof ConsentState;
+          if (!(key in latest)) {
+            latest[key] = log.granted;
+          }
+        }
+        setConsents((prev) => ({ ...prev, ...latest }));
+      }
+
       setLoading(false);
     }
     loadProfile();
-  }, []);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -59,7 +105,6 @@ export default function ProfilePage() {
     setMessage(null);
 
     const formData = new FormData(e.currentTarget);
-    const supabase = createClient();
 
     const { error } = await supabase
       .from("profiles")
@@ -82,6 +127,21 @@ export default function ProfilePage() {
     setSaving(false);
   }
 
+  async function handleConsentChange(type: keyof ConsentState, granted: boolean) {
+    if (!profile) return;
+
+    setSavingConsent(true);
+    setConsents((prev) => ({ ...prev, [type]: granted }));
+
+    await supabase.from("consent_logs").insert({
+      user_id: profile.id,
+      consent_type: type,
+      granted,
+    });
+
+    setSavingConsent(false);
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -97,16 +157,15 @@ export default function ProfilePage() {
       <div>
         <h1 className="text-3xl font-bold">My Profile</h1>
         <p className="text-muted-foreground">
-          Manage your personal information
+          Manage your personal information and privacy settings
         </p>
       </div>
 
+      {/* Personal Information */}
       <Card>
         <CardHeader>
           <CardTitle>Personal Information</CardTitle>
-          <CardDescription>
-            Update your contact details
-          </CardDescription>
+          <CardDescription>Update your contact details</CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
           <CardContent className="space-y-4">
@@ -130,8 +189,13 @@ export default function ProfilePage() {
             </div>
             <div className="space-y-2">
               <Label htmlFor="role">Account type</Label>
-              <div>
+              <div className="flex items-center gap-2">
                 <Badge>{ROLE_LABELS[profile.role] || profile.role}</Badge>
+                {profile.is_premium_tenant && (
+                  <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
+                    Premium Tenant
+                  </Badge>
+                )}
               </div>
             </div>
             <div className="space-y-2">
@@ -166,6 +230,43 @@ export default function ProfilePage() {
             </Button>
           </div>
         </form>
+      </Card>
+
+      {/* Consent Management */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Shield className="h-5 w-5 text-muted-foreground" />
+            <CardTitle>Privacy & Consent</CardTitle>
+          </div>
+          <CardDescription>
+            Manage how we use your data. Changes take effect immediately.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          {(Object.keys(CONSENT_DESCRIPTIONS) as (keyof ConsentState)[]).map((type) => {
+            const desc = CONSENT_DESCRIPTIONS[type];
+            return (
+              <div key={type} className="flex items-start justify-between gap-4">
+                <div className="space-y-0.5">
+                  <Label className="text-base">{desc.label}</Label>
+                  <p className="text-sm text-muted-foreground">
+                    {desc.description}
+                  </p>
+                </div>
+                <Switch
+                  checked={consents[type]}
+                  onCheckedChange={(checked) => handleConsentChange(type, checked)}
+                  disabled={savingConsent || type === "data_processing"}
+                />
+              </div>
+            );
+          })}
+          <p className="text-xs text-muted-foreground border-t pt-4">
+            Data processing consent is required and cannot be revoked while using our services.
+            For questions about your data rights under PIPEDA/GDPR, contact privacy@webmarketing.ca
+          </p>
+        </CardContent>
       </Card>
     </div>
   );

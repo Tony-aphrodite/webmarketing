@@ -14,6 +14,12 @@ import {
   FileText,
   Settings,
   ImageIcon,
+  ClipboardList,
+  Link2,
+  DollarSign,
+  PenSquare,
+  Scale,
+  Download,
 } from "lucide-react";
 
 interface NavItem {
@@ -21,77 +27,74 @@ interface NavItem {
   href: string;
   icon: React.ComponentType<{ className?: string }>;
   roles: UserRole[];
+  separator?: boolean;
 }
 
+const ALL_ROLES: UserRole[] = [
+  "propietario",
+  "propietario_preferido",
+  "inversionista",
+  "inquilino",
+  "inquilino_premium",
+  "pymes",
+];
+
+const OWNER_ROLES: UserRole[] = [
+  "propietario",
+  "propietario_preferido",
+  "inversionista",
+];
+
 const NAV_ITEMS: NavItem[] = [
+  // ── User routes ──
   {
     label: "Dashboard",
     href: "/dashboard",
     icon: LayoutDashboard,
-    roles: [
-      "propietario",
-      "propietario_preferido",
-      "inversionista",
-      "inquilino",
-      "inquilino_premium",
-      "pymes",
-    ],
+    roles: ALL_ROLES,
   },
   {
     label: "My Properties",
     href: "/dashboard/properties",
     icon: Building2,
-    roles: ["propietario", "propietario_preferido", "inversionista"],
+    roles: OWNER_ROLES,
   },
   {
     label: "Image Gallery",
     href: "/dashboard/images",
     icon: ImageIcon,
-    roles: ["propietario", "propietario_preferido", "inversionista"],
+    roles: OWNER_ROLES,
   },
   {
     label: "Recommended Services",
     href: "/dashboard/services",
     icon: Heart,
-    roles: [
-      "propietario",
-      "propietario_preferido",
-      "inversionista",
-      "inquilino",
-      "inquilino_premium",
-      "pymes",
-    ],
+    roles: ALL_ROLES,
+  },
+  {
+    label: "Payment History",
+    href: "/dashboard/payments",
+    icon: CreditCard,
+    roles: ALL_ROLES,
   },
   {
     label: "My Profile",
     href: "/dashboard/profile",
     icon: User,
-    roles: [
-      "propietario",
-      "propietario_preferido",
-      "inversionista",
-      "inquilino",
-      "inquilino_premium",
-      "pymes",
-    ],
+    roles: ALL_ROLES,
   },
-  // Admin routes
+  // ── Admin routes ──
   {
-    label: "Admin Panel",
+    label: "Admin Dashboard",
     href: "/admin",
     icon: LayoutDashboard,
     roles: ["admin"],
+    separator: true,
   },
   {
     label: "Users",
     href: "/admin/users",
     icon: Users,
-    roles: ["admin"],
-  },
-  {
-    label: "Properties",
-    href: "/admin/properties",
-    icon: Building2,
     roles: ["admin"],
   },
   {
@@ -101,15 +104,57 @@ const NAV_ITEMS: NavItem[] = [
     roles: ["admin"],
   },
   {
-    label: "Services",
-    href: "/admin/services",
-    icon: Settings,
+    label: "Properties",
+    href: "/admin/properties",
+    icon: Building2,
     roles: ["admin"],
   },
   {
     label: "Payments",
     href: "/admin/payments",
     icon: CreditCard,
+    roles: ["admin"],
+  },
+  {
+    label: "Services",
+    href: "/admin/services",
+    icon: Settings,
+    roles: ["admin"],
+  },
+  {
+    label: "Forms",
+    href: "/admin/forms",
+    icon: ClipboardList,
+    roles: ["admin"],
+  },
+  {
+    label: "Matching",
+    href: "/admin/matching",
+    icon: Link2,
+    roles: ["admin"],
+  },
+  {
+    label: "Pricing",
+    href: "/admin/pricing",
+    icon: DollarSign,
+    roles: ["admin"],
+  },
+  {
+    label: "Content",
+    href: "/admin/content",
+    icon: PenSquare,
+    roles: ["admin"],
+  },
+  {
+    label: "Legal",
+    href: "/admin/legal",
+    icon: Scale,
+    roles: ["admin"],
+  },
+  {
+    label: "Export",
+    href: "/admin/export",
+    icon: Download,
     roles: ["admin"],
   },
 ];
@@ -120,7 +165,7 @@ export function Sidebar({ role }: { role: UserRole }) {
   const filteredItems = NAV_ITEMS.filter((item) => item.roles.includes(role));
 
   return (
-    <aside className="w-64 border-r bg-muted/30">
+    <aside className="w-64 border-r bg-muted/30 overflow-y-auto">
       <nav className="flex flex-col gap-1 p-4">
         {filteredItems.map((item) => {
           const isActive =
@@ -129,19 +174,27 @@ export function Sidebar({ role }: { role: UserRole }) {
               item.href !== "/admin" &&
               pathname.startsWith(item.href));
           return (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
-                isActive
-                  ? "bg-primary text-primary-foreground"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            <div key={item.href}>
+              {item.separator && (
+                <div className="my-2 border-t pt-2">
+                  <span className="px-3 text-xs font-semibold uppercase text-muted-foreground">
+                    Admin
+                  </span>
+                </div>
               )}
-            >
-              <item.icon className="h-4 w-4" />
-              {item.label}
-            </Link>
+              <Link
+                href={item.href}
+                className={cn(
+                  "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
+                  isActive
+                    ? "bg-primary text-primary-foreground"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                )}
+              >
+                <item.icon className="h-4 w-4" />
+                {item.label}
+              </Link>
+            </div>
           );
         })}
       </nav>

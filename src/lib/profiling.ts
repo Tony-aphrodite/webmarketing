@@ -127,12 +127,23 @@ export function isPremiumTenant(criteriaCount: number): boolean {
 }
 
 // ═══════════════════════════════════════════════════════
+// Portfolio Fees (used for Payback calculation)
+// ═══════════════════════════════════════════════════════
+
+export const PORTFOLIO_FEES: Record<EliteTier, number> = {
+  essentials: 750,
+  signature: 900,
+  lujo: 1200,
+};
+
+// ═══════════════════════════════════════════════════════
 // Full Profiling Runners (server-side)
 // ═══════════════════════════════════════════════════════
 
 /**
  * Run owner profiling: classify role, tier, elite sub-tier, CFP, payback.
  * Updates profiles + all properties for the given user.
+ * Each property gets its own elite_tier based on its individual rent.
  */
 export async function profileOwner(userId: string) {
   const supabase = await createClient();
@@ -149,34 +160,35 @@ export async function profileOwner(userId: string) {
   // 2. Classify role + tier
   const { role, serviceTier } = classifyOwner(propertyCount);
 
-  // 3. Elite sub-tier (if 4+ properties)
-  let eliteTier: EliteTier | null = null;
-  let avgRent = 0;
-  if (serviceTier === "elite" && properties) {
-    const rents = properties
-      .map((p) => Number(p.monthly_rent) || 0)
-      .filter((r) => r > 0);
-    avgRent = rents.length > 0 ? rents.reduce((a, b) => a + b, 0) / rents.length : 0;
-    eliteTier = classifyEliteTier(avgRent);
-  }
-
-  // 4. Update each property: service_tier, elite_tier, cfp_monthly
+  // 3. Update each property: service_tier, elite_tier (per property), cfp, payback
   if (properties) {
     for (const prop of properties) {
       const rent = Number(prop.monthly_rent) || 0;
       const cfp = calculateCFP(rent);
+
+      // Each property gets its own elite_tier based on its own rent
+      let propEliteTier: EliteTier | null = null;
+      let paybackMonths: number | null = null;
+
+      if (serviceTier === "elite" && rent > 0) {
+        propEliteTier = classifyEliteTier(rent);
+        const fee = PORTFOLIO_FEES[propEliteTier];
+        paybackMonths = calculatePayback(fee, cfp);
+      }
+
       await supabase
         .from("properties")
         .update({
           service_tier: serviceTier,
-          elite_tier: serviceTier === "elite" ? eliteTier : null,
+          elite_tier: propEliteTier,
           cfp_monthly: cfp,
+          payback_months: paybackMonths,
         })
         .eq("id", prop.id);
     }
   }
 
-  // 5. Update profile: role, property_count
+  // 4. Update profile: role, property_count
   await supabase
     .from("profiles")
     .update({
@@ -188,9 +200,7 @@ export async function profileOwner(userId: string) {
   return {
     role,
     serviceTier,
-    eliteTier,
     propertyCount,
-    avgRent,
   };
 }
 
@@ -248,4 +258,90 @@ export async function profileTenant(userId: string) {
     .eq("id", userId);
 
   return { criteriaCount, premium, role };
+}
+
+// ═══════════════════════════════════════════════════════
+// Tenant ↔ Property Matching
+// ═══════════════════════════════════════════════════════
+
+/**
+ * Match available properties for a tenant based on their preferences.
+ * - Premium tenants → Elite properties within their budget
+ * - Regular tenants → properties matching preferences (budget, bedrooms, amenities)
+ */
+export async function matchPropertiesForTenant(userId: string) {
+  const supabase = await createClient();
+
+  // 1. Get tenant preferences
+  const { data: prefs } = await supabase
+    .from("tenant_preferences")
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .single();
+
+  if (!prefs) return [];
+
+  const premium = prefs.is_premium ?? false;
+  const maxBudget = prefs.max_budget ? Number(prefs.max_budget) : null;
+  const minBudget = prefs.min_budget ? Number(prefs.min_budget) : null;
+  const bedrooms = prefs.bedrooms_needed ? Number(prefs.bedrooms_needed) : null;
+  const amenities: string[] = prefs.preferred_amenities || [];
+
+  // 2. Build base query — only available properties
+  let query = supabase
+    .from("properties")
+    .select("*, profiles!properties_owner_id_fkey(full_name)")
+    .eq("is_available", true);
+
+  if (premium) {
+    // Premium tenants → only Elite Assets & Legacy properties
+    query = query.eq("service_tier", "elite");
+  }
+
+  // Budget filter
+  if (maxBudget) {
+    query = query.lte("monthly_rent", maxBudget);
+  }
+  if (minBudget) {
+    query = query.gte("monthly_rent", minBudget);
+  }
+
+  // Bedrooms filter (if specified)
+  if (bedrooms && bedrooms > 0) {
+    query = query.gte("bedrooms", bedrooms);
+  }
+
+  const { data: properties } = await query
+    .order("monthly_rent", { ascending: true })
+    .limit(20);
+
+  if (!properties || properties.length === 0) return [];
+
+  // 3. Score & rank properties by preference match
+  const scored = properties.map((prop) => {
+    let score = 0;
+
+    // Amenity overlap
+    const propAmenities: string[] = prop.amenities || [];
+    const overlap = amenities.filter((a) => propAmenities.includes(a)).length;
+    score += overlap * 2;
+
+    // Exact bedroom match bonus
+    if (bedrooms && prop.bedrooms === bedrooms) score += 3;
+
+    // Budget fit (closer to budget = better)
+    if (maxBudget && prop.monthly_rent) {
+      const ratio = Number(prop.monthly_rent) / maxBudget;
+      if (ratio >= 0.7 && ratio <= 1.0) score += 2;
+    }
+
+    return { ...prop, matchScore: score };
+  });
+
+  // Sort by match score descending
+  scored.sort((a, b) => b.matchScore - a.matchScore);
+
+  return scored;
 }

@@ -1,0 +1,232 @@
+import { requireAdmin } from "@/lib/admin-server";
+import { formatCurrency, formatDateTime } from "@/lib/admin";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Users, Building2, FileText, DollarSign } from "lucide-react";
+import { ROLE_LABELS, LEAD_STATUS_COLORS, LEAD_STATUS_LABELS } from "@/lib/constants";
+
+export default async function AdminDashboardPage() {
+  const { supabase } = await requireAdmin();
+
+  // ── KPI queries in parallel ──
+  const [
+    { count: totalUsers },
+    { count: totalProperties },
+    { count: totalLeads },
+    { data: revenueData },
+    { data: usersByRole },
+    { data: leadsByStatus },
+    { data: recentLeads },
+    { data: recentUsers },
+    { data: recentPayments },
+  ] = await Promise.all([
+    supabase.from("profiles").select("*", { count: "exact", head: true }),
+    supabase.from("properties").select("*", { count: "exact", head: true }),
+    supabase.from("leads").select("*", { count: "exact", head: true }),
+    supabase
+      .from("payments")
+      .select("amount")
+      .eq("status", "completed"),
+    supabase.rpc("count_by_role") as unknown as Promise<{ data: { role: string; count: number }[] | null }>,
+    supabase.rpc("count_by_lead_status") as unknown as Promise<{ data: { status: string; count: number }[] | null }>,
+    supabase
+      .from("leads")
+      .select("id, full_name, email, status, created_at")
+      .order("created_at", { ascending: false })
+      .limit(5),
+    supabase
+      .from("profiles")
+      .select("id, full_name, email, role, created_at")
+      .order("created_at", { ascending: false })
+      .limit(5),
+    supabase
+      .from("payments")
+      .select("id, amount, status, created_at, profiles:user_id(full_name)")
+      .order("created_at", { ascending: false })
+      .limit(5),
+  ]);
+
+  const totalRevenue = revenueData?.reduce(
+    (sum, p) => sum + (Number(p.amount) || 0),
+    0
+  ) || 0;
+
+  return (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+        <p className="text-muted-foreground">
+          Overview of your platform metrics
+        </p>
+      </div>
+
+      {/* KPI Cards */}
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Total Users</CardTitle>
+            <Users className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalUsers || 0}</div>
+            {usersByRole && usersByRole.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1">
+                {usersByRole.map((r) => (
+                  <Badge key={r.role} variant="outline" className="text-xs">
+                    {ROLE_LABELS[r.role] || r.role}: {r.count}
+                  </Badge>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Properties</CardTitle>
+            <Building2 className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalProperties || 0}</div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Total Leads</CardTitle>
+            <FileText className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{totalLeads || 0}</div>
+            {leadsByStatus && leadsByStatus.length > 0 && (
+              <div className="mt-2 flex flex-wrap gap-1">
+                {leadsByStatus.map((l) => {
+                  const colors = LEAD_STATUS_COLORS[l.status];
+                  return (
+                    <Badge
+                      key={l.status}
+                      variant="outline"
+                      className={`text-xs ${colors?.bg || ""} ${colors?.text || ""}`}
+                    >
+                      {LEAD_STATUS_LABELS[l.status] || l.status}: {l.count}
+                    </Badge>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+            <DollarSign className="h-4 w-4 text-muted-foreground" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{formatCurrency(totalRevenue)}</div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {/* Recent Activity */}
+      <div className="grid gap-6 lg:grid-cols-3">
+        {/* Recent Leads */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Recent Leads</CardTitle>
+            <CardDescription>Latest lead submissions</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {!recentLeads || recentLeads.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No leads yet</p>
+            ) : (
+              <div className="space-y-3">
+                {recentLeads.map((lead) => {
+                  const colors = LEAD_STATUS_COLORS[lead.status];
+                  return (
+                    <div key={lead.id} className="flex items-start justify-between gap-2">
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium truncate">{lead.full_name}</p>
+                        <p className="text-xs text-muted-foreground truncate">{lead.email}</p>
+                      </div>
+                      <Badge
+                        variant="outline"
+                        className={`shrink-0 text-xs ${colors?.bg || ""} ${colors?.text || ""}`}
+                      >
+                        {LEAD_STATUS_LABELS[lead.status] || lead.status}
+                      </Badge>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Recent Users */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Recent Registrations</CardTitle>
+            <CardDescription>Newest users</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {!recentUsers || recentUsers.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No users yet</p>
+            ) : (
+              <div className="space-y-3">
+                {recentUsers.map((u) => (
+                  <div key={u.id} className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium truncate">{u.full_name}</p>
+                      <p className="text-xs text-muted-foreground truncate">{u.email}</p>
+                    </div>
+                    <Badge variant="outline" className="shrink-0 text-xs">
+                      {ROLE_LABELS[u.role] || u.role}
+                    </Badge>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Recent Payments */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-base">Recent Payments</CardTitle>
+            <CardDescription>Latest transactions</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {!recentPayments || recentPayments.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No payments yet</p>
+            ) : (
+              <div className="space-y-3">
+                {recentPayments.map((p) => (
+                  <div key={p.id} className="flex items-start justify-between gap-2">
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium truncate">
+                        {(p.profiles as unknown as { full_name: string } | null)?.full_name || "Unknown"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {formatDateTime(p.created_at)}
+                      </p>
+                    </div>
+                    <span className="text-sm font-medium shrink-0">
+                      {formatCurrency(Number(p.amount))}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      </div>
+    </div>
+  );
+}

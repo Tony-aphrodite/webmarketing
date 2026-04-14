@@ -9,148 +9,10 @@ import {
 } from "@/components/ui/card";
 import { buttonVariants } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Building2, FileText, Heart, Crown, CheckCircle2 } from "lucide-react";
+import { Building2, FileText, Heart, Crown, CheckCircle2, CreditCard, TrendingUp, AlertTriangle } from "lucide-react";
 import Link from "next/link";
-
-const ROLE_LABELS: Record<string, string> = {
-  propietario: "Property Owner",
-  propietario_preferido: "Preferred Owner",
-  inversionista: "Investor",
-  inquilino: "Tenant",
-  inquilino_premium: "Premium Tenant",
-  pymes: "Business Owner",
-  admin: "Administrator",
-};
-
-// ─── Owner Service Tiers ─────────────────────────────
-const OWNER_TIERS: Record<
-  string,
-  {
-    name: string;
-    tagline: string;
-    features: string[];
-    color: string;
-    bgColor: string;
-    borderColor: string;
-  }
-> = {
-  basic: {
-    name: "Basic",
-    tagline: "Essential property management for single-property owners",
-    features: [
-      "Professional property listing",
-      "Tenant screening & matching",
-      "Basic photography guidance",
-      "Standard listing optimization",
-      "Email support",
-    ],
-    color: "text-blue-600",
-    bgColor: "bg-blue-50",
-    borderColor: "border-blue-200",
-  },
-  preferred_owners: {
-    name: "Preferred Owners",
-    tagline: "Enhanced services for growing property portfolios",
-    features: [
-      "Everything in Basic, plus:",
-      "Professional photography session",
-      "Priority tenant matching",
-      "Multi-property dashboard",
-      "Market analysis reports",
-      "Priority email & chat support",
-    ],
-    color: "text-emerald-600",
-    bgColor: "bg-emerald-50",
-    borderColor: "border-emerald-200",
-  },
-  elite: {
-    name: "Elite Assets & Legacy",
-    tagline: "Full-service management for investment portfolios",
-    features: [
-      "Everything in Preferred, plus:",
-      "Dedicated account manager",
-      "Premium photography & virtual tours",
-      "Revenue optimization strategy",
-      "Legal compliance review",
-      "Quarterly portfolio analysis",
-      "Concierge-level support",
-    ],
-    color: "text-amber-600",
-    bgColor: "bg-amber-50",
-    borderColor: "border-amber-200",
-  },
-};
-
-// ─── PYMES Plans ─────────────────────────────────────
-const PYMES_PLANS: Record<
-  string,
-  {
-    name: string;
-    price: string;
-    upfront: string;
-    installment: string;
-    duration: string;
-    tagline: string;
-    features: string[];
-    color: string;
-    bgColor: string;
-    borderColor: string;
-  }
-> = {
-  rescue: {
-    name: "Rescue",
-    price: "$1,500 CAD",
-    upfront: "$750 CAD upfront",
-    installment: "$375 CAD × 2 payments",
-    duration: "Minimum 2.5 months",
-    tagline: "Intensive intervention plan to exit critical mode and move to growth",
-    features: [
-      "Complete diagnosis",
-      "Basic optimization (Google, Social Media, SEO)",
-      "Lead capture structure",
-      "Direct advisory",
-    ],
-    color: "text-red-600",
-    bgColor: "bg-red-50",
-    borderColor: "border-red-200",
-  },
-  growth: {
-    name: "Growth",
-    price: "$2,500 CAD",
-    upfront: "$1,250 CAD upfront",
-    installment: "$625 CAD × 2 payments",
-    duration: "Minimum 4–5 months",
-    tagline: "Plan to overcome stagnation, correct weaknesses and start growing",
-    features: [
-      "Complete diagnosis",
-      "Marketing strategy",
-      "Conversion optimization",
-      "Campaign structure",
-      "Lead tracking",
-    ],
-    color: "text-orange-600",
-    bgColor: "bg-orange-50",
-    borderColor: "border-orange-200",
-  },
-  scale: {
-    name: "Scale",
-    price: "$3,800 CAD",
-    upfront: "$1,520 CAD upfront",
-    installment: "$570 CAD × 4 payments",
-    duration: "Minimum 6 months",
-    tagline: "Plan to scale and maximize revenue",
-    features: [
-      "Complete diagnosis",
-      "Advanced optimization",
-      "Channel expansion",
-      "Growth strategy",
-      "Opportunity analysis",
-    ],
-    color: "text-green-600",
-    bgColor: "bg-green-50",
-    borderColor: "border-green-200",
-  },
-};
+import { ROLE_LABELS, OWNER_TIERS, PYMES_PLANS } from "@/lib/constants";
+import { formatCurrency } from "@/lib/admin";
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -183,13 +45,20 @@ export default async function DashboardPage() {
   let serviceCount = 0;
   let ownerTier: string | null = null;
   let pymesPlan: string | null = null;
+  let totalCFP = 0;
+  let leadCount = 0;
+  let matchedCount = 0;
+  let pymesScore: number | null = null;
+  let pymesUrgency: string | null = null;
+  let pymesLoss: number | null = null;
 
   if (isOwnerRole) {
-    const { count } = await supabase
+    const { data: props } = await supabase
       .from("properties")
-      .select("*", { count: "exact", head: true })
+      .select("id, cfp_monthly")
       .eq("owner_id", user.id);
-    propertyCount = count || 0;
+    propertyCount = props?.length || 0;
+    totalCFP = props?.reduce((sum, p) => sum + (Number(p.cfp_monthly) || 0), 0) || 0;
 
     // Determine tier from property count
     if (propertyCount >= 4) ownerTier = "elite";
@@ -197,18 +66,35 @@ export default async function DashboardPage() {
     else if (propertyCount >= 1) ownerTier = "basic";
   }
 
+  if (isTenantRole) {
+    const { count } = await supabase
+      .from("properties")
+      .select("*", { count: "exact", head: true })
+      .eq("is_available", true);
+    matchedCount = count || 0;
+  }
+
   if (isPymesRole) {
-    // Get the most recent diagnosis
     const { data: diagnosis } = await supabase
       .from("pymes_diagnosis")
-      .select("recommended_plan")
+      .select("recommended_plan, total_score, urgency_level, estimated_loss")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .limit(1)
       .single();
 
     pymesPlan = diagnosis?.recommended_plan || null;
+    pymesScore = diagnosis?.total_score ?? null;
+    pymesUrgency = diagnosis?.urgency_level ?? null;
+    pymesLoss = diagnosis?.estimated_loss ? Number(diagnosis.estimated_loss) : null;
   }
+
+  // Lead count (if user is an owner/pymes)
+  const { count: lCount } = await supabase
+    .from("leads")
+    .select("*", { count: "exact", head: true })
+    .eq("user_id", user.id);
+  leadCount = lCount || 0;
 
   const { count: svcCount } = await supabase
     .from("services")
@@ -231,51 +117,101 @@ export default async function DashboardPage() {
         </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-3">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {isOwnerRole && (
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-sm font-medium">
-                My Properties
-              </CardTitle>
-              <Building2 className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{propertyCount}</div>
-              <p className="text-xs text-muted-foreground">
-                Registered properties
-              </p>
-            </CardContent>
-          </Card>
+          <>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium">My Properties</CardTitle>
+                <Building2 className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{propertyCount}</div>
+                <p className="text-xs text-muted-foreground">Registered properties</p>
+              </CardContent>
+            </Card>
+            {totalCFP > 0 && (
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">Total CFP</CardTitle>
+                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{formatCurrency(totalCFP)}</div>
+                  <p className="text-xs text-muted-foreground">Monthly cash flow preserved</p>
+                </CardContent>
+              </Card>
+            )}
+          </>
+        )}
+
+        {isTenantRole && (
+          <>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium">Matched Properties</CardTitle>
+                <Building2 className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{matchedCount}</div>
+                <p className="text-xs text-muted-foreground">Available properties</p>
+              </CardContent>
+            </Card>
+          </>
+        )}
+
+        {isPymesRole && pymesScore !== null && (
+          <>
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <CardTitle className="text-sm font-medium">Diagnosis Score</CardTitle>
+                <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{pymesScore}/35</div>
+                <p className="text-xs text-muted-foreground capitalize">
+                  Urgency: {pymesUrgency || "N/A"}
+                </p>
+              </CardContent>
+            </Card>
+            {pymesLoss !== null && (
+              <Card>
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">Estimated Loss</CardTitle>
+                  <TrendingUp className="h-4 w-4 text-red-500" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold text-red-600">{formatCurrency(pymesLoss)}</div>
+                  <p className="text-xs text-muted-foreground">Monthly revenue at risk</p>
+                </CardContent>
+              </Card>
+            )}
+          </>
         )}
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">
-              Available Services
-            </CardTitle>
+            <CardTitle className="text-sm font-medium">Available Services</CardTitle>
             <Heart className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{serviceCount}</div>
-            <p className="text-xs text-muted-foreground">
-              Active services
-            </p>
+            <p className="text-xs text-muted-foreground">Active services</p>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between pb-2">
-            <CardTitle className="text-sm font-medium">Status</CardTitle>
-            <FileText className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">Active</div>
-            <p className="text-xs text-muted-foreground">
-              Your profile is complete
-            </p>
-          </CardContent>
-        </Card>
+        {leadCount > 0 && (
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
+              <CardTitle className="text-sm font-medium">Active Leads</CardTitle>
+              <FileText className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{leadCount}</div>
+              <p className="text-xs text-muted-foreground">Your lead requests</p>
+            </CardContent>
+          </Card>
+        )}
       </div>
 
       {/* ═══ Assigned Plan / Tier ═══ */}
