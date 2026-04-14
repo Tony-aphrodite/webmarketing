@@ -936,7 +936,7 @@ export default async function ServicesPage() {
               and finalize the best plan for your needs. No obligation.
             </p>
             <Link
-              href="/api/contact"
+              href="/#contact"
               className={cn(buttonVariants({ size: "lg" }), "gap-2")}
             >
               Schedule a Free Consultation
