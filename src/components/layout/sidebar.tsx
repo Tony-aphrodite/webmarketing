@@ -159,45 +159,59 @@ const NAV_ITEMS: NavItem[] = [
   },
 ];
 
-export function Sidebar({ role }: { role: UserRole }) {
+/** Shared navigation links used by both desktop sidebar and mobile drawer */
+export function SidebarNav({
+  role,
+  onNavigate,
+}: {
+  role: UserRole;
+  onNavigate?: () => void;
+}) {
   const pathname = usePathname();
-
   const filteredItems = NAV_ITEMS.filter((item) => item.roles.includes(role));
 
   return (
-    <aside className="w-64 border-r bg-muted/30 overflow-y-auto">
-      <nav className="flex flex-col gap-1 p-4">
-        {filteredItems.map((item) => {
-          const isActive =
-            pathname === item.href ||
-            (item.href !== "/dashboard" &&
-              item.href !== "/admin" &&
-              pathname.startsWith(item.href));
-          return (
-            <div key={item.href}>
-              {item.separator && (
-                <div className="my-2 border-t pt-2">
-                  <span className="px-3 text-xs font-semibold uppercase text-muted-foreground">
-                    Admin
-                  </span>
-                </div>
+    <nav className="flex flex-col gap-1 p-4">
+      {filteredItems.map((item) => {
+        const isActive =
+          pathname === item.href ||
+          (item.href !== "/dashboard" &&
+            item.href !== "/admin" &&
+            pathname.startsWith(item.href));
+        return (
+          <div key={item.href}>
+            {item.separator && (
+              <div className="my-2 border-t pt-2">
+                <span className="px-3 text-xs font-semibold uppercase text-muted-foreground">
+                  Admin
+                </span>
+              </div>
+            )}
+            <Link
+              href={item.href}
+              onClick={onNavigate}
+              className={cn(
+                "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
+                isActive
+                  ? "bg-primary text-primary-foreground"
+                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
               )}
-              <Link
-                href={item.href}
-                className={cn(
-                  "flex items-center gap-3 rounded-md px-3 py-2 text-sm transition-colors",
-                  isActive
-                    ? "bg-primary text-primary-foreground"
-                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
-                )}
-              >
-                <item.icon className="h-4 w-4" />
-                {item.label}
-              </Link>
-            </div>
-          );
-        })}
-      </nav>
+            >
+              <item.icon className="h-4 w-4 shrink-0" />
+              {item.label}
+            </Link>
+          </div>
+        );
+      })}
+    </nav>
+  );
+}
+
+/** Desktop sidebar — hidden on mobile */
+export function Sidebar({ role }: { role: UserRole }) {
+  return (
+    <aside className="hidden w-64 shrink-0 border-r bg-muted/30 overflow-y-auto md:block">
+      <SidebarNav role={role} />
     </aside>
   );
 }

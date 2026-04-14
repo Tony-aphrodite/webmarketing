@@ -141,7 +141,7 @@ export default function AdminPricingPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Pricing & Promotions</h1>
+        <h1 className="text-2xl font-bold md:text-3xl">Pricing & Promotions</h1>
         <p className="text-muted-foreground">
           Manage service prices and promotional discounts
         </p>

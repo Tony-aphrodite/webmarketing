@@ -187,7 +187,7 @@ export default function AdminExportPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Data Export</h1>
+        <h1 className="text-2xl font-bold md:text-3xl">Data Export</h1>
         <p className="text-muted-foreground">
           Export platform data as CSV files
         </p>

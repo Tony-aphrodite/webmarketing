@@ -176,7 +176,7 @@ export default function ImagesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Image Gallery</h1>
+        <h1 className="text-2xl font-bold md:text-3xl">Image Gallery</h1>
         <p className="text-muted-foreground">
           Manage room-by-room images for your properties
         </p>
@@ -212,10 +212,10 @@ export default function ImagesPage() {
         <>
           {/* Property selector + upload */}
           <div className="flex flex-wrap items-end gap-4">
-            <div className="space-y-2">
+            <div className="w-full space-y-2 sm:w-auto">
               <Label>Property</Label>
               <Select value={selectedProperty} onValueChange={(v) => v && setSelectedProperty(v)}>
-                <SelectTrigger className="w-[300px]">
+                <SelectTrigger className="w-full sm:w-[300px]">
                   <SelectValue placeholder="Select property" />
                 </SelectTrigger>
                 <SelectContent>
@@ -228,10 +228,10 @@ export default function ImagesPage() {
               </Select>
             </div>
 
-            <div className="space-y-2">
+            <div className="w-full space-y-2 sm:w-auto">
               <Label>Room Category</Label>
               <Select value={selectedRoom} onValueChange={(v) => v && setSelectedRoom(v)}>
-                <SelectTrigger className="w-[200px]">
+                <SelectTrigger className="w-full sm:w-[200px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

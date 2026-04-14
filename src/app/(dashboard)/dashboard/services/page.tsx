@@ -401,7 +401,7 @@ export default async function ServicesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold">Services</h1>
+        <h1 className="text-2xl font-bold md:text-3xl">Services</h1>
         <p className="text-muted-foreground">
           Services recommended for your profile
         </p>
