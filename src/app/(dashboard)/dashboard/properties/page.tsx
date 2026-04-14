@@ -28,6 +28,26 @@ export default async function PropertiesPage() {
     .eq("owner_id", user.id)
     .order("created_at", { ascending: false });
 
+  // Fetch first image for each property from property_images table
+  const propertyIds = properties?.map((p) => p.id) || [];
+  const thumbnailMap: Record<string, string> = {};
+
+  if (propertyIds.length > 0) {
+    const { data: images } = await supabase
+      .from("property_images")
+      .select("property_id, image_url")
+      .in("property_id", propertyIds)
+      .order("sort_order", { ascending: true });
+
+    if (images) {
+      for (const img of images) {
+        if (!thumbnailMap[img.property_id]) {
+          thumbnailMap[img.property_id] = img.image_url;
+        }
+      }
+    }
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -49,7 +69,7 @@ export default async function PropertiesPage() {
             <p className="mb-4 text-muted-foreground">
               You haven&apos;t registered any properties yet
             </p>
-            <Link href="/forms/propietario/add-property" className={buttonVariants()}>
+            <Link href="/forms/propietario" className={buttonVariants()}>
               Register my first property
             </Link>
           </CardContent>
@@ -71,9 +91,9 @@ export default async function PropertiesPage() {
               <Card key={property.id} className="overflow-hidden">
                 {/* Thumbnail */}
                 <div className="aspect-video bg-muted">
-                  {property.images && property.images.length > 0 ? (
+                  {thumbnailMap[property.id] ? (
                     <img
-                      src={property.images[0]}
+                      src={thumbnailMap[property.id]}
                       alt={property.address}
                       className="h-full w-full object-cover"
                     />

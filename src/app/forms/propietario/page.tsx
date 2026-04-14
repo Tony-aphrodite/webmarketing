@@ -25,6 +25,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Building2, ArrowLeft, ArrowRight, FileText } from "lucide-react";
+import { ImageUpload, type ImageWithMeta } from "@/components/forms/image-upload";
 
 // ─── Objectives (PDF 5.2.1 - 8 options) ─────────────
 const OBJECTIVES = [
@@ -125,7 +126,7 @@ const LEGAL_DOCS: Record<string, { title: string; text: string }> = {
   },
 };
 
-const TOTAL_STEPS = 5;
+const TOTAL_STEPS = 6;
 
 function getServiceTier(count: number): string {
   if (count >= 4) return "Elite Assets & Legacy";
@@ -139,6 +140,7 @@ export default function OwnerFormPage() {
   const [step, setStep] = useState(1);
   const [error, setError] = useState<string | null>(null);
   const [expandedLegal, setExpandedLegal] = useState<string | null>(null);
+  const [propertyImages, setPropertyImages] = useState<ImageWithMeta[]>([]);
   const formRef = useRef<HTMLDivElement>(null);
 
   const {
@@ -305,7 +307,7 @@ export default function OwnerFormPage() {
       if (briefError) throw briefError;
 
       // Save first property details
-      const { error: propError } = await supabase.from("properties").insert({
+      const { data: propData, error: propError } = await supabase.from("properties").insert({
         owner_id: user.id,
         title: `${data.property_type} in ${data.zone_city}`,
         property_type: data.property_type,
@@ -339,9 +341,42 @@ export default function OwnerFormPage() {
         nearby_supermarkets: data.nearby_supermarkets,
         service_tier: tier,
         is_available: data.occupancy_status === "vacant",
-      });
+      }).select().single();
 
       if (propError) throw propError;
+
+      // Upload property images to Supabase Storage
+      if (propData && propertyImages.length > 0) {
+        for (const img of propertyImages) {
+          const ext = img.file.name.split(".").pop();
+          const path = `properties/${propData.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+
+          const { error: uploadErr } = await supabase.storage
+            .from("property-images")
+            .upload(path, img.file);
+
+          if (uploadErr) {
+            console.error("Image upload failed:", uploadErr);
+            continue;
+          }
+
+          const { data: { publicUrl } } = supabase.storage
+            .from("property-images")
+            .getPublicUrl(path);
+
+          await supabase.from("property_images").insert({
+            property_id: propData.id,
+            room_category: img.room,
+            image_url: publicUrl,
+            original_filename: img.file.name,
+            file_size_bytes: img.file.size,
+            resolution_ok: img.validation.resolution_ok,
+            orientation: img.validation.orientation,
+            status: "pending",
+            sort_order: propertyImages.indexOf(img),
+          });
+        }
+      }
 
       // Update profile property count
       await supabase
@@ -407,14 +442,16 @@ export default function OwnerFormPage() {
               {step === 2 && "Property Portfolio"}
               {step === 3 && "Property Details"}
               {step === 4 && "Zone & Location"}
-              {step === 5 && "Legal Consents"}
+              {step === 5 && "Property Photos"}
+              {step === 6 && "Legal Consents"}
             </CardTitle>
             <CardDescription>
               {step === 1 && "Tell us about yourself and your property objectives."}
               {step === 2 && "Enter the city and desired rent for each property."}
               {step === 3 && "Describe your first property. You can add more from your dashboard."}
               {step === 4 && "Location details help us match tenants to your property."}
-              {step === 5 && "Please review and accept the following consents."}
+              {step === 5 && "Upload photos of your property. Quality images attract better tenants."}
+              {step === 6 && "Please review and accept the following consents."}
             </CardDescription>
           </CardHeader>
 
@@ -915,8 +952,17 @@ export default function OwnerFormPage() {
               </>
             )}
 
-            {/* ═══ Step 5: Legal Consents ═══ */}
+            {/* ═══ Step 5: Property Photos ═══ */}
             {step === 5 && (
+              <ImageUpload
+                images={propertyImages}
+                onImagesChange={setPropertyImages}
+                maxImages={20}
+              />
+            )}
+
+            {/* ═══ Step 6: Legal Consents ═══ */}
+            {step === 6 && (
               <div className="space-y-4">
                 {[
                   {

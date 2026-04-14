@@ -25,6 +25,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Building2, ArrowLeft, ArrowRight, FileText } from "lucide-react";
+import { ImageUpload, type ImageWithMeta } from "@/components/forms/image-upload";
 
 // ─── Property types (PDF 5.2.1.1) ───────────────────
 const PROPERTY_TYPES = [
@@ -106,7 +107,7 @@ const LEGAL_DOCS = {
     "I have read, understood, and agree to be bound by the Terms and Conditions of Service, including but not limited to: service scope and limitations, fee structure and payment terms, property listing guidelines, tenant screening procedures, dispute resolution mechanisms, liability limitations, and termination clauses. I understand that these terms constitute a legally binding agreement between myself and the property management service provider. I acknowledge that I have had the opportunity to review these terms and seek independent legal advice if desired.",
 };
 
-const TOTAL_STEPS = 3;
+const TOTAL_STEPS = 4;
 
 export default function AddPropertyPage() {
   const router = useRouter();
@@ -114,6 +115,7 @@ export default function AddPropertyPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [expandedLegal, setExpandedLegal] = useState<Record<string, boolean>>({});
+  const [propertyImages, setPropertyImages] = useState<ImageWithMeta[]>([]);
   const formRef = useRef<HTMLDivElement>(null);
 
   const {
@@ -231,7 +233,7 @@ export default function AddPropertyPage() {
       const totalProps = (count || 0) + 1;
       const tier = totalProps >= 4 ? "elite" : totalProps >= 2 ? "preferred_owners" : "basic";
 
-      const { error: propError } = await supabase.from("properties").insert({
+      const { data: propData, error: propError } = await supabase.from("properties").insert({
         owner_id: user.id,
         title: `${data.property_type} in ${data.zone_city}`,
         property_type: data.property_type,
@@ -268,9 +270,42 @@ export default function AddPropertyPage() {
         occupancy_status: data.occupancy_status,
         vacancy_date: data.vacancy_date || null,
         listing_platforms: data.listing_platforms,
-      });
+      }).select().single();
 
       if (propError) throw propError;
+
+      // Upload property images to Supabase Storage
+      if (propData && propertyImages.length > 0) {
+        for (const img of propertyImages) {
+          const ext = img.file.name.split(".").pop();
+          const path = `properties/${propData.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+
+          const { error: uploadErr } = await supabase.storage
+            .from("property-images")
+            .upload(path, img.file);
+
+          if (uploadErr) {
+            console.error("Image upload failed:", uploadErr);
+            continue;
+          }
+
+          const { data: { publicUrl } } = supabase.storage
+            .from("property-images")
+            .getPublicUrl(path);
+
+          await supabase.from("property_images").insert({
+            property_id: propData.id,
+            room_category: img.room,
+            image_url: publicUrl,
+            original_filename: img.file.name,
+            file_size_bytes: img.file.size,
+            resolution_ok: img.validation.resolution_ok,
+            orientation: img.validation.orientation,
+            status: "pending",
+            sort_order: propertyImages.indexOf(img),
+          });
+        }
+      }
 
       // Update profile property count
       await supabase
@@ -321,12 +356,14 @@ export default function AddPropertyPage() {
             <CardTitle className="text-xl">
               {step === 1 && "Property Details"}
               {step === 2 && "Zone & Location"}
-              {step === 3 && "Legal Consents"}
+              {step === 3 && "Property Photos"}
+              {step === 4 && "Legal Consents"}
             </CardTitle>
             <CardDescription>
               {step === 1 && "Describe your property details."}
               {step === 2 && "Location details help us match tenants to your property."}
-              {step === 3 && "Please review and accept the following consents."}
+              {step === 3 && "Upload photos of your property. Quality images attract better tenants."}
+              {step === 4 && "Please review and accept the following consents."}
             </CardDescription>
           </CardHeader>
 
@@ -716,8 +753,17 @@ export default function AddPropertyPage() {
               </>
             )}
 
-            {/* ═══ Step 3: Legal Consents ═══ */}
+            {/* ═══ Step 3: Property Photos ═══ */}
             {step === 3 && (
+              <ImageUpload
+                images={propertyImages}
+                onImagesChange={setPropertyImages}
+                maxImages={20}
+              />
+            )}
+
+            {/* ═══ Step 4: Legal Consents ═══ */}
+            {step === 4 && (
               <>
                 {(
                   [
