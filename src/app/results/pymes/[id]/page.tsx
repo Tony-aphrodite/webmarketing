@@ -23,6 +23,7 @@ import {
   X,
 } from "lucide-react";
 import { PymesRadarChart } from "@/components/charts/pymes-radar-chart";
+import { CheckoutButton } from "@/components/checkout/checkout-button";
 
 // ─── Plan Details ────────────────────────────────────
 const PLAN_DETAILS: Record<
@@ -155,6 +156,15 @@ export default async function PymesResultsPage({
     .single();
 
   if (!diagnosis) redirect("/forms/pymes");
+
+  // Fetch the pymes_plans record for checkout
+  const { data: pymesPlanRecord } = await supabase
+    .from("pymes_plans")
+    .select("id")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .single();
 
   const recommendedKey = diagnosis.recommended_plan ?? "growth";
   const plan = PLAN_DETAILS[recommendedKey];
@@ -400,16 +410,28 @@ export default async function PymesResultsPage({
                 </li>
               ))}
             </ul>
-            <Link
-              href="/dashboard/services"
-              className={cn(
-                buttonVariants({ size: "lg" }),
-                "mt-4 w-full gap-2"
-              )}
-            >
-              Get Started with {plan.name}
-              <ArrowRight className="h-4 w-4" />
-            </Link>
+            {pymesPlanRecord ? (
+              <div className="mt-4 w-full">
+                <CheckoutButton
+                  type="pymes_upfront"
+                  pymesPlanId={pymesPlanRecord.id}
+                  label={`Get Started with ${plan.name}`}
+                  size="lg"
+                  className="w-full"
+                />
+              </div>
+            ) : (
+              <Link
+                href="/dashboard/services"
+                className={cn(
+                  buttonVariants({ size: "lg" }),
+                  "mt-4 w-full gap-2"
+                )}
+              >
+                Get Started with {plan.name}
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            )}
           </CardContent>
         </Card>
 
@@ -550,13 +572,22 @@ export default async function PymesResultsPage({
             isn&apos;t final &mdash; it&apos;s a roadmap.
           </p>
           <div className="flex flex-col gap-3 sm:flex-row">
-            <Link
-              href="/dashboard/services"
-              className={cn(buttonVariants({ size: "lg" }), "gap-2")}
-            >
-              Start Now &mdash; {plan.name} Plan
-              <ArrowRight className="h-4 w-4" />
-            </Link>
+            {pymesPlanRecord ? (
+              <CheckoutButton
+                type="pymes_upfront"
+                pymesPlanId={pymesPlanRecord.id}
+                label={`Start Now — ${plan.name} Plan`}
+                size="lg"
+              />
+            ) : (
+              <Link
+                href="/dashboard/services"
+                className={cn(buttonVariants({ size: "lg" }), "gap-2")}
+              >
+                Start Now &mdash; {plan.name} Plan
+                <ArrowRight className="h-4 w-4" />
+              </Link>
+            )}
             <Link
               href="/dashboard/services#schedule"
               className={cn(buttonVariants({ variant: "outline", size: "lg" }), "gap-2")}

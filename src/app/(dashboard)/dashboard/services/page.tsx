@@ -20,6 +20,7 @@ import {
   Building2,
   MapPin,
 } from "lucide-react";
+import { CheckoutButton } from "@/components/checkout/checkout-button";
 
 // ─── Owner Service Tiers ─────────────────────────────
 const OWNER_TIERS: Record<
@@ -328,6 +329,7 @@ export default async function ServicesPage() {
 
   // ─── PYMES data ────────────────────────────────
   let pymesPlan: string | null = null;
+  let pymesPlanRecord: { id: string; plan_type: string } | null = null;
 
   if (isPymesRole) {
     const { data: diagnosis } = await supabase
@@ -339,6 +341,18 @@ export default async function ServicesPage() {
       .single();
 
     pymesPlan = diagnosis?.recommended_plan || null;
+
+    if (pymesPlan) {
+      const { data: planRecord } = await supabase
+        .from("pymes_plans")
+        .select("id, plan_type")
+        .eq("plan_type", pymesPlan)
+        .eq("is_active", true)
+        .limit(1)
+        .single();
+
+      pymesPlanRecord = planRecord;
+    }
   }
 
   // ─── Tenant data: matched properties ────────────
@@ -613,18 +627,27 @@ export default async function ServicesPage() {
               ))}
             </ul>
             <div className="flex flex-col gap-2 sm:flex-row">
-              <Link
-                href="/dashboard/services#contact"
-                className={cn(buttonVariants(), "flex-1 gap-2")}
-              >
-                Start Now
-                <ArrowRight className="h-4 w-4" />
-              </Link>
+              {pymesPlanRecord ? (
+                <CheckoutButton
+                  type="pymes_upfront"
+                  pymesPlanId={pymesPlanRecord.id}
+                  label={`Pay ${pymesPlanDetails.upfront}`}
+                  className="flex-1"
+                />
+              ) : (
+                <Link
+                  href="/dashboard/services#contact"
+                  className={cn(buttonVariants(), "flex-1 gap-2")}
+                >
+                  Start Now
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              )}
               <Link
                 href="/dashboard/services#contact"
                 className={cn(buttonVariants({ variant: "outline" }), "flex-1 gap-2")}
               >
-                Schedule My Rescue Session
+                Schedule a Consultation
               </Link>
             </div>
           </CardContent>
@@ -807,7 +830,7 @@ export default async function ServicesPage() {
           </h2>
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {relevantServices.map((service) => (
-              <Card key={service.id}>
+              <Card key={service.id} className="flex flex-col">
                 <CardHeader>
                   <div className="flex items-start justify-between">
                     <CardTitle className="text-lg">{service.name}</CardTitle>
@@ -817,7 +840,7 @@ export default async function ServicesPage() {
                   </div>
                   <CardDescription>{service.description}</CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="flex-1">
                   {service.features && service.features.length > 0 && (
                     <ul className="mb-3 space-y-1 text-sm text-muted-foreground">
                       {service.features.map((feature: string, i: number) => (
@@ -833,6 +856,16 @@ export default async function ServicesPage() {
                     {service.currency || "CAD"}
                   </span>
                 </CardContent>
+                {service.price > 0 && (
+                  <div className="p-6 pt-0">
+                    <CheckoutButton
+                      type="service"
+                      serviceId={service.id}
+                      label={`Purchase — $${service.price?.toLocaleString()} ${service.currency || "CAD"}`}
+                      className="w-full"
+                    />
+                  </div>
+                )}
               </Card>
             ))}
           </div>
