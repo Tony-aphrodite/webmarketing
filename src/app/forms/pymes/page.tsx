@@ -128,19 +128,19 @@ function calculateResults(data: PymesCalculatorData) {
 // ─── Urgency messages per PDF 5.1.1.1 ────────────────
 const URGENCY_MESSAGES: Record<string, { emoji: string; title: string; body: string }> = {
   critical: {
-    emoji: "🟡",
-    title: "Dangerous stagnation risk,",
-    body: "You are working for the business, not the other way around. You have revenue leaks and need to improve your marketing urgently,",
+    emoji: "🔴",
+    title: "Tu empresa está perdiendo dinero cada hora.",
+    body: "Necesitas una reestructuración antes de que sea tarde.",
   },
   high: {
     emoji: "🟠",
-    title: "Growth stalled,",
-    body: "Your business has potential but you are leaving opportunities on the table. With strategic adjustments you can accelerate your growth,",
+    title: "Tienes oportunidades de crecimiento que no estás aprovechando.",
+    body: "Un plan estratégico puede cambiar el rumbo.",
   },
   moderate: {
     emoji: "🟢",
-    title: "On the right track, optimize to scale,",
-    body: "Your business has solid foundations. It is time to scale with advanced digital marketing strategies,",
+    title: "Tu negocio tiene una base sólida.",
+    body: "Con optimización puedes escalar al siguiente nivel.",
   },
 };
 
