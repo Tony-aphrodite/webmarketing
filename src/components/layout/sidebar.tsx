@@ -75,7 +75,7 @@ const NAV_ITEMS: NavItem[] = [
     label: "Payment History",
     href: "/dashboard/payments",
     icon: CreditCard,
-    roles: ALL_ROLES,
+    roles: [...OWNER_ROLES, "pymes" as UserRole],
   },
   {
     label: "My Profile",
