@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { sendContactNotification } from "@/lib/email";
 
 export async function POST(request: Request) {
   try {
@@ -27,6 +28,11 @@ export async function POST(request: Request) {
       status: "nuevo",
       notes: subject,
     });
+
+    // Send email notification (non-blocking)
+    sendContactNotification({ name, email, phone: phone || null, subject }).catch(
+      (err) => console.error("Email notification failed:", err)
+    );
 
     // Redirect back to homepage with success message
     return NextResponse.redirect(new URL("/?contact=success", request.url), 303);
