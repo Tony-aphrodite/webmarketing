@@ -42,11 +42,12 @@ interface PropertyImage {
 }
 
 const IMAGE_RULES = [
-  "Minimum resolution: 1920×1080 pixels",
+  "Minimum resolution: 1280px width",
   "Landscape orientation preferred",
   "Natural lighting — avoid flash",
   "Clean and decluttered spaces",
   "No personal items or identifiable information",
+  "No people or pets (not even in reflections)",
 ];
 
 export default function ImagesPage() {
@@ -214,9 +215,16 @@ export default function ImagesPage() {
           <div className="flex flex-wrap items-end gap-4">
             <div className="w-full space-y-2 sm:w-auto">
               <Label>Property</Label>
-              <Select value={selectedProperty} onValueChange={(v) => v && setSelectedProperty(v)}>
+              <Select value={selectedProperty} onValueChange={(v: string | null) => v && setSelectedProperty(v)}>
                 <SelectTrigger className="w-full sm:w-[300px]">
-                  <SelectValue placeholder="Select property" />
+                  <SelectValue>
+                    {selectedProperty
+                      ? (() => {
+                          const p = properties.find((pr) => pr.id === selectedProperty);
+                          return p ? `${p.address}, ${p.city}` : "Select property";
+                        })()
+                      : "Select property"}
+                  </SelectValue>
                 </SelectTrigger>
                 <SelectContent>
                   {properties.map((p) => (
