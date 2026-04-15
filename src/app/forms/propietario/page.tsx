@@ -134,6 +134,85 @@ function getServiceTier(count: number): string {
   return "Basic";
 }
 
+function getPortfolio(rent: number): { name: string; key: string; color: string; bgColor: string } {
+  if (rent >= 7001) return { name: "Lujo", key: "lujo", color: "text-purple-600", bgColor: "bg-purple-50" };
+  if (rent >= 4000) return { name: "Signature", key: "signature", color: "text-amber-600", bgColor: "bg-amber-50" };
+  return { name: "Essentials", key: "essentials", color: "text-blue-600", bgColor: "bg-blue-50" };
+}
+
+// Fee rates per portfolio for CFP calculation
+const PORTFOLIO_FEE_RATES: Record<string, number> = {
+  essentials: 0.10, // 10% of rent
+  signature: 0.12,  // 12% of rent
+  lujo: 0.15,       // 15% of rent
+};
+
+interface InvestorPropertyData {
+  property_type: string;
+  bedrooms: string;
+  bathrooms: string;
+  area_sqft: number | "";
+  area_unit: "sqft" | "m2";
+  occupancy_status: string;
+  vacancy_date: string;
+  availability_date: string;
+  style: string;
+  levels: string;
+  dishwasher: boolean;
+  pet_friendly: boolean;
+  smart_home: boolean;
+  smart_home_features: string[];
+  shared_unit: boolean;
+  furnished: boolean;
+  utilities_included: boolean;
+  amenities: string[];
+  common_areas: string[];
+  listing_platforms: string[];
+  address: string;
+  postal_code: string;
+  near_parks: boolean;
+  near_churches: boolean;
+  near_skytrain: boolean;
+  skytrain_lines: string[];
+  near_bus: boolean;
+  near_mall: boolean;
+  social_life: string;
+  nearby_supermarkets: string[];
+}
+
+const DEFAULT_INVESTOR_PROP: InvestorPropertyData = {
+  property_type: "",
+  bedrooms: "",
+  bathrooms: "",
+  area_sqft: "",
+  area_unit: "sqft",
+  occupancy_status: "vacant",
+  vacancy_date: "",
+  availability_date: "",
+  style: "",
+  levels: "",
+  dishwasher: false,
+  pet_friendly: false,
+  smart_home: false,
+  smart_home_features: [],
+  shared_unit: false,
+  furnished: false,
+  utilities_included: false,
+  amenities: [],
+  common_areas: [],
+  listing_platforms: [],
+  address: "",
+  postal_code: "",
+  near_parks: false,
+  near_churches: false,
+  near_skytrain: false,
+  skytrain_lines: [],
+  near_bus: false,
+  near_mall: false,
+  social_life: "",
+  nearby_supermarkets: [],
+};
+
 export default function OwnerFormPage() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
@@ -141,6 +220,8 @@ export default function OwnerFormPage() {
   const [error, setError] = useState<string | null>(null);
   const [expandedLegal, setExpandedLegal] = useState<string | null>(null);
   const [propertyImages, setPropertyImages] = useState<ImageWithMeta[]>([]);
+  const [investorProps, setInvestorProps] = useState<InvestorPropertyData[]>([]);
+  const [propIdx, setPropIdx] = useState(0);
   const formRef = useRef<HTMLDivElement>(null);
 
   const {
@@ -200,6 +281,8 @@ export default function OwnerFormPage() {
   const occupancyStatus = watch("occupancy_status") as string;
   const selectedStyle = watch("style") as string | undefined;
   const selectedLevels = watch("levels") as string | undefined;
+  const userType = watch("user_type") as string | undefined;
+  const isInvestor = userType === "investor" && propertyCount >= 4;
 
   function toggleArray(field: keyof OwnerFormData, value: string, arr: string[]) {
     const next = arr.includes(value)
@@ -216,7 +299,43 @@ export default function OwnerFormPage() {
     while (newRents.length < count) newRents.push(0);
     setValue("cities", newCities.slice(0, count));
     setValue("rents", newRents.slice(0, count));
+    syncInvestorProps(count);
   }
+
+  // Keep investorProps array in sync with property_count for investors
+  function syncInvestorProps(count: number) {
+    setInvestorProps((prev) => {
+      const arr = [...prev];
+      while (arr.length < count) arr.push({ ...DEFAULT_INVESTOR_PROP });
+      return arr.slice(0, count);
+    });
+  }
+
+  // Update a single field on the current investor property
+  function setInvProp<K extends keyof InvestorPropertyData>(key: K, value: InvestorPropertyData[K]) {
+    setInvestorProps((prev) => {
+      const arr = [...prev];
+      if (!arr[propIdx]) arr[propIdx] = { ...DEFAULT_INVESTOR_PROP };
+      arr[propIdx] = { ...arr[propIdx], [key]: value };
+      return arr;
+    });
+  }
+
+  function toggleInvArray(key: "amenities" | "common_areas" | "smart_home_features" | "skytrain_lines" | "nearby_supermarkets" | "listing_platforms", value: string) {
+    setInvestorProps((prev) => {
+      const arr = [...prev];
+      if (!arr[propIdx]) arr[propIdx] = { ...DEFAULT_INVESTOR_PROP };
+      const current = arr[propIdx][key];
+      arr[propIdx] = {
+        ...arr[propIdx],
+        [key]: current.includes(value) ? current.filter((v) => v !== value) : [...current, value],
+      };
+      return arr;
+    });
+  }
+
+  // Current investor property (safe access)
+  const invProp = investorProps[propIdx] || DEFAULT_INVESTOR_PROP;
 
   // Scroll to first error field (#6, #12, #20)
   function scrollToFirstError() {
@@ -232,15 +351,49 @@ export default function OwnerFormPage() {
     let valid = true;
     if (step === 1) {
       valid = await trigger(["user_type", "property_count", "objectives"]);
+      if (valid) syncInvestorProps(propertyCount);
     }
     if (step === 2) {
       valid = await trigger(["cities", "rents"]);
     }
     if (step === 3) {
-      valid = await trigger(["property_type", "bedrooms", "bathrooms"]);
+      if (isInvestor) {
+        // Validate current investor property
+        const p = investorProps[propIdx];
+        if (!p?.property_type || !p?.bedrooms || !p?.bathrooms) {
+          setError("Please fill in property type, bedrooms, and bathrooms.");
+          scrollToFirstError();
+          return;
+        }
+        setError(null);
+        // Move to next property or next step
+        if (propIdx < propertyCount - 1) {
+          setPropIdx(propIdx + 1);
+          return;
+        }
+        // All properties done, reset index for step 4
+        setPropIdx(0);
+      } else {
+        valid = await trigger(["property_type", "bedrooms", "bathrooms"]);
+      }
     }
     if (step === 4) {
-      valid = await trigger(["address", "zone_city"]);
+      if (isInvestor) {
+        const p = investorProps[propIdx];
+        if (!p?.address) {
+          setError("Please enter the property address.");
+          scrollToFirstError();
+          return;
+        }
+        setError(null);
+        if (propIdx < propertyCount - 1) {
+          setPropIdx(propIdx + 1);
+          return;
+        }
+        setPropIdx(0);
+      } else {
+        valid = await trigger(["address", "zone_city"]);
+      }
     }
     if (valid) {
       setStep(step + 1);
@@ -280,6 +433,7 @@ export default function OwnerFormPage() {
       }
 
       const tier = propertyCount >= 4 ? "elite" : propertyCount >= 2 ? "preferred_owners" : "basic";
+      const isInvestorSubmit = data.user_type === "investor" && propertyCount >= 4;
 
       // Save owner profile to discovery_briefs
       const { error: briefError } = await supabase
@@ -287,13 +441,13 @@ export default function OwnerFormPage() {
         .insert({
           user_id: user.id,
           property_objective: "rent",
-          property_type: data.property_type,
-          current_state: data.occupancy_status,
+          property_type: isInvestorSubmit ? investorProps[0]?.property_type || data.property_type : data.property_type,
+          current_state: isInvestorSubmit ? investorProps[0]?.occupancy_status || "vacant" : data.occupancy_status,
           monthly_rent: data.rents[0] || null,
           main_challenge: "find_tenants",
           property_count: data.property_count,
           has_professional_photos: false,
-          current_listings: data.listing_platforms,
+          current_listings: isInvestorSubmit ? investorProps[0]?.listing_platforms || [] : data.listing_platforms,
           objectives: data.objectives,
           cities: data.cities,
           rents: data.rents,
@@ -306,75 +460,154 @@ export default function OwnerFormPage() {
 
       if (briefError) throw briefError;
 
-      // Save first property details
-      const { data: propData, error: propError } = await supabase.from("properties").insert({
-        owner_id: user.id,
-        title: `${data.property_type} in ${data.zone_city}`,
-        property_type: data.property_type,
-        address: data.address,
-        city: data.zone_city,
-        province: data.province,
-        postal_code: data.postal_code || null,
-        monthly_rent: data.rents[0] || null,
-        bedrooms: parseInt(data.bedrooms),
-        bathrooms: Math.floor(parseFloat(data.bathrooms.replace(" Bath", ""))),
-        area_sqft: typeof data.area_sqft === "number" ? data.area_sqft : null,
-        amenities: data.amenities,
-        common_areas: data.common_areas,
-        availability_date: data.availability_date || null,
-        dishwasher: data.dishwasher,
-        pet_friendly: data.pet_friendly,
-        smart_home: data.smart_home,
-        smart_home_features: data.smart_home_features,
-        shared_unit: data.shared_unit,
-        levels: data.levels || null,
-        furnished: data.furnished,
-        utilities_included: data.utilities_included,
-        style: data.style || null,
-        near_parks: data.near_parks,
-        near_churches: data.near_churches,
-        near_skytrain: data.near_skytrain,
-        skytrain_lines: data.skytrain_lines,
-        near_bus: data.near_bus,
-        social_life: data.social_life || null,
-        near_mall: data.near_mall,
-        nearby_supermarkets: data.nearby_supermarkets,
-        service_tier: tier,
-        is_available: data.occupancy_status === "vacant",
-      }).select().single();
+      if (isInvestorSubmit) {
+        // ─── Investor: create all properties with portfolio assignment ───
+        for (let i = 0; i < Math.min(propertyCount, investorProps.length); i++) {
+          const ip = investorProps[i];
+          const rent = data.rents[i] || 0;
+          const city = data.cities[i] || "";
+          const portfolio = getPortfolio(rent);
+          const feeRate = PORTFOLIO_FEE_RATES[portfolio.key];
+          const fee = rent * feeRate;
+          const cfpMonthly = rent - fee;
+          const paybackMonths = fee > 0 ? fee / cfpMonthly : 0;
 
-      if (propError) throw propError;
+          const { data: propData, error: propError } = await supabase.from("properties").insert({
+            owner_id: user.id,
+            title: `${ip.property_type} in ${city}`,
+            property_type: ip.property_type,
+            address: ip.address,
+            city: city,
+            province: "British Columbia",
+            postal_code: ip.postal_code || null,
+            monthly_rent: rent || null,
+            bedrooms: parseInt(ip.bedrooms) || null,
+            bathrooms: ip.bathrooms ? Math.floor(parseFloat(ip.bathrooms.replace(" Bath", ""))) : null,
+            area_sqft: typeof ip.area_sqft === "number" ? ip.area_sqft : null,
+            amenities: ip.amenities,
+            common_areas: ip.common_areas,
+            availability_date: ip.availability_date || null,
+            dishwasher: ip.dishwasher,
+            pet_friendly: ip.pet_friendly,
+            smart_home: ip.smart_home,
+            smart_home_features: ip.smart_home_features,
+            shared_unit: ip.shared_unit,
+            levels: ip.levels || null,
+            furnished: ip.furnished,
+            utilities_included: ip.utilities_included,
+            style: ip.style || null,
+            near_parks: ip.near_parks,
+            near_churches: ip.near_churches,
+            near_skytrain: ip.near_skytrain,
+            skytrain_lines: ip.skytrain_lines,
+            near_bus: ip.near_bus,
+            social_life: ip.social_life || null,
+            near_mall: ip.near_mall,
+            nearby_supermarkets: ip.nearby_supermarkets,
+            service_tier: tier,
+            elite_tier: portfolio.key,
+            cfp_monthly: cfpMonthly,
+            payback_months: paybackMonths,
+            is_available: ip.occupancy_status === "vacant",
+          }).select().single();
 
-      // Upload property images to Supabase Storage
-      if (propData && propertyImages.length > 0) {
-        for (const img of propertyImages) {
-          const ext = img.file.name.split(".").pop();
-          const path = `properties/${propData.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
-
-          const { error: uploadErr } = await supabase.storage
-            .from("property-images")
-            .upload(path, img.file);
-
-          if (uploadErr) {
-            console.error("Image upload failed:", uploadErr);
-            continue;
+          if (propError) {
+            console.error(`Failed to create property ${i + 1}:`, propError);
           }
 
-          const { data: { publicUrl } } = supabase.storage
-            .from("property-images")
-            .getPublicUrl(path);
+          // Upload images for this property (images are shared across all in this version)
+          if (propData && i === 0 && propertyImages.length > 0) {
+            for (const img of propertyImages) {
+              const ext = img.file.name.split(".").pop();
+              const path = `properties/${propData.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+              const { error: uploadErr } = await supabase.storage.from("property-images").upload(path, img.file);
+              if (uploadErr) { console.error("Image upload failed:", uploadErr); continue; }
+              const { data: { publicUrl } } = supabase.storage.from("property-images").getPublicUrl(path);
+              await supabase.from("property_images").insert({
+                property_id: propData.id,
+                room_category: img.room,
+                image_url: publicUrl,
+                original_filename: img.file.name,
+                file_size_bytes: img.file.size,
+                resolution_ok: img.validation.resolution_ok,
+                orientation: img.validation.orientation,
+                status: "pending",
+                sort_order: propertyImages.indexOf(img),
+              });
+            }
+          }
+        }
+      } else {
+        // ─── Owner: save single property (existing logic) ───
+        const { data: propData, error: propError } = await supabase.from("properties").insert({
+          owner_id: user.id,
+          title: `${data.property_type} in ${data.zone_city}`,
+          property_type: data.property_type,
+          address: data.address,
+          city: data.zone_city,
+          province: data.province,
+          postal_code: data.postal_code || null,
+          monthly_rent: data.rents[0] || null,
+          bedrooms: parseInt(data.bedrooms),
+          bathrooms: Math.floor(parseFloat(data.bathrooms.replace(" Bath", ""))),
+          area_sqft: typeof data.area_sqft === "number" ? data.area_sqft : null,
+          amenities: data.amenities,
+          common_areas: data.common_areas,
+          availability_date: data.availability_date || null,
+          dishwasher: data.dishwasher,
+          pet_friendly: data.pet_friendly,
+          smart_home: data.smart_home,
+          smart_home_features: data.smart_home_features,
+          shared_unit: data.shared_unit,
+          levels: data.levels || null,
+          furnished: data.furnished,
+          utilities_included: data.utilities_included,
+          style: data.style || null,
+          near_parks: data.near_parks,
+          near_churches: data.near_churches,
+          near_skytrain: data.near_skytrain,
+          skytrain_lines: data.skytrain_lines,
+          near_bus: data.near_bus,
+          social_life: data.social_life || null,
+          near_mall: data.near_mall,
+          nearby_supermarkets: data.nearby_supermarkets,
+          service_tier: tier,
+          is_available: data.occupancy_status === "vacant",
+        }).select().single();
 
-          await supabase.from("property_images").insert({
-            property_id: propData.id,
-            room_category: img.room,
-            image_url: publicUrl,
-            original_filename: img.file.name,
-            file_size_bytes: img.file.size,
-            resolution_ok: img.validation.resolution_ok,
-            orientation: img.validation.orientation,
-            status: "pending",
-            sort_order: propertyImages.indexOf(img),
-          });
+        if (propError) throw propError;
+
+        // Upload property images to Supabase Storage
+        if (propData && propertyImages.length > 0) {
+          for (const img of propertyImages) {
+            const ext = img.file.name.split(".").pop();
+            const path = `properties/${propData.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
+
+            const { error: uploadErr } = await supabase.storage
+              .from("property-images")
+              .upload(path, img.file);
+
+            if (uploadErr) {
+              console.error("Image upload failed:", uploadErr);
+              continue;
+            }
+
+            const { data: { publicUrl } } = supabase.storage
+              .from("property-images")
+              .getPublicUrl(path);
+
+            await supabase.from("property_images").insert({
+              property_id: propData.id,
+              room_category: img.room,
+              image_url: publicUrl,
+              original_filename: img.file.name,
+              file_size_bytes: img.file.size,
+              resolution_ok: img.validation.resolution_ok,
+              orientation: img.validation.orientation,
+              status: "pending",
+              sort_order: propertyImages.indexOf(img),
+            });
+          }
         }
       }
 
@@ -440,16 +673,20 @@ export default function OwnerFormPage() {
             <CardTitle className="text-xl">
               {step === 1 && "Owner Profile"}
               {step === 2 && "Property Portfolio"}
-              {step === 3 && "Property Details"}
-              {step === 4 && "Zone & Location"}
+              {step === 3 && (isInvestor ? `Property ${propIdx + 1} Details` : "Property Details")}
+              {step === 4 && (isInvestor ? `Property ${propIdx + 1} Location` : "Zone & Location")}
               {step === 5 && "Property Photos"}
               {step === 6 && "Legal Consents"}
             </CardTitle>
             <CardDescription>
               {step === 1 && "Tell us about yourself and your property objectives."}
               {step === 2 && "Enter the city and desired rent for each property."}
-              {step === 3 && "Describe your first property. You can add more from your dashboard."}
-              {step === 4 && "Location details help us match tenants to your property."}
+              {step === 3 && (isInvestor
+                ? `Describe property ${propIdx + 1} of ${propertyCount}. Each property is assigned a portfolio based on rent.`
+                : "Describe your first property. You can add more from your dashboard.")}
+              {step === 4 && (isInvestor
+                ? `Enter the address and nearby features for property ${propIdx + 1} of ${propertyCount}.`
+                : "Location details help us match tenants to your property.")}
               {step === 5 && "Upload photos of your property. Quality images attract better tenants."}
               {step === 6 && "Please review and accept the following consents."}
             </CardDescription>
@@ -601,7 +838,7 @@ export default function OwnerFormPage() {
             )}
 
             {/* ═══ Step 3: Property Details ═══ */}
-            {step === 3 && (
+            {step === 3 && !isInvestor && (
               <>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -845,8 +1082,222 @@ export default function OwnerFormPage() {
               </>
             )}
 
-            {/* ═══ Step 4: Zone & Location ═══ */}
-            {step === 4 && (
+            {/* ═══ Step 3: Investor Per-Property Details ═══ */}
+            {step === 3 && isInvestor && (
+              <>
+                {/* Property sub-navigation header */}
+                <div className="flex items-center justify-between rounded-lg border bg-muted/30 p-3">
+                  <div>
+                    <p className="text-sm font-medium">
+                      Property {propIdx + 1} of {propertyCount}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {cities[propIdx] || "No city"} &mdash; ${(rents[propIdx] || 0).toLocaleString()} CAD/mo
+                    </p>
+                  </div>
+                  {rents[propIdx] > 0 && (() => {
+                    const portfolio = getPortfolio(rents[propIdx]);
+                    return (
+                      <span className={`rounded-full px-3 py-1 text-xs font-medium ${portfolio.bgColor} ${portfolio.color}`}>
+                        {portfolio.name} Portfolio
+                      </span>
+                    );
+                  })()}
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Property type</Label>
+                    <Select value={invProp.property_type || undefined} onValueChange={(val: string | null) => val && setInvProp("property_type", val)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select type" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {PROPERTY_TYPES.map((t) => (
+                          <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Occupancy status</Label>
+                    <Select value={invProp.occupancy_status} onValueChange={(val: string | null) => val && setInvProp("occupancy_status", val)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {OCCUPANCY_OPTIONS.map((o) => (
+                          <SelectItem key={o.value} value={o.value}>{o.label}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {invProp.occupancy_status === "occupied" && (
+                  <div className="space-y-2 rounded-md border border-amber-200 bg-amber-50 p-3">
+                    <Label>When does the property become available?</Label>
+                    <Input type="date" value={invProp.vacancy_date} onChange={(e) => setInvProp("vacancy_date", e.target.value)} />
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <Label>Availability date</Label>
+                  <Input type="date" value={invProp.availability_date} onChange={(e) => setInvProp("availability_date", e.target.value)} />
+                </div>
+
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label>Bedrooms</Label>
+                    <Select value={invProp.bedrooms || undefined} onValueChange={(val: string | null) => val && setInvProp("bedrooms", val)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {BEDROOMS.map((b) => (
+                          <SelectItem key={b} value={b.replace(" BR", "")}>{b}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Bathrooms</Label>
+                    <Select value={invProp.bathrooms || undefined} onValueChange={(val: string | null) => val && setInvProp("bathrooms", val)}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {BATHROOMS.map((b) => (
+                          <SelectItem key={b} value={b}>{b}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Size</Label>
+                    <div className="flex gap-1">
+                      <Input
+                        type="number"
+                        placeholder="800"
+                        value={invProp.area_sqft}
+                        onChange={(e) => setInvProp("area_sqft", e.target.value ? Number(e.target.value) : "")}
+                        className="min-w-0"
+                      />
+                      <Select value={invProp.area_unit} onValueChange={(v: string | null) => v && setInvProp("area_unit", v as "sqft" | "m2")}>
+                        <SelectTrigger className="w-20 shrink-0">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="sqft">ft²</SelectItem>
+                          <SelectItem value="m2">m²</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Style</Label>
+                  <Select value={invProp.style || undefined} onValueChange={(val: string | null) => val && setInvProp("style", val)}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select style" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {STYLES.map((s) => (
+                        <SelectItem key={s.value} value={s.value}>{s.label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex flex-wrap gap-x-6 gap-y-2">
+                  {[
+                    { id: `inv-dishwasher-${propIdx}`, label: "Dishwasher", field: "dishwasher" as const },
+                    { id: `inv-pet-${propIdx}`, label: "Pet-friendly", field: "pet_friendly" as const },
+                    { id: `inv-shared-${propIdx}`, label: "Shared unit", field: "shared_unit" as const },
+                    { id: `inv-furnished-${propIdx}`, label: "Furnished", field: "furnished" as const },
+                    { id: `inv-utilities-${propIdx}`, label: "Utilities included", field: "utilities_included" as const },
+                  ].map(({ id, label, field }) => (
+                    <div key={id} className="flex items-center gap-2">
+                      <Checkbox
+                        id={id}
+                        checked={invProp[field] as boolean}
+                        onCheckedChange={(c) => setInvProp(field, c === true)}
+                      />
+                      <Label htmlFor={id} className="font-normal">{label}</Label>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="space-y-3">
+                  <Label>Amenities</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {AMENITIES.map((a) => (
+                      <div key={a} className="flex items-center gap-2">
+                        <Checkbox
+                          id={`inv-am-${propIdx}-${a}`}
+                          checked={invProp.amenities.includes(a)}
+                          onCheckedChange={() => toggleInvArray("amenities", a)}
+                        />
+                        <Label htmlFor={`inv-am-${propIdx}-${a}`} className="text-sm font-normal">{a}</Label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-3">
+                  <Label>Where is this property currently listed?</Label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {LISTING_PLATFORMS.map((p) => (
+                      <div key={p} className="flex items-center gap-2">
+                        <Checkbox
+                          id={`inv-lp-${propIdx}-${p}`}
+                          checked={invProp.listing_platforms.includes(p)}
+                          onCheckedChange={() => toggleInvArray("listing_platforms", p)}
+                        />
+                        <Label htmlFor={`inv-lp-${propIdx}-${p}`} className="text-sm font-normal">{p}</Label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* CFP Preview for this property */}
+                {rents[propIdx] > 0 && (() => {
+                  const rent = rents[propIdx];
+                  const portfolio = getPortfolio(rent);
+                  const feeRate = PORTFOLIO_FEE_RATES[portfolio.key];
+                  const fee = rent * feeRate;
+                  const cfp = rent - fee;
+                  const payback = fee > 0 ? fee / cfp : 0;
+                  return (
+                    <div className="rounded-lg border bg-emerald-50 p-4 space-y-2">
+                      <p className="text-sm font-medium text-emerald-700">Financial Preview — Property {propIdx + 1}</p>
+                      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+                        <div>
+                          <p className="text-xs text-muted-foreground">Rent</p>
+                          <p className="text-sm font-semibold">${rent.toLocaleString()}/mo</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground">Fee ({(feeRate * 100).toFixed(0)}%)</p>
+                          <p className="text-sm font-semibold text-red-600">${fee.toFixed(2)}/mo</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground">CFP Monthly</p>
+                          <p className="text-sm font-semibold text-emerald-600">${cfp.toFixed(2)}</p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-muted-foreground">Payback</p>
+                          <p className="text-sm font-semibold">{payback.toFixed(1)} months</p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })()}
+              </>
+            )}
+
+            {/* ═══ Step 4: Zone & Location (Owner) ═══ */}
+            {step === 4 && !isInvestor && (
               <>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -952,6 +1403,123 @@ export default function OwnerFormPage() {
               </>
             )}
 
+            {/* ═══ Step 4: Zone & Location (Investor per-property) ═══ */}
+            {step === 4 && isInvestor && (
+              <>
+                <div className="flex items-center justify-between rounded-lg border bg-muted/30 p-3">
+                  <div>
+                    <p className="text-sm font-medium">
+                      Property {propIdx + 1} of {propertyCount} — Location
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {cities[propIdx] || "No city"} &mdash; ${(rents[propIdx] || 0).toLocaleString()} CAD/mo
+                    </p>
+                  </div>
+                  {rents[propIdx] > 0 && (() => {
+                    const portfolio = getPortfolio(rents[propIdx]);
+                    return (
+                      <span className={`rounded-full px-3 py-1 text-xs font-medium ${portfolio.bgColor} ${portfolio.color}`}>
+                        {portfolio.name}
+                      </span>
+                    );
+                  })()}
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>City</Label>
+                    <p className="text-sm font-medium px-3 py-2 rounded-md bg-muted">{cities[propIdx] || "Not set"}</p>
+                    <p className="text-xs text-muted-foreground">Set in Step 2</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Postal code</Label>
+                    <Input
+                      placeholder="V6B 1A1"
+                      value={invProp.postal_code}
+                      onChange={(e) => setInvProp("postal_code", e.target.value)}
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Address</Label>
+                  <Input
+                    placeholder="123 Main St"
+                    value={invProp.address}
+                    onChange={(e) => setInvProp("address", e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-3">
+                  <Label>Nearby features</Label>
+                  {[
+                    { label: "Parks nearby", field: "near_parks" as const },
+                    { label: "Churches nearby", field: "near_churches" as const },
+                    { label: "Bus stop nearby", field: "near_bus" as const },
+                    { label: "Shopping mall nearby", field: "near_mall" as const },
+                  ].map(({ label, field }) => (
+                    <div key={field} className="flex items-center gap-2">
+                      <Checkbox
+                        id={`inv-${field}-${propIdx}`}
+                        checked={invProp[field]}
+                        onCheckedChange={(c) => setInvProp(field, c === true)}
+                      />
+                      <Label htmlFor={`inv-${field}-${propIdx}`} className="font-normal">{label}</Label>
+                    </div>
+                  ))}
+
+                  <div className="flex items-center gap-2">
+                    <Checkbox
+                      id={`inv-skytrain-${propIdx}`}
+                      checked={invProp.near_skytrain}
+                      onCheckedChange={(c) => setInvProp("near_skytrain", c === true)}
+                    />
+                    <Label htmlFor={`inv-skytrain-${propIdx}`} className="font-normal">SkyTrain nearby</Label>
+                  </div>
+                  {invProp.near_skytrain && (
+                    <div className="ml-6 space-y-2">
+                      <Label className="text-sm">Which line?</Label>
+                      {SKYTRAIN_LINES.map((line) => (
+                        <div key={line} className="flex items-center gap-2">
+                          <Checkbox
+                            id={`inv-sky-${propIdx}-${line}`}
+                            checked={invProp.skytrain_lines.includes(line)}
+                            onCheckedChange={() => toggleInvArray("skytrain_lines", line)}
+                          />
+                          <Label htmlFor={`inv-sky-${propIdx}-${line}`} className="text-sm font-normal">{line}</Label>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Social life nearby (optional)</Label>
+                  <Input
+                    placeholder="e.g. bars, cinemas, entertainment..."
+                    value={invProp.social_life}
+                    onChange={(e) => setInvProp("social_life", e.target.value)}
+                  />
+                </div>
+
+                <div className="space-y-3">
+                  <Label>Nearby supermarkets</Label>
+                  <div className="grid grid-cols-3 gap-2">
+                    {SUPERMARKETS.map((s) => (
+                      <div key={s} className="flex items-center gap-2">
+                        <Checkbox
+                          id={`inv-sm-${propIdx}-${s}`}
+                          checked={invProp.nearby_supermarkets.includes(s)}
+                          onCheckedChange={() => toggleInvArray("nearby_supermarkets", s)}
+                        />
+                        <Label htmlFor={`inv-sm-${propIdx}-${s}`} className="text-sm font-normal">{s}</Label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+
             {/* ═══ Step 5: Property Photos ═══ */}
             {step === 5 && (
               <ImageUpload
@@ -1023,12 +1591,49 @@ export default function OwnerFormPage() {
                 ))}
 
                 {/* Review summary */}
-                <div className="rounded-lg border bg-primary/5 p-4 mt-4">
-                  <p className="text-sm font-medium text-primary">Your service tier:</p>
-                  <p className="mt-1 text-lg font-bold">{getServiceTier(propertyCount)}</p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {propertyCount} {propertyCount === 1 ? "property" : "properties"} in British Columbia
-                  </p>
+                <div className="rounded-lg border bg-primary/5 p-4 mt-4 space-y-3">
+                  <div>
+                    <p className="text-sm font-medium text-primary">Your service tier:</p>
+                    <p className="mt-1 text-lg font-bold">{getServiceTier(propertyCount)}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {propertyCount} {propertyCount === 1 ? "property" : "properties"} in British Columbia
+                    </p>
+                  </div>
+
+                  {/* Investor portfolio summary */}
+                  {isInvestor && investorProps.length > 0 && (
+                    <div className="space-y-2 border-t pt-3">
+                      <p className="text-sm font-medium">Portfolio Assignment Summary</p>
+                      {investorProps.slice(0, propertyCount).map((ip, i) => {
+                        const rent = rents[i] || 0;
+                        const portfolio = getPortfolio(rent);
+                        const feeRate = PORTFOLIO_FEE_RATES[portfolio.key];
+                        const cfp = rent - (rent * feeRate);
+                        return (
+                          <div key={i} className="flex items-center justify-between rounded-md border p-2 text-sm">
+                            <div>
+                              <span className="font-medium">#{i + 1}</span>{" "}
+                              <span className="text-muted-foreground">{cities[i]} &mdash; ${rent.toLocaleString()}/mo</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${portfolio.bgColor} ${portfolio.color}`}>
+                                {portfolio.name}
+                              </span>
+                              <span className="text-xs text-emerald-600 font-medium">CFP ${cfp.toFixed(0)}/mo</span>
+                            </div>
+                          </div>
+                        );
+                      })}
+                      <div className="rounded-md bg-emerald-50 border border-emerald-200 p-2 text-sm text-emerald-700 font-medium">
+                        Total Portfolio CFP: ${investorProps.slice(0, propertyCount).reduce((sum, _, i) => {
+                          const rent = rents[i] || 0;
+                          const portfolio = getPortfolio(rent);
+                          const feeRate = PORTFOLIO_FEE_RATES[portfolio.key];
+                          return sum + (rent - (rent * feeRate));
+                        }, 0).toFixed(2)} CAD/mo
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -1036,8 +1641,17 @@ export default function OwnerFormPage() {
 
           {/* Navigation */}
           <div className="flex justify-between px-6 pb-6">
-            {step > 1 ? (
-              <Button type="button" variant="ghost" onClick={() => setStep(step - 1)} className="gap-1">
+            {step > 1 || (isInvestor && propIdx > 0) ? (
+              <Button type="button" variant="ghost" onClick={() => {
+                if (isInvestor && (step === 3 || step === 4) && propIdx > 0) {
+                  setPropIdx(propIdx - 1);
+                } else if (isInvestor && step === 4 && propIdx === 0) {
+                  setPropIdx(propertyCount - 1);
+                  setStep(3);
+                } else {
+                  setStep(step - 1);
+                }
+              }} className="gap-1">
                 <ArrowLeft className="h-4 w-4" />
                 Back
               </Button>
