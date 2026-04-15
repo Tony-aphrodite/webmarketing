@@ -52,17 +52,22 @@ function validateImage(file: File): Promise<ImageWithMeta["validation"]> {
       const width = img.width;
       const height = img.height;
       const orientation = width >= height ? "landscape" : "portrait";
-      const resolution_ok = width >= 1920 && height >= 1080;
-      const file_size_ok = file.size <= 10 * 1024 * 1024; // 10MB
+      const resolution_ok = width >= 1280;
+      const file_size_ok = file.size <= 10 * 1024 * 1024; // 10MB max
+      const min_weight_ok = file.size >= 100 * 1024; // 100KB min (avoid screenshots)
 
       let status: "green" | "yellow" | "red" = "green";
       let message = "All checks passed";
 
-      if (!resolution_ok || !file_size_ok) {
+      if (!resolution_ok) {
         status = "red";
-        message = !resolution_ok
-          ? `Resolution too low (${width}x${height}). Minimum: 1920x1080.`
-          : `File too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximum: 10MB.`;
+        message = `Resolution too low (${width}px wide). Minimum: 1280px width.`;
+      } else if (!file_size_ok) {
+        status = "red";
+        message = `File too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Maximum: 10MB.`;
+      } else if (!min_weight_ok) {
+        status = "red";
+        message = `File too small (${(file.size / 1024).toFixed(0)}KB). Minimum: 100KB. Screenshots are not accepted.`;
       } else if (orientation === "portrait") {
         status = "yellow";
         message = "Portrait orientation detected. Landscape is preferred.";
@@ -90,23 +95,37 @@ export function ImageUpload({
 }: ImageUploadProps) {
   const [selectedRoom, setSelectedRoom] = useState("living_room");
 
+  const [rejectedMessages, setRejectedMessages] = useState<string[]>([]);
+
   const onDrop = useCallback(
     async (acceptedFiles: File[]) => {
       const remaining = maxImages - images.length;
       const newFiles = acceptedFiles.slice(0, remaining);
 
       const newImages: ImageWithMeta[] = [];
+      const rejected: string[] = [];
       for (const file of newFiles) {
         const validation = await validateImage(file);
-        newImages.push({
-          file,
-          preview: URL.createObjectURL(file),
-          room: selectedRoom,
-          validation,
-        });
+        if (validation.status === "red") {
+          rejected.push(`${file.name}: ${validation.message}`);
+        } else {
+          newImages.push({
+            file,
+            preview: URL.createObjectURL(file),
+            room: selectedRoom,
+            validation,
+          });
+        }
       }
 
-      onImagesChange([...images, ...newImages]);
+      if (rejected.length > 0) {
+        setRejectedMessages(rejected);
+        setTimeout(() => setRejectedMessages([]), 8000);
+      }
+
+      if (newImages.length > 0) {
+        onImagesChange([...images, ...newImages]);
+      }
     },
     [images, maxImages, onImagesChange, selectedRoom]
   );
@@ -138,17 +157,28 @@ export function ImageUpload({
 
   return (
     <div className="space-y-4">
-      {/* 5-Rule Checklist */}
+      {/* 6-Rule Checklist */}
       <div className="rounded-lg border bg-muted/30 p-4">
         <p className="mb-2 text-sm font-medium">Photo Guidelines</p>
         <ol className="space-y-1 text-xs text-muted-foreground list-decimal list-inside">
           <li>Images must be well-lit (natural light preferred)</li>
           <li>Rooms must be clean and staged</li>
           <li>No personal items or people visible</li>
+          <li>No people or pets (not even in reflections of mirrors or shiny surfaces)</li>
           <li>Horizontal / landscape orientation preferred</li>
-          <li>Minimum resolution: 1920 x 1080 pixels</li>
+          <li>Minimum resolution: 1280px width. Minimum file size: 100KB</li>
         </ol>
       </div>
+
+      {/* Rejection messages */}
+      {rejectedMessages.length > 0 && (
+        <div className="rounded-lg border border-red-200 bg-red-50 p-3 space-y-1">
+          <p className="text-sm font-medium text-red-600">Images rejected:</p>
+          {rejectedMessages.map((msg, i) => (
+            <p key={i} className="text-xs text-red-500">{msg}</p>
+          ))}
+        </div>
+      )}
 
       {/* Room selector */}
       <div className="space-y-2">
