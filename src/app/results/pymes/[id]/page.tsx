@@ -46,15 +46,17 @@ const PLAN_DETAILS: Record<
     name: "Rescue",
     price: "$1,500 CAD",
     priceNum: 1500,
-    upfront: "$750 CAD upfront",
-    installment: "$375 CAD × 2 payments",
+    upfront: "$750 CAD upfront (50%)",
+    installment: "$375 CAD × 2 monthly payments",
     duration: "Minimum 2.5 months",
     tagline: "Intensive intervention plan to exit critical mode and move to growth",
     features: [
-      "Complete diagnosis",
-      "Basic optimization (Google, Social Media, SEO)",
-      "Lead capture structure",
-      "Direct advisory",
+      "Complete business diagnosis & sales leak analysis",
+      "Digital presence emergency recovery",
+      "Basic optimization (Google Business, Social Media, SEO)",
+      "Lead capture structure & funnel setup",
+      "Direct 1-on-1 advisory sessions",
+      "Monthly KPI performance report",
     ],
     color: "text-red-600",
     bgColor: "bg-red-50",
@@ -64,16 +66,18 @@ const PLAN_DETAILS: Record<
     name: "Growth",
     price: "$2,500 CAD",
     priceNum: 2500,
-    upfront: "$1,250 CAD upfront",
-    installment: "$625 CAD × 2 payments",
+    upfront: "$1,250 CAD upfront (50%)",
+    installment: "$625 CAD × 2 monthly payments",
     duration: "Minimum 4–5 months",
     tagline: "Plan to overcome stagnation, correct weaknesses and start growing",
     features: [
-      "Complete diagnosis",
-      "Marketing strategy",
-      "Conversion optimization",
-      "Campaign structure",
-      "Lead tracking",
+      "Complete business diagnosis & sales leak analysis",
+      "Marketing strategy development & execution",
+      "Conversion rate optimization",
+      "Campaign structure & ad management",
+      "Lead tracking system implementation",
+      "Market positioning analysis",
+      "Bi-weekly KPI performance reports",
     ],
     color: "text-orange-600",
     bgColor: "bg-orange-50",
@@ -83,16 +87,19 @@ const PLAN_DETAILS: Record<
     name: "Scale",
     price: "$3,800 CAD",
     priceNum: 3800,
-    upfront: "$1,520 CAD upfront",
-    installment: "$570 CAD × 4 payments",
+    upfront: "$1,520 CAD upfront (40%)",
+    installment: "$570 CAD × 4 monthly payments",
     duration: "Minimum 6 months",
-    tagline: "Plan to scale and maximize revenue",
+    tagline: "Plan to scale and maximize revenue with advanced strategies",
     features: [
-      "Complete diagnosis",
-      "Advanced optimization",
-      "Channel expansion",
-      "Growth strategy",
-      "Opportunity analysis",
+      "Complete business diagnosis & sales leak analysis",
+      "Advanced multi-channel optimization",
+      "Channel expansion & new market entry",
+      "Growth strategy & scaling roadmap",
+      "Opportunity & competitor analysis",
+      "Marketing automation systems",
+      "Dedicated account manager",
+      "Weekly KPI performance reports",
     ],
     color: "text-green-600",
     bgColor: "bg-green-50",
@@ -102,18 +109,25 @@ const PLAN_DETAILS: Record<
 
 // ─── All features across plans (for comparison table) ──
 const ALL_FEATURES = [
-  "Complete diagnosis",
-  "Basic optimization (Google, Social Media, SEO)",
-  "Lead capture structure",
-  "Direct advisory",
-  "Marketing strategy",
-  "Conversion optimization",
-  "Campaign structure",
-  "Lead tracking",
-  "Advanced optimization",
-  "Channel expansion",
-  "Growth strategy",
-  "Opportunity analysis",
+  "Complete business diagnosis & sales leak analysis",
+  "Digital presence emergency recovery",
+  "Basic optimization (Google Business, Social Media, SEO)",
+  "Lead capture structure & funnel setup",
+  "Direct 1-on-1 advisory sessions",
+  "Marketing strategy development & execution",
+  "Conversion rate optimization",
+  "Campaign structure & ad management",
+  "Lead tracking system implementation",
+  "Market positioning analysis",
+  "Advanced multi-channel optimization",
+  "Channel expansion & new market entry",
+  "Growth strategy & scaling roadmap",
+  "Opportunity & competitor analysis",
+  "Marketing automation systems",
+  "Dedicated account manager",
+  "Monthly KPI performance report",
+  "Bi-weekly KPI performance reports",
+  "Weekly KPI performance reports",
 ];
 
 const QUESTION_LABELS = [
@@ -178,7 +192,7 @@ export default async function PymesResultsPage({
       bg: "bg-red-50",
       border: "border-red-200",
       description:
-        "Your business has significant marketing gaps that are actively costing you revenue. Immediate action is strongly recommended.",
+        "Tu empresa está perdiendo dinero cada hora. Necesitas una reestructuración antes de que sea tarde.",
     },
     high: {
       label: "High",
@@ -187,7 +201,7 @@ export default async function PymesResultsPage({
       bg: "bg-orange-50",
       border: "border-orange-200",
       description:
-        "There are notable weaknesses in your marketing strategy. Addressing these soon will prevent further revenue loss.",
+        "Tienes oportunidades de crecimiento que no estás aprovechando. Un plan estratégico puede cambiar el rumbo.",
     },
     moderate: {
       label: "Moderate",
@@ -196,7 +210,7 @@ export default async function PymesResultsPage({
       bg: "bg-green-50",
       border: "border-green-200",
       description:
-        "Your marketing foundation is solid, but there's room to optimize and scale for maximum growth.",
+        "Tu negocio tiene una base sólida. Con optimización puedes escalar al siguiente nivel.",
     },
   };
 
@@ -391,14 +405,20 @@ export default async function PymesResultsPage({
             <CardDescription>{plan.tagline}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-1">
+            <div className="space-y-2">
               <span className={`text-4xl font-bold ${plan.color}`}>
                 {plan.price}
               </span>
-              <p className="text-sm text-muted-foreground">
-                {plan.upfront} + {plan.installment}
-              </p>
               <p className="text-sm text-muted-foreground">{plan.duration}</p>
+              <div className="rounded-md border bg-muted/30 p-3 space-y-1">
+                <p className="text-xs font-medium">Payment Options:</p>
+                <p className="text-sm text-muted-foreground">
+                  {plan.upfront}, then {plan.installment}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  Or full payment upfront. Accepted: e-Transfer, credit card, or bank transfer.
+                </p>
+              </div>
             </div>
             <ul className="space-y-2">
               {plan.features.map((feature, i) => (
