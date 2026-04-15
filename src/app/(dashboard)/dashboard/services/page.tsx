@@ -210,15 +210,17 @@ const PYMES_PLANS: Record<
   rescue: {
     name: "Rescue",
     price: "$1,500 CAD",
-    upfront: "$750 CAD upfront",
-    installment: "$375 CAD × 2 payments",
+    upfront: "$750 CAD upfront (50%)",
+    installment: "$375 CAD × 2 monthly payments",
     duration: "Minimum 2.5 months",
     tagline: "Intensive intervention plan to exit critical mode and move to growth",
     features: [
-      "Complete diagnosis",
-      "Basic optimization (Google, Social Media, SEO)",
-      "Lead capture structure",
-      "Direct advisory",
+      "Complete business diagnosis & sales leak analysis",
+      "Digital presence emergency recovery",
+      "Basic optimization (Google Business, Social Media, SEO)",
+      "Lead capture structure & funnel setup",
+      "Direct 1-on-1 advisory sessions",
+      "Monthly KPI performance report",
     ],
     color: "text-red-600",
     bgColor: "bg-red-50",
@@ -227,16 +229,18 @@ const PYMES_PLANS: Record<
   growth: {
     name: "Growth",
     price: "$2,500 CAD",
-    upfront: "$1,250 CAD upfront",
-    installment: "$625 CAD × 2 payments",
+    upfront: "$1,250 CAD upfront (50%)",
+    installment: "$625 CAD × 2 monthly payments",
     duration: "Minimum 4–5 months",
     tagline: "Plan to overcome stagnation, correct weaknesses and start growing",
     features: [
-      "Complete diagnosis",
-      "Marketing strategy",
-      "Conversion optimization",
-      "Campaign structure",
-      "Lead tracking",
+      "Complete business diagnosis & sales leak analysis",
+      "Marketing strategy development & execution",
+      "Conversion rate optimization",
+      "Campaign structure & ad management",
+      "Lead tracking system implementation",
+      "Market positioning analysis",
+      "Bi-weekly KPI performance reports",
     ],
     color: "text-orange-600",
     bgColor: "bg-orange-50",
@@ -245,16 +249,19 @@ const PYMES_PLANS: Record<
   scale: {
     name: "Scale",
     price: "$3,800 CAD",
-    upfront: "$1,520 CAD upfront",
-    installment: "$570 CAD × 4 payments",
+    upfront: "$1,520 CAD upfront (40%)",
+    installment: "$570 CAD × 4 monthly payments",
     duration: "Minimum 6 months",
-    tagline: "Plan to scale and maximize revenue",
+    tagline: "Plan to scale and maximize revenue with advanced strategies",
     features: [
-      "Complete diagnosis",
-      "Advanced optimization",
-      "Channel expansion",
-      "Growth strategy",
-      "Opportunity analysis",
+      "Complete business diagnosis & sales leak analysis",
+      "Advanced multi-channel optimization",
+      "Channel expansion & new market entry",
+      "Growth strategy & scaling roadmap",
+      "Opportunity & competitor analysis",
+      "Marketing automation systems",
+      "Dedicated account manager",
+      "Weekly KPI performance reports",
     ],
     color: "text-green-600",
     bgColor: "bg-green-50",
@@ -372,6 +379,24 @@ export default async function ServicesPage() {
   if (isTenantRole) {
     const { matchPropertiesForTenant } = await import("@/lib/profiling");
     matchedProperties = await matchPropertiesForTenant(user.id);
+  }
+
+  // Fetch thumbnails for matched properties from property_images table
+  const matchedPropertyIds = matchedProperties.map((p) => p.id);
+  const matchedThumbnails: Record<string, string> = {};
+  if (matchedPropertyIds.length > 0) {
+    const { data: imgs } = await supabase
+      .from("property_images")
+      .select("property_id, image_url")
+      .in("property_id", matchedPropertyIds)
+      .order("sort_order", { ascending: true });
+    if (imgs) {
+      for (const img of imgs) {
+        if (!matchedThumbnails[img.property_id]) {
+          matchedThumbnails[img.property_id] = img.image_url;
+        }
+      }
+    }
   }
 
   // ─── General services ──────────────────────────
@@ -603,18 +628,29 @@ export default async function ServicesPage() {
             <CardDescription>{pymesPlanDetails.tagline}</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="space-y-1">
+            <div className="space-y-2">
               <span
                 className={`text-3xl font-bold ${pymesPlanDetails.color}`}
               >
                 {pymesPlanDetails.price}
               </span>
-              <p className="text-xs text-muted-foreground">
-                {pymesPlanDetails.upfront} + {pymesPlanDetails.installment}
-              </p>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-sm text-muted-foreground">
                 {pymesPlanDetails.duration}
               </p>
+              <div className="rounded-md border bg-card p-3 space-y-1.5">
+                <p className="text-xs font-medium">Payment Options:</p>
+                <div className="flex items-center gap-2 text-sm">
+                  <Badge variant="outline" className="text-xs shrink-0">Option 1</Badge>
+                  <span className="text-muted-foreground">{pymesPlanDetails.upfront}, then {pymesPlanDetails.installment}</span>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <Badge variant="outline" className="text-xs shrink-0">Option 2</Badge>
+                  <span className="text-muted-foreground">Full payment upfront (100%)</span>
+                </div>
+                <p className="text-xs text-muted-foreground mt-1">
+                  Accepted: e-Transfer, credit card, or bank transfer
+                </p>
+              </div>
             </div>
             <ul className="space-y-1.5">
               {pymesPlanDetails.features.map((feature, i) => (
@@ -757,8 +793,18 @@ export default async function ServicesPage() {
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             {matchedProperties.map((prop) => (
               <Card key={prop.id} className="overflow-hidden">
-                <div className="aspect-video bg-muted flex items-center justify-center text-muted-foreground">
-                  <Building2 className="h-8 w-8" />
+                <div className="aspect-video bg-muted">
+                  {matchedThumbnails[prop.id] ? (
+                    <img
+                      src={matchedThumbnails[prop.id]}
+                      alt={`${prop.property_type} in ${prop.city}`}
+                      className="h-full w-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-full items-center justify-center text-muted-foreground">
+                      <Building2 className="h-8 w-8" />
+                    </div>
+                  )}
                 </div>
                 <CardHeader className="pb-2">
                   <div className="flex items-start justify-between">
