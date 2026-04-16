@@ -1,7 +1,5 @@
 import { Resend } from "resend";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 const NOTIFICATION_EMAIL = process.env.CONTACT_NOTIFICATION_EMAIL || "admin@webmarketing.ca";
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "WebMarketing <noreply@webmarketing.ca>";
 
@@ -20,6 +18,8 @@ export async function sendContactNotification({
     console.warn("RESEND_API_KEY not set — skipping email notification");
     return;
   }
+
+  const resend = new Resend(process.env.RESEND_API_KEY);
 
   await resend.emails.send({
     from: FROM_EMAIL,
