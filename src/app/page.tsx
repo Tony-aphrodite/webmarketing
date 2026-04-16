@@ -14,7 +14,14 @@ import {
   TrendingUp,
 } from "lucide-react";
 
-export default function HomePage() {
+export default async function HomePage({
+  searchParams,
+}: {
+  searchParams: Promise<{ contact?: string }>;
+}) {
+  const params = await searchParams;
+  const contactStatus = params.contact;
+
   return (
     <div className="flex min-h-screen flex-col">
       {/* Header */}
@@ -743,6 +750,24 @@ export default function HomePage() {
               you shortly.
             </p>
           </div>
+
+          {contactStatus === "success" && (
+            <div className="rounded-lg border border-green-200 bg-green-50 p-4 text-center">
+              <CheckCircle2 className="mx-auto mb-2 h-8 w-8 text-green-600" />
+              <p className="font-medium text-green-800">Message sent successfully!</p>
+              <p className="mt-1 text-sm text-green-600">
+                Our team will get back to you within 24 hours.
+              </p>
+            </div>
+          )}
+          {contactStatus === "error" && (
+            <div className="rounded-lg border border-red-200 bg-red-50 p-4 text-center">
+              <p className="font-medium text-red-800">Something went wrong</p>
+              <p className="mt-1 text-sm text-red-600">
+                Please try again or email us directly.
+              </p>
+            </div>
+          )}
 
           <form
             action="/api/contact"

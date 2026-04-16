@@ -147,16 +147,18 @@ export default async function DashboardPage() {
 
         {isTenantRole && (
           <>
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-sm font-medium">Matched Properties</CardTitle>
-                <Building2 className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{matchedCount}</div>
-                <p className="text-xs text-muted-foreground">Available properties</p>
-              </CardContent>
-            </Card>
+            <Link href="/dashboard/services#matched-properties">
+              <Card className="cursor-pointer transition-shadow hover:shadow-md">
+                <CardHeader className="flex flex-row items-center justify-between pb-2">
+                  <CardTitle className="text-sm font-medium">Matched Properties</CardTitle>
+                  <Building2 className="h-4 w-4 text-muted-foreground" />
+                </CardHeader>
+                <CardContent>
+                  <div className="text-2xl font-bold">{matchedCount}</div>
+                  <p className="text-xs text-muted-foreground">Click to view matched properties</p>
+                </CardContent>
+              </Card>
+            </Link>
           </>
         )}
 
