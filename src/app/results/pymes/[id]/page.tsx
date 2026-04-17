@@ -97,8 +97,6 @@ const PLAN_DETAILS: Record<
       "Channel expansion & new market entry",
       "Growth strategy & scaling roadmap",
       "Opportunity & competitor analysis",
-      "Marketing automation systems",
-      "Dedicated account manager",
       "Weekly KPI performance reports",
     ],
     color: "text-green-600",
@@ -123,8 +121,6 @@ const ALL_FEATURES = [
   "Channel expansion & new market entry",
   "Growth strategy & scaling roadmap",
   "Opportunity & competitor analysis",
-  "Marketing automation systems",
-  "Dedicated account manager",
   "Monthly KPI performance report",
   "Bi-weekly KPI performance reports",
   "Weekly KPI performance reports",
@@ -192,7 +188,7 @@ export default async function PymesResultsPage({
       bg: "bg-red-50",
       border: "border-red-200",
       description:
-        "Tu empresa está perdiendo dinero cada hora. Necesitas una reestructuración antes de que sea tarde.",
+        "Your company is losing money every hour. You need a restructuring before it's too late.",
     },
     high: {
       label: "High",
@@ -201,7 +197,7 @@ export default async function PymesResultsPage({
       bg: "bg-orange-50",
       border: "border-orange-200",
       description:
-        "Tienes oportunidades de crecimiento que no estás aprovechando. Un plan estratégico puede cambiar el rumbo.",
+        "You have growth opportunities you're not taking advantage of. A strategic plan can change the course.",
     },
     moderate: {
       label: "Moderate",
@@ -210,7 +206,7 @@ export default async function PymesResultsPage({
       bg: "bg-green-50",
       border: "border-green-200",
       description:
-        "Tu negocio tiene una base sólida. Con optimización puedes escalar al siguiente nivel.",
+        "Your business has a solid foundation. With optimization you can scale to the next level.",
     },
   };
 

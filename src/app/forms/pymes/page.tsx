@@ -125,22 +125,22 @@ function calculateResults(data: PymesCalculatorData) {
   return { totalScore, estimatedLoss, urgencyLevel, recommendedPlan };
 }
 
-// ─── Urgency messages per PDF 5.1.1.1 ────────────────
+// ─── Urgency messages per MVP PDF 5.1.1.1 (English) ──
 const URGENCY_MESSAGES: Record<string, { emoji: string; title: string; body: string }> = {
   critical: {
     emoji: "🔴",
-    title: "Tu empresa está perdiendo dinero cada hora.",
-    body: "Necesitas una reestructuración antes de que sea tarde.",
+    title: "Your company is losing money every hour.",
+    body: "You need a restructuring before it's too late.",
   },
   high: {
     emoji: "🟠",
-    title: "Tienes oportunidades de crecimiento que no estás aprovechando.",
-    body: "Un plan estratégico puede cambiar el rumbo.",
+    title: "You have growth opportunities you're not taking advantage of.",
+    body: "A strategic plan can change the course.",
   },
   moderate: {
     emoji: "🟢",
-    title: "Tu negocio tiene una base sólida.",
-    body: "Con optimización puedes escalar al siguiente nivel.",
+    title: "Your business has a solid foundation.",
+    body: "With optimization you can scale to the next level.",
   },
 };
 
@@ -849,26 +849,35 @@ export default function PymesCalculatorPage() {
                     <>
                       {/* PDF 5.1.1.1 style urgency message */}
                       <div
-                        className={`rounded-lg border p-5 ${
+                        className={`rounded-lg border-2 p-6 ${
                           results.urgencyLevel === "critical"
-                            ? "border-red-200 bg-red-50"
+                            ? "border-red-300 bg-red-50"
                             : results.urgencyLevel === "high"
-                              ? "border-orange-200 bg-orange-50"
-                              : "border-green-200 bg-green-50"
+                              ? "border-orange-300 bg-orange-50"
+                              : "border-green-300 bg-green-50"
                         }`}
                       >
-                        <p className="text-lg leading-relaxed">
-                          <span className="text-2xl">{msg.emoji}</span>{" "}
-                          <strong>{msg.title}</strong> {msg.body}{" "}
-                          <strong>
-                            you are missing out on ${results.estimatedLoss.toLocaleString()} CAD annually
-                          </strong>{" "}
-                          due to marketing and process inefficiencies
-                        </p>
-                        <p className="mt-3 text-sm text-muted-foreground">
-                          Score: {results.totalScore} / 35
+                        <div className="flex items-start gap-3">
+                          <span className="text-3xl">{msg.emoji}</span>
+                          <div className="flex-1 space-y-2">
+                            <p className="text-lg font-bold leading-tight">{msg.title}</p>
+                            <p className="text-base leading-relaxed">{msg.body}</p>
+                            <p className="text-sm leading-relaxed mt-2">
+                              You are missing out on{" "}
+                              <strong className="text-lg">
+                                ${results.estimatedLoss.toLocaleString()} CAD annually
+                              </strong>{" "}
+                              due to marketing and process inefficiencies.
+                            </p>
+                          </div>
+                        </div>
+                        <p className="mt-4 pt-3 border-t text-sm text-muted-foreground">
+                          Diagnostic Score: <strong>{results.totalScore} / 35</strong>
                         </p>
                       </div>
+                      <p className="text-xs text-center text-muted-foreground">
+                        Take your time to review. Click &quot;Get Full Results&quot; below when ready.
+                      </p>
 
                       <div className="rounded-lg border p-4 space-y-3">
                         <p className="text-sm font-medium">Recommended Plan</p>

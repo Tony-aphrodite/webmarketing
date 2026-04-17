@@ -140,11 +140,16 @@ function getPortfolio(rent: number): { name: string; key: string; color: string;
   return { name: "Essentials", key: "essentials", color: "text-blue-600", bgColor: "bg-blue-50" };
 }
 
-// Fee rates per portfolio for CFP calculation
-const PORTFOLIO_FEE_RATES: Record<string, number> = {
-  essentials: 0.10, // 10% of rent
-  signature: 0.12,  // 12% of rent
-  lujo: 0.15,       // 15% of rent
+// Portfolio fee structure per MVP (Steve April 16 2026)
+// CFP = rent × 10% (fixed for all portfolios)
+// Monthly fee = fixed amount per portfolio (for all linked properties)
+// Payback = monthly fee / CFP
+const CFP_RATE = 0.10; // 10% of rent, fixed
+
+const PORTFOLIO_FEES: Record<string, { oneTime: number; monthlyFee: number }> = {
+  essentials: { oneTime: 900, monthlyFee: 100 },
+  signature: { oneTime: 1410, monthlyFee: 100 },
+  lujo: { oneTime: 1650, monthlyFee: 300 },
 };
 
 interface InvestorPropertyData {
@@ -355,6 +360,14 @@ export default function OwnerFormPage() {
     }
     if (step === 2) {
       valid = await trigger(["cities", "rents"]);
+      if (valid && userType === "investor") {
+        const invalidRent = rents.slice(0, propertyCount).find((r) => r < 2500);
+        if (invalidRent !== undefined) {
+          setError("Investor properties require a minimum rent of $2,500 CAD.");
+          scrollToFirstError();
+          return;
+        }
+      }
     }
     if (step === 3) {
       if (isInvestor) {
@@ -467,10 +480,9 @@ export default function OwnerFormPage() {
           const rent = data.rents[i] || 0;
           const city = data.cities[i] || "";
           const portfolio = getPortfolio(rent);
-          const feeRate = PORTFOLIO_FEE_RATES[portfolio.key];
-          const fee = rent * feeRate;
-          const cfpMonthly = rent - fee;
-          const paybackMonths = fee > 0 ? fee / cfpMonthly : 0;
+          const portfolioFee = PORTFOLIO_FEES[portfolio.key];
+          const cfpMonthly = rent * CFP_RATE;
+          const paybackMonths = cfpMonthly > 0 ? portfolioFee.monthlyFee / cfpMonthly : 0;
 
           const { data: propData, error: propError } = await supabase.from("properties").insert({
             owner_id: user.id,
@@ -805,12 +817,14 @@ export default function OwnerFormPage() {
                         </Select>
                       </div>
                       <div className="space-y-1">
-                        <Label className="text-xs">Monthly rent (CAD $300-$8,000)</Label>
+                        <Label className="text-xs">
+                          Monthly rent (CAD {userType === "investor" ? "$2,500-$8,000" : "$300-$8,000"})
+                        </Label>
                         <Input
                           type="number"
-                          min={300}
+                          min={userType === "investor" ? 2500 : 300}
                           max={8000}
-                          placeholder="e.g. 2500"
+                          placeholder={userType === "investor" ? "e.g. 3500" : "e.g. 2500"}
                           value={rents[i] || ""}
                           onChange={(e) => {
                             const newRents = [...rents];
@@ -818,7 +832,10 @@ export default function OwnerFormPage() {
                             setValue("rents", newRents);
                           }}
                         />
-                        {rents[i] > 0 && rents[i] < 300 && (
+                        {userType === "investor" && rents[i] > 0 && rents[i] < 2500 && (
+                          <p className="text-sm text-destructive">Minimum rent for investors is $2,500 CAD</p>
+                        )}
+                        {userType !== "investor" && rents[i] > 0 && rents[i] < 300 && (
                           <p className="text-sm text-destructive">Minimum rent is $300 CAD</p>
                         )}
                         {rents[i] > 8000 && (
@@ -1084,7 +1101,7 @@ export default function OwnerFormPage() {
 
             {/* ═══ Step 3: Investor Per-Property Details ═══ */}
             {step === 3 && isInvestor && (
-              <>
+              <div key={`inv-step3-${propIdx}`} className="contents">
                 {/* Property sub-navigation header */}
                 <div className="flex items-center justify-between rounded-lg border bg-muted/30 p-3">
                   <div>
@@ -1265,35 +1282,37 @@ export default function OwnerFormPage() {
                 {rents[propIdx] > 0 && (() => {
                   const rent = rents[propIdx];
                   const portfolio = getPortfolio(rent);
-                  const feeRate = PORTFOLIO_FEE_RATES[portfolio.key];
-                  const fee = rent * feeRate;
-                  const cfp = rent - fee;
-                  const payback = fee > 0 ? fee / cfp : 0;
+                  const portfolioFee = PORTFOLIO_FEES[portfolio.key];
+                  const cfp = rent * CFP_RATE;
+                  const payback = cfp > 0 ? portfolioFee.monthlyFee / cfp : 0;
                   return (
                     <div className="rounded-lg border bg-emerald-50 p-4 space-y-2">
-                      <p className="text-sm font-medium text-emerald-700">Financial Preview — Property {propIdx + 1}</p>
+                      <p className="text-sm font-medium text-emerald-700">Financial Preview — Property {propIdx + 1} ({portfolio.name})</p>
                       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
                         <div>
                           <p className="text-xs text-muted-foreground">Rent</p>
                           <p className="text-sm font-semibold">${rent.toLocaleString()}/mo</p>
                         </div>
                         <div>
-                          <p className="text-xs text-muted-foreground">Fee ({(feeRate * 100).toFixed(0)}%)</p>
-                          <p className="text-sm font-semibold text-red-600">${fee.toFixed(2)}/mo</p>
+                          <p className="text-xs text-muted-foreground">CFP (10% rent)</p>
+                          <p className="text-sm font-semibold text-emerald-600">${cfp.toFixed(2)}/mo</p>
                         </div>
                         <div>
-                          <p className="text-xs text-muted-foreground">CFP Monthly</p>
-                          <p className="text-sm font-semibold text-emerald-600">${cfp.toFixed(2)}</p>
+                          <p className="text-xs text-muted-foreground">One-time Fee</p>
+                          <p className="text-sm font-semibold">${portfolioFee.oneTime.toLocaleString()}</p>
                         </div>
                         <div>
-                          <p className="text-xs text-muted-foreground">Payback</p>
+                          <p className="text-xs text-muted-foreground">Payback ({`$${portfolioFee.monthlyFee}/CFP`})</p>
                           <p className="text-sm font-semibold">{payback.toFixed(1)} months</p>
                         </div>
                       </div>
+                      <p className="text-xs text-muted-foreground pt-1 border-t">
+                        Portfolio monthly fee: ${portfolioFee.monthlyFee} (shared across all {portfolio.name} properties)
+                      </p>
                     </div>
                   );
                 })()}
-              </>
+              </div>
             )}
 
             {/* ═══ Step 4: Zone & Location (Owner) ═══ */}
@@ -1405,7 +1424,7 @@ export default function OwnerFormPage() {
 
             {/* ═══ Step 4: Zone & Location (Investor per-property) ═══ */}
             {step === 4 && isInvestor && (
-              <>
+              <div key={`inv-step4-${propIdx}`} className="contents">
                 <div className="flex items-center justify-between rounded-lg border bg-muted/30 p-3">
                   <div>
                     <p className="text-sm font-medium">
@@ -1517,7 +1536,7 @@ export default function OwnerFormPage() {
                     ))}
                   </div>
                 </div>
-              </>
+              </div>
             )}
 
             {/* ═══ Step 5: Property Photos ═══ */}
@@ -1607,8 +1626,7 @@ export default function OwnerFormPage() {
                       {investorProps.slice(0, propertyCount).map((ip, i) => {
                         const rent = rents[i] || 0;
                         const portfolio = getPortfolio(rent);
-                        const feeRate = PORTFOLIO_FEE_RATES[portfolio.key];
-                        const cfp = rent - (rent * feeRate);
+                        const cfp = rent * CFP_RATE;
                         return (
                           <div key={i} className="flex items-center justify-between rounded-md border p-2 text-sm">
                             <div>
@@ -1627,9 +1645,7 @@ export default function OwnerFormPage() {
                       <div className="rounded-md bg-emerald-50 border border-emerald-200 p-2 text-sm text-emerald-700 font-medium">
                         Total Portfolio CFP: ${investorProps.slice(0, propertyCount).reduce((sum, _, i) => {
                           const rent = rents[i] || 0;
-                          const portfolio = getPortfolio(rent);
-                          const feeRate = PORTFOLIO_FEE_RATES[portfolio.key];
-                          return sum + (rent - (rent * feeRate));
+                          return sum + (rent * CFP_RATE);
                         }, 0).toFixed(2)} CAD/mo
                       </div>
                     </div>

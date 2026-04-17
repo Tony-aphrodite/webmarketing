@@ -139,8 +139,6 @@ export const PYMES_PLANS: Record<
       "Channel expansion & new market entry",
       "Growth strategy & scaling roadmap",
       "Opportunity & competitor analysis",
-      "Marketing automation systems",
-      "Dedicated account manager",
       "Weekly KPI performance reports",
     ],
     color: "text-green-600",

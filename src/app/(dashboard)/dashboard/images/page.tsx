@@ -43,11 +43,21 @@ interface PropertyImage {
 
 const IMAGE_RULES = [
   "Minimum resolution: 1280px width",
+  "Minimum file size: 100KB (no screenshots)",
   "Landscape orientation preferred",
   "Natural lighting — avoid flash",
   "Clean and decluttered spaces",
   "No personal items or identifiable information",
   "No people or pets (not even in reflections)",
+];
+
+// Required room categories per MVP (min 1 photo each)
+const REQUIRED_ROOMS = [
+  "Living Room",
+  "Kitchen",
+  "Master Bedroom",
+  "Bathroom",
+  "Exterior",
 ];
 
 export default function ImagesPage() {
@@ -60,6 +70,7 @@ export default function ImagesPage() {
   const [loading, setLoading] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [selectedRoom, setSelectedRoom] = useState(ROOM_CATEGORIES[0]);
+  const [uploadMessage, setUploadMessage] = useState<{ type: "success" | "warning" | "error"; text: string } | null>(null);
 
   const supabase = createClient();
 
@@ -100,12 +111,72 @@ export default function ImagesPage() {
     setImages(data || []);
   }
 
+  function validateImageFile(file: File): Promise<{
+    ok: boolean;
+    quality: "high" | "acceptable" | "low";
+    message: string;
+    width: number;
+    height: number;
+    orientation: "landscape" | "portrait";
+  }> {
+    return new Promise((resolve) => {
+      const img = new window.Image();
+      img.onload = () => {
+        const width = img.width;
+        const height = img.height;
+        const orientation: "landscape" | "portrait" = width >= height ? "landscape" : "portrait";
+        const sizeMB = file.size / 1024 / 1024;
+        const sizeKB = file.size / 1024;
+
+        if (width < 1280) {
+          resolve({ ok: false, quality: "low", orientation, width, height,
+            message: `Resolution too low (${width}px wide). Minimum 1280px width required.` });
+          return;
+        }
+        if (sizeMB > 10) {
+          resolve({ ok: false, quality: "low", orientation, width, height,
+            message: `File too large (${sizeMB.toFixed(1)}MB). Maximum 10MB.` });
+          return;
+        }
+        if (sizeKB < 100) {
+          resolve({ ok: false, quality: "low", orientation, width, height,
+            message: `File too small (${sizeKB.toFixed(0)}KB). Minimum 100KB. Screenshots not accepted.` });
+          return;
+        }
+
+        let quality: "high" | "acceptable" | "low" = "acceptable";
+        let message = "Acceptable quality";
+        if (width >= 1920 && orientation === "landscape") {
+          quality = "high";
+          message = "High quality image";
+        } else if (orientation === "portrait") {
+          message = "Acceptable — landscape orientation is preferred";
+        }
+
+        resolve({ ok: true, quality, orientation, width, height, message });
+      };
+      img.onerror = () => resolve({ ok: false, quality: "low", orientation: "landscape",
+        width: 0, height: 0, message: "Could not read image dimensions." });
+      img.src = URL.createObjectURL(file);
+    });
+  }
+
   async function handleUpload(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
-    if (!file || !selectedProperty) return;
+    if (!file || !selectedProperty) {
+      e.target.value = "";
+      return;
+    }
 
     setUploading(true);
+    setUploadMessage(null);
     try {
+      const validation = await validateImageFile(file);
+      if (!validation.ok) {
+        setUploadMessage({ type: "error", text: validation.message });
+        return;
+      }
+
       const ext = file.name.split(".").pop();
       const path = `properties/${selectedProperty}/${Date.now()}.${ext}`;
 
@@ -125,13 +196,21 @@ export default function ImagesPage() {
         image_url: publicUrl,
         original_filename: file.name,
         file_size_bytes: file.size,
+        resolution_ok: validation.width >= 1280,
+        orientation: validation.orientation,
         status: "pending",
         sort_order: images.filter((i) => i.room_category === selectedRoom).length,
+      });
+
+      setUploadMessage({
+        type: validation.quality === "high" ? "success" : "warning",
+        text: `${validation.message} (${validation.width}×${validation.height})`,
       });
 
       await loadImages();
     } catch (err) {
       console.error("Upload failed:", err);
+      setUploadMessage({ type: "error", text: "Upload failed. Please try again." });
     } finally {
       setUploading(false);
       e.target.value = "";
@@ -270,6 +349,61 @@ export default function ImagesPage() {
               />
             </div>
           </div>
+
+          {/* Upload result message */}
+          {uploadMessage && (
+            <div
+              className={`rounded-md border p-3 text-sm ${
+                uploadMessage.type === "success"
+                  ? "border-green-200 bg-green-50 text-green-700"
+                  : uploadMessage.type === "warning"
+                    ? "border-yellow-200 bg-yellow-50 text-yellow-700"
+                    : "border-red-200 bg-red-50 text-red-700"
+              }`}
+            >
+              {uploadMessage.text}
+            </div>
+          )}
+
+          {/* Required rooms checklist (MVP: min 1 photo per required room) */}
+          {selectedProperty && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Required Rooms ({REQUIRED_ROOMS.filter(r => images.some(i => i.room_category === r)).length}/{REQUIRED_ROOMS.length})</CardTitle>
+                <CardDescription>
+                  Upload at least 1 photo per required room to complete your listing
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <ul className="grid gap-2 sm:grid-cols-2 md:grid-cols-3">
+                  {REQUIRED_ROOMS.map((room) => {
+                    const hasPhoto = images.some(i => i.room_category === room);
+                    return (
+                      <li key={room} className="flex items-center gap-2 text-sm">
+                        {hasPhoto ? (
+                          <CheckCircle2 className="h-4 w-4 text-green-600" />
+                        ) : (
+                          <AlertCircle className="h-4 w-4 text-red-500" />
+                        )}
+                        <span className={hasPhoto ? "text-green-700" : "text-muted-foreground"}>
+                          {room}
+                        </span>
+                      </li>
+                    );
+                  })}
+                </ul>
+                {REQUIRED_ROOMS.every(r => images.some(i => i.room_category === r)) ? (
+                  <p className="mt-3 text-sm font-medium text-green-600">
+                    ✓ All required rooms have photos
+                  </p>
+                ) : (
+                  <p className="mt-3 text-sm text-red-500">
+                    Missing photos for: {REQUIRED_ROOMS.filter(r => !images.some(i => i.room_category === r)).join(", ")}
+                  </p>
+                )}
+              </CardContent>
+            </Card>
+          )}
 
           {/* Image grid grouped by room */}
           {Object.keys(groupedImages).length === 0 ? (

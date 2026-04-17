@@ -21,6 +21,7 @@ import {
   MapPin,
 } from "lucide-react";
 import { CheckoutButton } from "@/components/checkout/checkout-button";
+import { MatchedPropertyCard } from "@/components/tenant/matched-property-card";
 
 // ─── Owner Service Tiers ─────────────────────────────
 const OWNER_TIERS: Record<
@@ -259,8 +260,6 @@ const PYMES_PLANS: Record<
       "Channel expansion & new market entry",
       "Growth strategy & scaling roadmap",
       "Opportunity & competitor analysis",
-      "Marketing automation systems",
-      "Dedicated account manager",
       "Weekly KPI performance reports",
     ],
     color: "text-green-600",
@@ -362,39 +361,59 @@ export default async function ServicesPage() {
     }
   }
 
-  // ─── Tenant data: matched properties ────────────
-  let matchedProperties: {
+  // ─── Tenant data: matched properties (Steve #2: show ALL matches with full info) ────────────
+  interface MatchedProperty {
     id: string;
     property_type: string;
     address: string;
     city: string;
+    province: string | null;
+    postal_code: string | null;
     monthly_rent: number | null;
     bedrooms: number | null;
     bathrooms: number | null;
+    area_sqft: number | null;
     amenities: string[] | null;
+    common_areas: string[] | null;
+    availability_date: string | null;
+    dishwasher: boolean;
+    pet_friendly: boolean;
+    smart_home: boolean;
+    furnished: boolean;
+    utilities_included: boolean;
+    near_parks: boolean;
+    near_skytrain: boolean;
+    skytrain_lines: string[] | null;
+    near_bus: boolean;
+    near_mall: boolean;
+    nearby_supermarkets: string[] | null;
     is_available: boolean;
     matchScore: number;
-  }[] = [];
+  }
+  let matchedProperties: MatchedProperty[] = [];
 
   if (isTenantRole) {
     const { matchPropertiesForTenant } = await import("@/lib/profiling");
-    matchedProperties = await matchPropertiesForTenant(user.id);
+    matchedProperties = (await matchPropertiesForTenant(user.id)) as MatchedProperty[];
   }
 
-  // Fetch thumbnails for matched properties from property_images table
+  // Fetch ALL photos per matched property (Steve #2-3: show all photos per room)
   const matchedPropertyIds = matchedProperties.map((p) => p.id);
-  const matchedThumbnails: Record<string, string> = {};
+  const matchedImages: Record<string, { image_url: string; room_category: string }[]> = {};
   if (matchedPropertyIds.length > 0) {
     const { data: imgs } = await supabase
       .from("property_images")
-      .select("property_id, image_url")
+      .select("property_id, image_url, room_category, sort_order")
       .in("property_id", matchedPropertyIds)
+      .order("room_category")
       .order("sort_order", { ascending: true });
     if (imgs) {
       for (const img of imgs) {
-        if (!matchedThumbnails[img.property_id]) {
-          matchedThumbnails[img.property_id] = img.image_url;
-        }
+        if (!matchedImages[img.property_id]) matchedImages[img.property_id] = [];
+        matchedImages[img.property_id].push({
+          image_url: img.image_url,
+          room_category: img.room_category,
+        });
       }
     }
   }
@@ -778,7 +797,7 @@ export default async function ServicesPage() {
         </Card>
       )}
 
-      {/* ═══ Tenant: Matched Properties ═══ */}
+      {/* ═══ Tenant: Matched Properties (Steve #2: full info, all photos, Apply for Free) ═══ */}
       {isTenantRole && matchedProperties.length > 0 && (
         <div id="matched-properties" className="scroll-mt-20 space-y-4">
           <h2 className="text-xl font-semibold flex items-center gap-2">
@@ -790,60 +809,13 @@ export default async function ServicesPage() {
             {matchedProperties.length === 1 ? "property" : "properties"} that
             match your preferences.
           </p>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="space-y-6">
             {matchedProperties.map((prop) => (
-              <Card key={prop.id} className="overflow-hidden">
-                <div className="aspect-video bg-muted">
-                  {matchedThumbnails[prop.id] ? (
-                    <img
-                      src={matchedThumbnails[prop.id]}
-                      alt={`${prop.property_type} in ${prop.city}`}
-                      className="h-full w-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-full items-center justify-center text-muted-foreground">
-                      <Building2 className="h-8 w-8" />
-                    </div>
-                  )}
-                </div>
-                <CardHeader className="pb-2">
-                  <div className="flex items-start justify-between">
-                    <CardTitle className="text-lg capitalize">
-                      {prop.property_type}
-                    </CardTitle>
-                    <Badge variant="default">Available</Badge>
-                  </div>
-                  <CardDescription className="flex items-center gap-1">
-                    <MapPin className="h-3 w-3" />
-                    {prop.city}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-2">
-                  {prop.monthly_rent && (
-                    <p className="text-lg font-bold">
-                      ${Number(prop.monthly_rent).toLocaleString()} CAD/mo
-                    </p>
-                  )}
-                  <div className="flex gap-3 text-sm text-muted-foreground">
-                    {prop.bedrooms && <span>{prop.bedrooms} bed</span>}
-                    {prop.bathrooms && <span>{prop.bathrooms} bath</span>}
-                  </div>
-                  {prop.amenities && prop.amenities.length > 0 && (
-                    <div className="flex flex-wrap gap-1">
-                      {prop.amenities.slice(0, 4).map((a, i) => (
-                        <Badge key={i} variant="secondary" className="text-xs">
-                          {a}
-                        </Badge>
-                      ))}
-                      {prop.amenities.length > 4 && (
-                        <Badge variant="secondary" className="text-xs">
-                          +{prop.amenities.length - 4}
-                        </Badge>
-                      )}
-                    </div>
-                  )}
-                </CardContent>
-              </Card>
+              <MatchedPropertyCard
+                key={prop.id}
+                property={prop}
+                images={matchedImages[prop.id] || []}
+              />
             ))}
           </div>
         </div>
