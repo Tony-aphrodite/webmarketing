@@ -476,6 +476,7 @@ export default function PymesCalculatorPage() {
   const [formType, setFormType] = useState<"selector" | "diagnosis" | "captacion">("selector");
   const [step, setStep] = useState(1); // 1: company info, 2-8: questions, 9: submit
   const [error, setError] = useState<string | null>(null);
+  const [reviewCountdown, setReviewCountdown] = useState(0); // Steve #6-2: force read time on review step
 
   const {
     register,
@@ -522,6 +523,24 @@ export default function PymesCalculatorPage() {
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
   }, [handlePopState]);
+
+  // Steve #6-2: when entering review step (9), start 6-second countdown
+  // so user has time to read the urgency message before submitting
+  useEffect(() => {
+    if (step === 9 && formType === "diagnosis") {
+      setReviewCountdown(6);
+      const interval = setInterval(() => {
+        setReviewCountdown((prev) => {
+          if (prev <= 1) {
+            clearInterval(interval);
+            return 0;
+          }
+          return prev - 1;
+        });
+      }, 1000);
+      return () => clearInterval(interval);
+    }
+  }, [step, formType]);
 
   async function nextStep() {
     if (step === 1) {
@@ -959,8 +978,12 @@ export default function PymesCalculatorPage() {
               </Button>
             )}
             {step === 9 ? (
-              <Button type="submit" disabled={loading}>
-                {loading ? "Submitting..." : "Get Full Results"}
+              <Button type="submit" disabled={loading || reviewCountdown > 0}>
+                {loading
+                  ? "Submitting..."
+                  : reviewCountdown > 0
+                    ? `Read the message (${reviewCountdown}s)`
+                    : "Get Full Results"}
               </Button>
             ) : step === 8 ? (
               <Button type="button" onClick={() => setStep(9)}>

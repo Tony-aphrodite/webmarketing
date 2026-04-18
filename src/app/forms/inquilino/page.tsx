@@ -343,7 +343,8 @@ export default function TenantFormPage() {
         move_in_date: data.move_in_date,
         move_in_flexible: data.move_in_flexible,
         employment_type: data.employment_type,
-        employment_verifiable: data.employment_verifiable,
+        // Steve Old#1: international_student should NEVER have employment_verifiable=true
+        employment_verifiable: data.employment_type === "international_student" ? false : data.employment_verifiable,
         institution_type: data.institution_type || null,
         institution_name: data.institution_name || null,
         number_of_people: data.number_of_people,
@@ -455,9 +456,14 @@ export default function TenantFormPage() {
                   <Label>What is your current situation?</Label>
                   <Select
                     value={employmentType}
-                    onValueChange={(val: string | null) =>
-                      val && setValue("employment_type", val as TenantFormData["employment_type"])
-                    }
+                    onValueChange={(val: string | null) => {
+                      if (!val) return;
+                      setValue("employment_type", val as TenantFormData["employment_type"]);
+                      // Steve Old#1: reset employment_verifiable when switching to international_student
+                      if (val === "international_student") {
+                        setValue("employment_verifiable", false);
+                      }
+                    }}
                   >
                     <SelectTrigger>
                       <SelectValue placeholder="Select your situation" />

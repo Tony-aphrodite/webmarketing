@@ -52,6 +52,8 @@ export default async function DashboardPage() {
   let pymesUrgency: string | null = null;
   let pymesLoss: number | null = null;
 
+  const isInvestor = profile.role === "inversionista";
+
   if (isOwnerRole) {
     const { data: props } = await supabase
       .from("properties")
@@ -60,18 +62,23 @@ export default async function DashboardPage() {
     propertyCount = props?.length || 0;
     totalCFP = props?.reduce((sum, p) => sum + (Number(p.cfp_monthly) || 0), 0) || 0;
 
-    // Determine tier from property count
-    if (propertyCount >= 4) ownerTier = "elite";
-    else if (propertyCount >= 2) ownerTier = "preferred_owners";
-    else if (propertyCount >= 1) ownerTier = "basic";
+    // Steve #8: investors NEVER see "basic" — always elite (portfolio-based)
+    if (isInvestor) {
+      ownerTier = "elite";
+    } else if (propertyCount >= 4) {
+      ownerTier = "elite";
+    } else if (propertyCount >= 2) {
+      ownerTier = "preferred_owners";
+    } else if (propertyCount >= 1) {
+      ownerTier = "basic";
+    }
   }
 
   if (isTenantRole) {
-    const { count } = await supabase
-      .from("properties")
-      .select("*", { count: "exact", head: true })
-      .eq("is_available", true);
-    matchedCount = count || 0;
+    // Steve #2-1: use same matching logic as Services page so counts match
+    const { matchPropertiesForTenant } = await import("@/lib/profiling");
+    const matches = await matchPropertiesForTenant(user.id);
+    matchedCount = matches.length;
   }
 
   if (isPymesRole) {

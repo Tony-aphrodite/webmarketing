@@ -225,6 +225,7 @@ export default function OwnerFormPage() {
   const [error, setError] = useState<string | null>(null);
   const [expandedLegal, setExpandedLegal] = useState<string | null>(null);
   const [propertyImages, setPropertyImages] = useState<ImageWithMeta[]>([]);
+  const [investorPropertyImages, setInvestorPropertyImages] = useState<ImageWithMeta[][]>([]);
   const [investorProps, setInvestorProps] = useState<InvestorPropertyData[]>([]);
   const [propIdx, setPropIdx] = useState(0);
   const formRef = useRef<HTMLDivElement>(null);
@@ -312,6 +313,11 @@ export default function OwnerFormPage() {
     setInvestorProps((prev) => {
       const arr = [...prev];
       while (arr.length < count) arr.push({ ...DEFAULT_INVESTOR_PROP });
+      return arr.slice(0, count);
+    });
+    setInvestorPropertyImages((prev) => {
+      const arr = [...prev];
+      while (arr.length < count) arr.push([]);
       return arr.slice(0, count);
     });
   }
@@ -407,6 +413,26 @@ export default function OwnerFormPage() {
       } else {
         valid = await trigger(["address", "zone_city"]);
       }
+    }
+    // Steve #12: Photos required for every property (investor) before leaving step 5
+    if (step === 5 && isInvestor) {
+      const emptyIdx = investorPropertyImages.findIndex((imgs, i) => i < propertyCount && (!imgs || imgs.length === 0));
+      if (emptyIdx !== -1) {
+        setError(`Property ${emptyIdx + 1} has no photos. Upload at least 1 photo per property before continuing.`);
+        setPropIdx(emptyIdx);
+        scrollToFirstError();
+        return;
+      }
+      setError(null);
+    }
+    // Steve #12: Owner must upload at least 1 photo
+    if (step === 5 && !isInvestor) {
+      if (propertyImages.length === 0) {
+        setError("Please upload at least 1 photo of your property before continuing.");
+        scrollToFirstError();
+        return;
+      }
+      setError(null);
     }
     if (valid) {
       setStep(step + 1);
@@ -527,9 +553,10 @@ export default function OwnerFormPage() {
             console.error(`Failed to create property ${i + 1}:`, propError);
           }
 
-          // Upload images for this property (images are shared across all in this version)
-          if (propData && i === 0 && propertyImages.length > 0) {
-            for (const img of propertyImages) {
+          // Steve #11: upload photos specifically for THIS property (per-property)
+          const thisPropertyImages = investorPropertyImages[i] || [];
+          if (propData && thisPropertyImages.length > 0) {
+            for (const img of thisPropertyImages) {
               const ext = img.file.name.split(".").pop();
               const path = `properties/${propData.id}/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
               const { error: uploadErr } = await supabase.storage.from("property-images").upload(path, img.file);
@@ -544,7 +571,7 @@ export default function OwnerFormPage() {
                 resolution_ok: img.validation.resolution_ok,
                 orientation: img.validation.orientation,
                 status: "pending",
-                sort_order: propertyImages.indexOf(img),
+                sort_order: thisPropertyImages.indexOf(img),
               });
             }
           }
@@ -1539,13 +1566,80 @@ export default function OwnerFormPage() {
               </div>
             )}
 
-            {/* ═══ Step 5: Property Photos ═══ */}
-            {step === 5 && (
+            {/* ═══ Step 5: Property Photos (Owner) ═══ */}
+            {step === 5 && !isInvestor && (
               <ImageUpload
                 images={propertyImages}
                 onImagesChange={setPropertyImages}
                 maxImages={20}
               />
+            )}
+
+            {/* ═══ Step 5: Per-property photos (Investor #11, #12) ═══ */}
+            {step === 5 && isInvestor && (
+              <div key={`inv-photos-${propIdx}`} className="space-y-4">
+                <div className="flex items-center justify-between rounded-lg border bg-muted/30 p-3">
+                  <div>
+                    <p className="text-sm font-medium">
+                      Photos for Property {propIdx + 1} of {propertyCount}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {cities[propIdx] || "No city"} &mdash; {investorProps[propIdx]?.address || "No address"}
+                    </p>
+                  </div>
+                  <span className="text-xs text-muted-foreground">
+                    {(investorPropertyImages[propIdx] || []).length} photos uploaded
+                  </span>
+                </div>
+
+                <div className="rounded-md border border-amber-200 bg-amber-50 p-3">
+                  <p className="text-sm font-medium text-amber-800">Required for each property:</p>
+                  <p className="text-xs text-amber-700 mt-1">
+                    Upload at least 1 photo per required room (Living Room, Kitchen, Bedroom, Bathroom, Exterior).
+                    All properties must have photos before you can continue.
+                  </p>
+                </div>
+
+                <ImageUpload
+                  images={investorPropertyImages[propIdx] || []}
+                  onImagesChange={(imgs) => {
+                    setInvestorPropertyImages((prev) => {
+                      const arr = [...prev];
+                      arr[propIdx] = imgs;
+                      return arr;
+                    });
+                  }}
+                  maxImages={20}
+                />
+
+                {/* Progress summary across all properties */}
+                <div className="rounded-md border bg-card p-3">
+                  <p className="text-xs font-medium mb-2">All Properties Photo Status:</p>
+                  <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-5">
+                    {Array.from({ length: propertyCount }).map((_, i) => {
+                      const count = (investorPropertyImages[i] || []).length;
+                      const isCurrent = i === propIdx;
+                      return (
+                        <button
+                          key={i}
+                          type="button"
+                          onClick={() => setPropIdx(i)}
+                          className={`rounded-md border p-2 text-xs text-left transition-colors ${
+                            isCurrent
+                              ? "border-primary bg-primary/5"
+                              : count === 0
+                                ? "border-red-300 bg-red-50 text-red-700"
+                                : "border-green-300 bg-green-50 text-green-700"
+                          }`}
+                        >
+                          <p className="font-medium">Property {i + 1}</p>
+                          <p className="text-[10px]">{count} photo{count !== 1 ? "s" : ""}</p>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
             )}
 
             {/* ═══ Step 6: Legal Consents ═══ */}

@@ -318,16 +318,20 @@ export default async function ServicesPage() {
 
     propertyCount = properties?.length ?? 0;
 
+    const isInvestor = profile.role === "inversionista";
+
     if (properties && properties.length > 0) {
-      ownerTier = properties[0].service_tier;
+      // Steve #8: investors NEVER see "basic" — always elite (portfolio-based)
+      ownerTier = isInvestor ? "elite" : properties[0].service_tier;
       ownerProperties = properties;
       totalCFP = properties.reduce(
         (sum, p) => sum + (Number(p.cfp_monthly) || 0),
         0
       );
     } else {
-      // Fallback: derive from property count on profile
-      if (profile.property_count >= 4) ownerTier = "elite";
+      // Fallback: derive from role + property count
+      if (isInvestor) ownerTier = "elite";
+      else if (profile.property_count >= 4) ownerTier = "elite";
       else if (profile.property_count >= 2) ownerTier = "preferred_owners";
       else if (profile.property_count >= 1) ownerTier = "basic";
     }
@@ -482,18 +486,22 @@ export default async function ServicesPage() {
                 )}
               </div>
 
+              {/* Recommendations (Steve #13: only photos + optimization) */}
               <div>
-                <p className="text-sm font-medium mb-2">Service includes:</p>
+                <p className="text-sm font-medium mb-2">Recommendations</p>
                 <ul className="space-y-1.5">
-                  {tierDetails.features.map((feature, i) => (
-                    <li key={i} className="flex items-start gap-2 text-sm">
-                      <CheckCircle2
-                        className={`mt-0.5 h-4 w-4 shrink-0 ${tierDetails.color}`}
-                      />
-                      {feature}
-                    </li>
-                  ))}
+                  <li className="flex items-start gap-2 text-sm">
+                    <CheckCircle2 className={`mt-0.5 h-4 w-4 shrink-0 ${tierDetails.color}`} />
+                    Professional photography for your listing
+                  </li>
+                  <li className="flex items-start gap-2 text-sm">
+                    <CheckCircle2 className={`mt-0.5 h-4 w-4 shrink-0 ${tierDetails.color}`} />
+                    Listing optimization checklist
+                  </li>
                 </ul>
+                <p className="mt-2 text-xs text-muted-foreground">
+                  See the full plan features in the &quot;Available Plans&quot; section below.
+                </p>
               </div>
 
               {/* Elite: Per-property Portfolio + CFP/Payback */}
