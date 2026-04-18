@@ -703,13 +703,25 @@ export default function OwnerFormPage() {
       </div>
 
       <Card className="w-full max-w-2xl">
-        <form onSubmit={handleSubmit(onSubmit, () => {
-          const errorFields = Object.keys(errors);
-          if (errorFields.length > 0) {
-            setError(`Please fill in the required fields: ${errorFields.map(f => f.replace(/_/g, " ")).join(", ")}`);
+        <form onSubmit={(e) => {
+          // For investors, seed top-level form fields from investorProps[0] so schema validation passes
+          // (investor data lives in the investorProps array, not in the top-level form state)
+          if (isInvestor && investorProps[0]) {
+            const ip0 = investorProps[0];
+            if (ip0.property_type) setValue("property_type", ip0.property_type);
+            if (ip0.bedrooms) setValue("bedrooms", ip0.bedrooms);
+            if (ip0.bathrooms) setValue("bathrooms", ip0.bathrooms);
+            if (ip0.address) setValue("address", ip0.address);
+            if (cities[0]) setValue("zone_city", cities[0]);
           }
-          scrollToFirstError();
-        })}>
+          return handleSubmit(onSubmit, () => {
+            const errorFields = Object.keys(errors);
+            if (errorFields.length > 0) {
+              setError(`Please fill in the required fields: ${errorFields.map(f => f.replace(/_/g, " ")).join(", ")}`);
+            }
+            scrollToFirstError();
+          })(e);
+        }}>
           <CardHeader>
             <CardTitle className="text-xl">
               {step === 1 && "Owner Profile"}
