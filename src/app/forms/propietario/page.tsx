@@ -360,6 +360,8 @@ export default function OwnerFormPage() {
 
   async function nextStep() {
     let valid = true;
+    // Clear any previous error when starting a step transition
+    setError(null);
     if (step === 1) {
       valid = await trigger(["user_type", "property_count", "objectives"]);
       if (valid) syncInvestorProps(propertyCount);
