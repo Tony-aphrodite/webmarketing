@@ -4,6 +4,11 @@ import { Resend } from "resend";
 const NOTIFICATION_EMAIL = process.env.CONTACT_NOTIFICATION_EMAIL || "alexsanabria33@hotmail.com";
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "WebMarketing <notifications@nexuma.ca>";
 
+// Support multi-recipient: comma-separated emails → array
+function parseRecipients(value: string): string[] {
+  return value.split(",").map((s) => s.trim()).filter(Boolean);
+}
+
 export async function sendContactNotification({
   name,
   email,
@@ -24,7 +29,7 @@ export async function sendContactNotification({
 
   await resend.emails.send({
     from: FROM_EMAIL,
-    to: NOTIFICATION_EMAIL,
+    to: parseRecipients(NOTIFICATION_EMAIL),
     subject: `New Contact Form: ${subject}`,
     html: `
       <h2>New Contact Form Submission</h2>

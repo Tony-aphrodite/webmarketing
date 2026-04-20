@@ -53,7 +53,7 @@ export async function POST(request: Request) {
       const resend = new Resend(process.env.RESEND_API_KEY);
       resend.emails.send({
         from: FROM_EMAIL,
-        to: COMMERCIAL_EMAIL,
+        to: COMMERCIAL_EMAIL.split(",").map((s) => s.trim()).filter(Boolean),
         subject: `New Tenant Application — ${property.property_type} in ${property.city}`,
         html: `
           <h2>New Tenant Application</h2>
