@@ -6,6 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createClient } from "@/lib/supabase/client";
 import { pymesCalculatorSchema, type PymesCalculatorData } from "@/types/forms";
+import { PYMES_PLANS } from "@/lib/constants";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -898,59 +899,41 @@ export default function PymesCalculatorPage() {
                         Take your time to review. Click &quot;Get Full Results&quot; below when ready.
                       </p>
 
-                      <div className="rounded-lg border p-4 space-y-3">
-                        <p className="text-sm font-medium">Recommended Plan</p>
-                        <p className="text-lg font-bold capitalize text-accent">
-                          Plan {results.recommendedPlan}
-                        </p>
-                        <p className="text-sm text-muted-foreground">
-                          {results.recommendedPlan === "rescue" &&
-                            "$1,500 CAD - Emergency digital rescue"}
-                          {results.recommendedPlan === "growth" &&
-                            "$2,500 CAD - Comprehensive growth strategy"}
-                          {results.recommendedPlan === "scale" &&
-                            "$3,800 CAD - Full digital transformation"}
-                        </p>
-                        <p className="text-xs text-muted-foreground">
-                          {results.recommendedPlan === "rescue" && "$750 upfront + $250/mo × 3 months · Min. 30 days"}
-                          {results.recommendedPlan === "growth" && "$1,000 upfront + $375/mo × 4 months · Min. 90 days"}
-                          {results.recommendedPlan === "scale" && "$1,500 upfront + $460/mo × 5 months · Min. 6 months"}
-                        </p>
-                        {results.recommendedPlan === "rescue" && (
-                          <ul className="text-xs text-muted-foreground space-y-1 list-disc ml-4">
-                            <li>Emergency digital audit</li>
-                            <li>Google Business Profile optimization</li>
-                            <li>Basic SEO correction</li>
-                            <li>Social media rescue (2 platforms)</li>
-                            <li>30-day action plan</li>
-                          </ul>
-                        )}
-                        {results.recommendedPlan === "growth" && (
-                          <ul className="text-xs text-muted-foreground space-y-1 list-disc ml-4">
-                            <li>Complete digital audit</li>
-                            <li>Website optimization or landing page</li>
-                            <li>SEO strategy (on-page + local)</li>
-                            <li>Social media management (3 platforms)</li>
-                            <li>Google Ads basic campaign</li>
-                            <li>Monthly performance reports</li>
-                            <li>90-day growth roadmap</li>
-                          </ul>
-                        )}
-                        {results.recommendedPlan === "scale" && (
-                          <ul className="text-xs text-muted-foreground space-y-1 list-disc ml-4">
-                            <li>Full digital transformation audit</li>
-                            <li>Website redesign or new build</li>
-                            <li>Advanced SEO (on-page + off-page + technical)</li>
-                            <li>Social media management (all platforms)</li>
-                            <li>Google Ads + Meta Ads campaigns</li>
-                            <li>Email marketing automation</li>
-                            <li>CRM integration</li>
-                            <li>Conversion rate optimization</li>
-                            <li>Monthly strategy sessions</li>
-                            <li>6-month scaling roadmap</li>
-                          </ul>
-                        )}
-                      </div>
+                      {/* Steve #6-2 (4/19): Plan description uses centralized PYMES_PLANS
+                          data — single source of truth matches Services page and Results page */}
+                      {(() => {
+                        const plan = PYMES_PLANS[results.recommendedPlan];
+                        if (!plan) return null;
+                        return (
+                          <div className="rounded-lg border p-4 space-y-3">
+                            <p className="text-sm font-medium">Recommended Plan</p>
+                            <p className={`text-lg font-bold ${plan.color}`}>
+                              Plan {plan.name}
+                            </p>
+                            <p className="text-sm font-semibold">
+                              {plan.price}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {plan.tagline}
+                            </p>
+                            <div className="rounded-md border bg-muted/30 p-2 space-y-1">
+                              <p className="text-xs font-medium">Payment Options:</p>
+                              <p className="text-xs text-muted-foreground">
+                                {plan.upfront}, then {plan.installment}
+                              </p>
+                              <p className="text-xs text-muted-foreground">
+                                Or full payment upfront. Accepted: e-Transfer, credit card, or bank transfer.
+                              </p>
+                              <p className="text-xs text-muted-foreground">{plan.duration}</p>
+                            </div>
+                            <ul className="text-xs text-muted-foreground space-y-1 list-disc ml-4">
+                              {plan.features.map((feat, i) => (
+                                <li key={i}>{feat}</li>
+                              ))}
+                            </ul>
+                          </div>
+                        );
+                      })()}
                     </>
                   );
                 })()}

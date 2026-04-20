@@ -2,8 +2,9 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { Resend } from "resend";
 
-const COMMERCIAL_EMAIL = process.env.COMMERCIAL_AREA_EMAIL || process.env.CONTACT_NOTIFICATION_EMAIL || "admin@webmarketing.ca";
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "WebMarketing <noreply@webmarketing.ca>";
+// Steve 4/19: nexuma.ca domain + alexsanabria33@hotmail.com as commercial receiver
+const COMMERCIAL_EMAIL = process.env.COMMERCIAL_AREA_EMAIL || process.env.CONTACT_NOTIFICATION_EMAIL || "alexsanabria33@hotmail.com";
+const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "WebMarketing <notifications@nexuma.ca>";
 
 export async function POST(request: Request) {
   try {

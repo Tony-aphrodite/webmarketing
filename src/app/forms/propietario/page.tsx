@@ -416,21 +416,39 @@ export default function OwnerFormPage() {
         valid = await trigger(["address", "zone_city"]);
       }
     }
-    // Steve #12: Photos required for every property (investor) before leaving step 5
+    // Steve #12 (4/19): Each property needs MINIMUM 1 photo per REQUIRED ROOM
+    // (Living Room, Kitchen, Bedroom, Bathroom, Exterior) — not just 1 total
+    const REQUIRED_ROOMS_FOR_FORM = ["living_room", "kitchen", "bedroom", "bathroom", "exterior"];
+
+    function missingRoomsFor(imgs: ImageWithMeta[] | undefined): string[] {
+      const covered = new Set((imgs || []).map((img) => img.room));
+      return REQUIRED_ROOMS_FOR_FORM.filter((r) => !covered.has(r));
+    }
+
     if (step === 5 && isInvestor) {
-      const emptyIdx = investorPropertyImages.findIndex((imgs, i) => i < propertyCount && (!imgs || imgs.length === 0));
-      if (emptyIdx !== -1) {
-        setError(`Property ${emptyIdx + 1} has no photos. Upload at least 1 photo per property before continuing.`);
-        setPropIdx(emptyIdx);
-        scrollToFirstError();
-        return;
+      // Check each property for missing required rooms
+      for (let i = 0; i < propertyCount; i++) {
+        const missing = missingRoomsFor(investorPropertyImages[i]);
+        if (missing.length > 0) {
+          setError(
+            `Property ${i + 1} is missing photos for: ${missing.join(", ")}. ` +
+            `At least 1 photo per required room (Living Room, Kitchen, Bedroom, Bathroom, Exterior) is needed.`
+          );
+          setPropIdx(i);
+          scrollToFirstError();
+          return;
+        }
       }
       setError(null);
     }
-    // Steve #12: Owner must upload at least 1 photo
+    // Steve #12 (4/19): Owner must also cover all required rooms
     if (step === 5 && !isInvestor) {
-      if (propertyImages.length === 0) {
-        setError("Please upload at least 1 photo of your property before continuing.");
+      const missing = missingRoomsFor(propertyImages);
+      if (missing.length > 0) {
+        setError(
+          `Missing photos for: ${missing.join(", ")}. ` +
+          `At least 1 photo per required room (Living Room, Kitchen, Bedroom, Bathroom, Exterior) is needed.`
+        );
         scrollToFirstError();
         return;
       }
@@ -652,13 +670,18 @@ export default function OwnerFormPage() {
         }
       }
 
-      // Update profile property count
+      // Steve 4/19: Set role based on user's SELECTION in Step 1 (owner vs investor),
+      // not just property count. Role must be set BEFORE profiling so profileOwner respects it.
+      const selectedRole = data.user_type === "investor" ? "inversionista" : undefined;
+      const profileUpdate: Record<string, unknown> = { property_count: data.property_count };
+      if (selectedRole) profileUpdate.role = selectedRole;
+
       await supabase
         .from("profiles")
-        .update({ property_count: data.property_count })
+        .update(profileUpdate)
         .eq("id", user.id);
 
-      // Run profiling (classifies role, tier, CFP, etc.)
+      // Run profiling (classifies tier, CFP, etc. — respects existing role)
       await fetch("/api/profiling", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -1631,7 +1654,11 @@ export default function OwnerFormPage() {
                   <p className="text-xs font-medium mb-2">All Properties Photo Status:</p>
                   <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-5">
                     {Array.from({ length: propertyCount }).map((_, i) => {
-                      const count = (investorPropertyImages[i] || []).length;
+                      const imgs = investorPropertyImages[i] || [];
+                      const requiredRooms = ["living_room", "kitchen", "bedroom", "bathroom", "exterior"];
+                      const covered = new Set(imgs.map((img) => img.room));
+                      const coveredCount = requiredRooms.filter((r) => covered.has(r)).length;
+                      const isComplete = coveredCount === requiredRooms.length;
                       const isCurrent = i === propIdx;
                       return (
                         <button
@@ -1641,13 +1668,16 @@ export default function OwnerFormPage() {
                           className={`rounded-md border p-2 text-xs text-left transition-colors ${
                             isCurrent
                               ? "border-primary bg-primary/5"
-                              : count === 0
-                                ? "border-red-300 bg-red-50 text-red-700"
-                                : "border-green-300 bg-green-50 text-green-700"
+                              : isComplete
+                                ? "border-green-300 bg-green-50 text-green-700"
+                                : coveredCount > 0
+                                  ? "border-yellow-300 bg-yellow-50 text-yellow-700"
+                                  : "border-red-300 bg-red-50 text-red-700"
                           }`}
                         >
                           <p className="font-medium">Property {i + 1}</p>
-                          <p className="text-[10px]">{count} photo{count !== 1 ? "s" : ""}</p>
+                          <p className="text-[10px]">{coveredCount}/{requiredRooms.length} rooms</p>
+                          <p className="text-[10px]">{imgs.length} photo{imgs.length !== 1 ? "s" : ""}</p>
                         </button>
                       );
                     })}

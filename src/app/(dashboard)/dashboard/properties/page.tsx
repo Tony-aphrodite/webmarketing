@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Plus, MapPin, TrendingUp, Clock } from "lucide-react";
 import { formatCurrency } from "@/lib/admin";
 import { SERVICE_TIERS, ELITE_TIERS } from "@/lib/constants";
+import { DeletePropertyButton } from "@/components/property/delete-property-button";
 
 export default async function PropertiesPage() {
   const supabase = await createClient();
@@ -191,6 +192,10 @@ export default async function PropertiesPage() {
                     >
                       Details
                     </Link>
+                    <DeletePropertyButton
+                      propertyId={property.id}
+                      propertyLabel={`${property.property_type} — ${property.address}, ${property.city}`}
+                    />
                   </div>
                 </CardContent>
               </Card>

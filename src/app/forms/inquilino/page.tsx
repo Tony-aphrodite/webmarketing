@@ -343,8 +343,8 @@ export default function TenantFormPage() {
         move_in_date: data.move_in_date,
         move_in_flexible: data.move_in_flexible,
         employment_type: data.employment_type,
-        // Steve Old#1: international_student should NEVER have employment_verifiable=true
-        employment_verifiable: data.employment_type === "international_student" ? false : data.employment_verifiable,
+        // Steve Old#1 (4/19 expanded): employment_verifiable removed for ALL tenants (legal)
+        employment_verifiable: false,
         institution_type: data.institution_type || null,
         institution_name: data.institution_name || null,
         number_of_people: data.number_of_people,
@@ -510,18 +510,8 @@ export default function TenantFormPage() {
                   </div>
                 )}
 
-                {employmentType !== "international_student" && (
-                  <div className="flex items-center gap-2">
-                    <Checkbox
-                      id="employment_verifiable"
-                      checked={watch("employment_verifiable")}
-                      onCheckedChange={(c) => setValue("employment_verifiable", c === true)}
-                    />
-                    <Label htmlFor="employment_verifiable" className="font-normal">
-                      My employment/enrollment is verifiable (can provide proof)
-                    </Label>
-                  </div>
-                )}
+                {/* Steve Old#1 (4/19 expanded): employment_verifiable checkbox removed
+                    for ALL tenants regardless of current_situation due to legal requirements */}
 
                 <div className="space-y-2">
                   <Label>How many people are you looking for housing?</Label>

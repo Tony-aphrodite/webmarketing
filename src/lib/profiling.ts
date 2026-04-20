@@ -157,8 +157,25 @@ export async function profileOwner(userId: string) {
   const propertyCount = properties?.length ?? 0;
   if (propertyCount === 0) return null;
 
-  // 2. Classify role + tier
-  const { role, serviceTier } = classifyOwner(propertyCount);
+  // 1b. Get current user profile to respect their initial user_type selection (Steve 4/19)
+  // A user who signed up as "Property Owner" should NOT be auto-promoted to Investor
+  // just because they added 4+ properties.
+  const { data: existingProfile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", userId)
+    .single();
+
+  const currentRole = existingProfile?.role;
+  const isCurrentlyInvestor = currentRole === "inversionista";
+
+  // 2. Classify role + tier based on count, but respect existing investor role
+  const { role: countBasedRole, serviceTier: countBasedTier } = classifyOwner(propertyCount);
+
+  // If the user was already an investor (chose Investor at signup), keep them as investor + elite
+  // Otherwise use the count-based classification
+  const role = isCurrentlyInvestor ? "inversionista" : countBasedRole;
+  const serviceTier = isCurrentlyInvestor ? "elite" : countBasedTier;
 
   // 3. Update each property: service_tier, elite_tier (per property), cfp, payback
   if (properties) {
@@ -290,15 +307,13 @@ export async function matchPropertiesForTenant(userId: string) {
   const amenities: string[] = prefs.preferred_amenities || [];
 
   // 2. Build base query — only available properties
+  // Steve #2-1 (4/19): Removed strict Elite-only filter for premium tenants.
+  // Premium tenants now see all matching properties but get PRIORITY scoring
+  // for Elite-tier properties (handled in scoring below).
   let query = supabase
     .from("properties")
     .select("*, profiles!properties_owner_id_fkey(full_name)")
     .eq("is_available", true);
-
-  if (premium) {
-    // Premium tenants → only Elite Assets & Legacy properties
-    query = query.eq("service_tier", "elite");
-  }
 
   // Budget filter
   if (maxBudget) {
@@ -336,6 +351,9 @@ export async function matchPropertiesForTenant(userId: string) {
       const ratio = Number(prop.monthly_rent) / maxBudget;
       if (ratio >= 0.7 && ratio <= 1.0) score += 2;
     }
+
+    // Premium tenants get +5 bonus for Elite properties (priority, not exclusivity)
+    if (premium && prop.service_tier === "elite") score += 5;
 
     return { ...prop, matchScore: score };
   });

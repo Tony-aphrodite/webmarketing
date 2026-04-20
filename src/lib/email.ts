@@ -1,7 +1,8 @@
 import { Resend } from "resend";
 
-const NOTIFICATION_EMAIL = process.env.CONTACT_NOTIFICATION_EMAIL || "admin@webmarketing.ca";
-const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "WebMarketing <noreply@webmarketing.ca>";
+// Steve 4/19: domain is nexuma.ca, receiver is alexsanabria33@hotmail.com until commercial email ready
+const NOTIFICATION_EMAIL = process.env.CONTACT_NOTIFICATION_EMAIL || "alexsanabria33@hotmail.com";
+const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "WebMarketing <notifications@nexuma.ca>";
 
 export async function sendContactNotification({
   name,
