@@ -168,14 +168,34 @@ export async function profileOwner(userId: string) {
 
   const currentRole = existingProfile?.role;
   const isCurrentlyInvestor = currentRole === "inversionista";
+  const isCurrentlyOwner = currentRole === "propietario" || currentRole === "propietario_preferido";
 
-  // 2. Classify role + tier based on count, but respect existing investor role
-  const { role: countBasedRole, serviceTier: countBasedTier } = classifyOwner(propertyCount);
+  // 2. Classify role + tier — RESPECT USER'S INITIAL SELECTION (Steve 4/20)
+  //    - Investor stays as investor + elite (regardless of count)
+  //    - Owner stays as owner (basic/preferred_owners based on count, but NEVER promoted to investor)
+  //    - New users (no role set): count-based classification
+  let role: UserRole;
+  let serviceTier: PropertyServiceTier;
 
-  // If the user was already an investor (chose Investor at signup), keep them as investor + elite
-  // Otherwise use the count-based classification
-  const role = isCurrentlyInvestor ? "inversionista" : countBasedRole;
-  const serviceTier = isCurrentlyInvestor ? "elite" : countBasedTier;
+  if (isCurrentlyInvestor) {
+    role = "inversionista";
+    serviceTier = "elite";
+  } else if (isCurrentlyOwner) {
+    // Owner stays owner — only adjust between basic and preferred_owners
+    // Never promote to investor regardless of property count (Steve 4/20)
+    if (propertyCount >= 2) {
+      role = "propietario_preferido";
+      serviceTier = "preferred_owners";
+    } else {
+      role = "propietario";
+      serviceTier = "basic";
+    }
+  } else {
+    // New user with no role yet — use count-based classification
+    const classified = classifyOwner(propertyCount);
+    role = classified.role;
+    serviceTier = classified.serviceTier;
+  }
 
   // 3. Update each property: service_tier, elite_tier (per property), cfp, payback
   if (properties) {
@@ -328,11 +348,24 @@ export async function matchPropertiesForTenant(userId: string) {
     query = query.gte("bedrooms", bedrooms);
   }
 
-  const { data: properties } = await query
+  const { data: propertiesRaw } = await query
     .order("monthly_rent", { ascending: true })
     .limit(20);
 
-  if (!properties || properties.length === 0) return [];
+  if (!propertiesRaw || propertiesRaw.length === 0) return [];
+
+  // Steve #2-1 (4/20): Exclude properties that have no photos uploaded.
+  // Matched properties without photos look broken from the tenant's perspective.
+  const propIds = propertiesRaw.map((p) => p.id);
+  const { data: photoCounts } = await supabase
+    .from("property_images")
+    .select("property_id")
+    .in("property_id", propIds);
+
+  const propIdsWithPhotos = new Set((photoCounts || []).map((p) => p.property_id));
+  const properties = propertiesRaw.filter((p) => propIdsWithPhotos.has(p.id));
+
+  if (properties.length === 0) return [];
 
   // 3. Score & rank properties by preference match
   const scored = properties.map((prop) => {

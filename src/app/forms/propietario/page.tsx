@@ -670,15 +670,20 @@ export default function OwnerFormPage() {
         }
       }
 
-      // Steve 4/19: Set role based on user's SELECTION in Step 1 (owner vs investor),
-      // not just property count. Role must be set BEFORE profiling so profileOwner respects it.
-      const selectedRole = data.user_type === "investor" ? "inversionista" : undefined;
-      const profileUpdate: Record<string, unknown> = { property_count: data.property_count };
-      if (selectedRole) profileUpdate.role = selectedRole;
+      // Steve 4/20: ALWAYS set role based on user's Step 1 selection.
+      // - user_type=investor → role=inversionista (stays investor regardless of count)
+      // - user_type=owner    → role=propietario or propietario_preferido (never auto-promoted to investor)
+      let selectedRole: string;
+      if (data.user_type === "investor") {
+        selectedRole = "inversionista";
+      } else {
+        // owner: set based on count but within owner tier range
+        selectedRole = data.property_count >= 2 ? "propietario_preferido" : "propietario";
+      }
 
       await supabase
         .from("profiles")
-        .update(profileUpdate)
+        .update({ property_count: data.property_count, role: selectedRole })
         .eq("id", user.id);
 
       // Run profiling (classifies tier, CFP, etc. — respects existing role)
