@@ -844,7 +844,7 @@ export default async function HomePage({
               <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-primary">
                 <Sparkles className="h-3.5 w-3.5 text-primary-foreground" />
               </div>
-              <span className="text-sm font-semibold">WebMarketing</span>
+              <span className="text-sm font-semibold">Nexuma</span>
             </div>
             <div className="flex gap-6 text-sm text-muted-foreground">
               <Link href="#how-it-works" className="transition-colors hover:text-primary">
@@ -862,7 +862,7 @@ export default async function HomePage({
             </div>
           </div>
           <div className="mt-8 border-t border-primary/10 pt-6 text-center text-xs text-muted-foreground">
-            &copy; {new Date().getFullYear()} WebMarketing. All rights reserved.
+            &copy; {new Date().getFullYear()} Nexuma marketing ltd. All rights reserved.
           </div>
         </div>
       </footer>

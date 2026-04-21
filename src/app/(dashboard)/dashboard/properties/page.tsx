@@ -94,7 +94,8 @@ export default async function PropertiesPage() {
             const tierLabel = isInvestor
               ? (property.elite_tier ? (ELITE_TIERS[property.elite_tier] || property.elite_tier) : "Elite")
               : (property.service_tier ? (SERVICE_TIERS[property.service_tier] || property.service_tier) : null);
-            const eliteLabel = property.elite_tier
+            // Steve 4/21 #10: only investors see portfolio label (Essentials/Signature/Lujo)
+            const eliteLabel = isInvestor && property.elite_tier
               ? ELITE_TIERS[property.elite_tier] || property.elite_tier
               : null;
 

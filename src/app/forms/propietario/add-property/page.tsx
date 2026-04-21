@@ -93,6 +93,7 @@ const BC_CITIES = [
   "New Westminster", "North Vancouver", "West Vancouver", "Langley",
   "Delta", "Abbotsford", "Chilliwack", "Maple Ridge", "Port Moody",
   "Port Coquitlam", "White Rock", "Pitt Meadows",
+  "Victoria", "Kelowna", "Nanaimo", "Kamloops",
 ];
 
 // ─── Legal docs (#29) ───────────────────────────────

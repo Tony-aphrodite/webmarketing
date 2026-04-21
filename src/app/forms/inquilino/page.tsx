@@ -35,15 +35,15 @@ const LEGAL_DOCS: Record<string, { title: string; text: string }> = {
   },
   consent_screening: {
     title: "Background Screening Consent (PIPA/PIPEDA)",
-    text: "You authorize WebMarketing and its designated screening partners to conduct background checks, including but not limited to: credit history verification, criminal record checks, and previous rental history verification. This screening is conducted in compliance with the Personal Information Protection Act (PIPA) of British Columbia and PIPEDA. Results are confidential and used solely for tenant qualification purposes.",
+    text: "You authorize Nexuma marketing ltd and its designated screening partners to conduct background checks, including but not limited to: credit history verification, criminal record checks, and previous rental history verification. This screening is conducted in compliance with the Personal Information Protection Act (PIPA) of British Columbia and PIPEDA. Results are confidential and used solely for tenant qualification purposes.",
   },
   consent_references: {
     title: "Reference Verification Consent",
-    text: "You authorize WebMarketing to contact the references you have provided, including previous landlords, employers, and personal references, to verify the information provided in your application. All information obtained will be kept confidential and used solely for the purpose of evaluating your tenancy application.",
+    text: "You authorize Nexuma marketing ltd to contact the references you have provided, including previous landlords, employers, and personal references, to verify the information provided in your application. All information obtained will be kept confidential and used solely for the purpose of evaluating your tenancy application.",
   },
   consent_communications: {
     title: "Electronic Communications Consent (CASL)",
-    text: "In compliance with Canada's Anti-Spam Legislation (CASL), you consent to receive commercial electronic messages from WebMarketing including service updates, property match notifications, and relevant information about your tenancy search. You may unsubscribe at any time.",
+    text: "In compliance with Canada's Anti-Spam Legislation (CASL), you consent to receive commercial electronic messages from Nexuma marketing ltd including service updates, property match notifications, and relevant information about your tenancy search. You may unsubscribe at any time.",
   },
   consent_truthfulness: {
     title: "Declaration of Truthfulness",
@@ -51,7 +51,7 @@ const LEGAL_DOCS: Record<string, { title: string; text: string }> = {
   },
   consent_marketing: {
     title: "Marketing Communications Consent (Optional)",
-    text: "You optionally consent to receive marketing communications, newsletters, and promotional offers from WebMarketing and its partners. This consent is not required for service and can be withdrawn at any time.",
+    text: "You optionally consent to receive marketing communications, newsletters, and promotional offers from Nexuma marketing ltd and its partners. This consent is not required for service and can be withdrawn at any time.",
   },
 };
 

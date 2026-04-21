@@ -110,7 +110,7 @@ const BC_CITIES = [
 const LEGAL_DOCS: Record<string, { title: string; text: string }> = {
   consent_image_usage: {
     title: "Image Usage & Editing Authorization",
-    text: "By accepting this consent, you authorize WebMarketing and its partners to use, reproduce, edit, and publish photographs, videos, and other visual content of your property for commercial, promotional, and marketing purposes. This includes but is not limited to: listing platforms, social media, advertisements, brochures, and website content. You confirm that you have the legal right to grant this authorization. This consent remains in effect for the duration of the service agreement and may be revoked in writing with 30 days notice.",
+    text: "By accepting this consent, you authorize Nexuma marketing ltd and its partners to use, reproduce, edit, and publish photographs, videos, and other visual content of your property for commercial, promotional, and marketing purposes. This includes but is not limited to: listing platforms, social media, advertisements, brochures, and website content. You confirm that you have the legal right to grant this authorization. This consent remains in effect for the duration of the service agreement and may be revoked in writing with 30 days notice.",
   },
   consent_data_processing: {
     title: "Rights & Privacy Declaration",
@@ -118,11 +118,11 @@ const LEGAL_DOCS: Record<string, { title: string; text: string }> = {
   },
   consent_marketing: {
     title: "Electronic Communications (CASL)",
-    text: "In compliance with Canada's Anti-Spam Legislation (CASL), by providing your consent you agree to receive commercial electronic messages from WebMarketing including but not limited to: service updates, marketing recommendations, property performance reports, promotional offers, and newsletters. You may unsubscribe from these communications at any time by clicking the unsubscribe link in any email or by contacting us directly. Your consent to receive these communications is not a condition of service.",
+    text: "In compliance with Canada's Anti-Spam Legislation (CASL), by providing your consent you agree to receive commercial electronic messages from Nexuma marketing ltd including but not limited to: service updates, marketing recommendations, property performance reports, promotional offers, and newsletters. You may unsubscribe from these communications at any time by clicking the unsubscribe link in any email or by contacting us directly. Your consent to receive these communications is not a condition of service.",
   },
   consent_third_party: {
     title: "Terms & Conditions",
-    text: "By accepting these terms and conditions, you agree to the following: (1) All information provided in this form is accurate and truthful. (2) You are the legal owner or authorized representative of the property/properties listed. (3) You authorize WebMarketing to act on your behalf for marketing and tenant placement purposes as outlined in your service plan. (4) Service fees are based on the assigned plan tier and are calculated as a percentage of monthly rent as described in the plan details. (5) Either party may terminate the agreement with 30 days written notice. (6) Disputes will be resolved under the laws of British Columbia, Canada.",
+    text: "By accepting these terms and conditions, you agree to the following: (1) All information provided in this form is accurate and truthful. (2) You are the legal owner or authorized representative of the property/properties listed. (3) You authorize Nexuma marketing ltd to act on your behalf for marketing and tenant placement purposes as outlined in your service plan. (4) Service fees are based on the assigned plan tier and are calculated as a percentage of monthly rent as described in the plan details. (5) Either party may terminate the agreement with 30 days written notice. (6) Disputes will be resolved under the laws of British Columbia, Canada.",
   },
 };
 

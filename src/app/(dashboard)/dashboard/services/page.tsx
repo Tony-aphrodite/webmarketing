@@ -597,30 +597,30 @@ export default async function ServicesPage() {
                           </div>
                         )}
 
-                        {/* Steve #8 (4/20): Portfolio pricing + acquisition info */}
+                        {/* Steve #8 (4/20) + #11 (4/21): Portfolio pricing — larger readable text */}
                         {portfolio && (
-                          <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 p-3 space-y-2">
-                            <p className="text-xs font-medium text-amber-800">
+                          <div className="mt-3 rounded-md border border-amber-200 bg-amber-50 p-4 space-y-3">
+                            <p className="text-base font-semibold text-amber-800">
                               {portfolio.name} Portfolio Pricing
                             </p>
-                            <div className="grid grid-cols-2 gap-3">
+                            <div className="grid grid-cols-2 gap-4">
                               <div>
-                                <p className="text-xs text-muted-foreground">One-time fee</p>
-                                <p className="text-sm font-semibold">${portfolio.oneTimeFee.toLocaleString()} CAD</p>
-                                <p className="text-[10px] text-muted-foreground">per unit</p>
+                                <p className="text-sm text-muted-foreground">One-time fee</p>
+                                <p className="text-lg font-bold">${portfolio.oneTimeFee.toLocaleString()} CAD</p>
+                                <p className="text-sm text-muted-foreground">per unit</p>
                               </div>
                               <div>
-                                <p className="text-xs text-muted-foreground">Monthly fee</p>
-                                <p className="text-sm font-semibold">${portfolio.monthlyFee} CAD/mo</p>
-                                <p className="text-[10px] text-muted-foreground">
+                                <p className="text-sm text-muted-foreground">Monthly fee</p>
+                                <p className="text-lg font-bold">${portfolio.monthlyFee} CAD/mo</p>
+                                <p className="text-sm text-muted-foreground">
                                   shared across all {portfolio.name} properties
                                 </p>
                               </div>
                             </div>
-                            <p className="text-[11px] text-amber-700 pt-1 border-t border-amber-200">
+                            <p className="text-sm text-amber-700 pt-2 border-t border-amber-200">
                               {portfolio.feeDescription}
                             </p>
-                            <p className="text-[11px] text-muted-foreground">
+                            <p className="text-sm text-muted-foreground">
                               To acquire: contact the commercial team to finalize the portfolio assignment and payment method (e-Transfer, credit card, or bank transfer).
                             </p>
                           </div>
