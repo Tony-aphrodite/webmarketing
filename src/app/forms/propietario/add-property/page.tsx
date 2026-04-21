@@ -151,6 +151,11 @@ export default function AddPropertyPage() {
       near_skytrain: false,
       near_bus: false,
       near_mall: false,
+      // Consent defaults — required for Zod boolean validation
+      consent_image_usage: false,
+      consent_data_processing: false,
+      consent_marketing: false,
+      consent_third_party: false,
     },
   });
 
