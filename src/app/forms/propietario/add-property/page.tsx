@@ -785,7 +785,7 @@ export default function AddPropertyPage() {
                       <Checkbox
                         id={consent.field}
                         checked={watch(consent.field) as boolean}
-                        onCheckedChange={(c) => setValue(consent.field, !!c)}
+                        onCheckedChange={(c) => setValue(consent.field, !!c, { shouldValidate: true })}
                       />
                       <div className="flex-1">
                         <Label htmlFor={consent.field} className="text-sm font-normal leading-snug">
