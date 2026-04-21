@@ -55,6 +55,12 @@ export default async function HomePage({
               About Us
             </Link>
             <Link
+              href="#faq"
+              className="text-sm text-muted-foreground transition-colors hover:text-primary"
+            >
+              FAQ
+            </Link>
+            <Link
               href="#contact"
               className="text-sm text-muted-foreground transition-colors hover:text-primary"
             >
@@ -731,6 +737,71 @@ export default async function HomePage({
                 </Link>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Steve 4/21 #1: FAQ Section */}
+      <section id="faq" className="px-4 py-24 bg-muted/30">
+        <div className="mx-auto max-w-4xl">
+          <div className="mb-12 text-center">
+            <span className="mb-3 inline-block text-sm font-medium uppercase tracking-widest text-primary">
+              FAQ
+            </span>
+            <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
+              Frequently Asked Questions
+            </h2>
+            <p className="mt-4 text-muted-foreground">
+              Answers to the most common questions about our services.
+            </p>
+          </div>
+
+          <div className="space-y-4">
+            {[
+              {
+                q: "Do I have to pay to register?",
+                a: "Initial registration is free. Some premium or specialized services have a cost, which is always disclosed before any payment.",
+              },
+              {
+                q: "How is the communication — will I talk to a bot or a junior executive?",
+                a: "Closeness is our core value. You'll have a direct channel with the person responsible for your strategy. We believe in total transparency: you'll know what we're working on each week through clear reports.",
+              },
+              {
+                q: "What is the differential value of this platform?",
+                a: "For property owners, as our motto says \"your property, your money\": you pay us only once, and once tenants move in, the tenant pays you directly — no intermediaries, no rent increases to cover third-party costs and profits.\n\nFor tenants, you not only pay less rent than with real-estate agencies or sub-leasing third parties, but we are also the only ones who show you properties that truly match your preferences.\n\nFor businesses, we target small and medium companies with prices within their reach. We know marketing agencies only care about clients with big budgets — we are truly your allies and we care about your business actually growing.",
+              },
+              {
+                q: "How do you balance marketing for B2B and B2C audiences?",
+                a: "We understand that even if channels change, we are always dealing with people. That's why all our marketing is personalized and handled by an advisor — we prioritize emotional connection and passion for the product. Our methodology unites both worlds through \"Human Service\": marketing designed by people for people.",
+              },
+              {
+                q: "What happens if my needs change mid-project?",
+                a: "Flexibility is one of our greatest strengths. As an agile and human organization, we can pivot and adjust strategies without the bureaucratic delays of traditional agencies.",
+              },
+              {
+                q: "How do you ensure marketing attracts the ideal tenant and not just curious visitors?",
+                a: "Our approach isn't limited to \"filling the space\" — it's about protecting your investment. We use a segmented marketing strategy that combines profiling formats with specific qualification filters and tenant credit screening services.",
+              },
+              {
+                q: "How do I know my information is secure?",
+                a: "We use secure connections and strong data-protection practices. Your information is used only to manage your request and deliver the service.",
+              },
+            ].map((item, i) => (
+              <details
+                key={i}
+                className="group rounded-lg border border-border bg-card p-4 transition-colors hover:border-primary/30"
+              >
+                <summary className="flex cursor-pointer items-start justify-between gap-4 text-base font-medium">
+                  <span>{item.q}</span>
+                  <span className="mt-1 shrink-0 text-primary transition-transform group-open:rotate-45">
+                    +
+                  </span>
+                </summary>
+                <p className="mt-3 whitespace-pre-line text-sm text-muted-foreground leading-relaxed">
+                  {item.a}
+                </p>
+              </details>
+            ))}
           </div>
         </div>
       </section>

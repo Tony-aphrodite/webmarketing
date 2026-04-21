@@ -62,7 +62,7 @@ const OWNER_TIERS: Record<
           "No monthly commissions",
           "Optional: +$100 for priority listing placement (1 month)",
         ],
-        cta: "Choose & Secure Your Income",
+        cta: "Choose & secure your money",
       },
       {
         name: "Founders Package — Visionary Owners",
@@ -74,7 +74,7 @@ const OWNER_TIERS: Record<
           "No monthly commissions",
           "Ideal for short-term rentals (weekly, monthly, up to 6 months)",
         ],
-        cta: "Trust & Earn",
+        cta: "Trust & earn",
       },
     ],
     color: "text-blue-600",
@@ -527,8 +527,26 @@ export default async function ServicesPage() {
                     Listing optimization checklist
                   </li>
                 </ul>
-                <p className="mt-2 text-xs text-muted-foreground">
-                  See the full plan features in the &quot;Available Plans&quot; section below.
+              </div>
+
+              {/* Steve 4/21 #17: What's included in this service (full features list) */}
+              <div className="rounded-lg border bg-muted/30 p-4">
+                <p className="text-base font-semibold mb-3">
+                  What&apos;s included in your {tierDetails.name} service
+                </p>
+                <ul className="space-y-2">
+                  {tierDetails.features.map((feature, i) => (
+                    <li key={i} className="flex items-start gap-2 text-sm">
+                      <CheckCircle2 className={`mt-0.5 h-4 w-4 shrink-0 ${tierDetails.color}`} />
+                      <span>{feature}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+
+              <div>
+                <p className="text-xs text-muted-foreground">
+                  See the full plan pricing and payment options in the &quot;Available Plans&quot; section below.
                 </p>
               </div>
 
@@ -644,6 +662,27 @@ export default async function ServicesPage() {
             <Star className="h-5 w-5 text-primary" />
             Available Plans
           </h2>
+
+          {/* Steve 4/21 #14: Founders plan urgency counter (editable via env) */}
+          {ownerTier === "basic" && (() => {
+            const foundersTaken = Number(process.env.NEXT_PUBLIC_FOUNDERS_TAKEN || "12");
+            const foundersLimit = 20;
+            const foundersLeft = Math.max(0, foundersLimit - foundersTaken);
+            return (
+              <div className="rounded-lg border-2 border-amber-400 bg-amber-50 p-4 text-center">
+                <p className="text-lg font-bold text-amber-900">
+                  {foundersTaken} owners have already chosen the Founders Package
+                </p>
+                <p className="text-2xl font-extrabold text-red-600 mt-1">
+                  Only {foundersLeft} spots left — Hurry!
+                </p>
+                <p className="text-xs text-amber-700 mt-2">
+                  Limited to the first 20 Visionary Owners at the special lifetime rate.
+                </p>
+              </div>
+            );
+          })()}
+
           <div className={`grid gap-4 ${tierDetails.plans.length > 1 ? "md:grid-cols-2" : ""}`}>
             {tierDetails.plans.map((plan, i) => (
               <Card key={i} className="flex flex-col">
