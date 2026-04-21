@@ -53,6 +53,11 @@ export default async function DashboardPage() {
   let pymesLoss: number | null = null;
 
   const isInvestor = profile.role === "inversionista";
+  // Steve 4/20: respect user's initial user_type selection
+  // propietario* = Property Owner (stays Basic/Preferred even with 4+ properties)
+  // inversionista = Investor (always Elite with portfolio breakdown)
+  const isOwnerNotInvestor =
+    profile.role === "propietario" || profile.role === "propietario_preferido";
 
   if (isOwnerRole) {
     const { data: props } = await supabase
@@ -62,10 +67,15 @@ export default async function DashboardPage() {
     propertyCount = props?.length || 0;
     totalCFP = props?.reduce((sum, p) => sum + (Number(p.cfp_monthly) || 0), 0) || 0;
 
-    // Steve #8: investors NEVER see "basic" — always elite (portfolio-based)
+    // Steve #8 + 4/20: investors always Elite; Property Owners stay at Basic/Preferred
+    // regardless of property count (never auto-promote to Elite).
     if (isInvestor) {
       ownerTier = "elite";
+    } else if (isOwnerNotInvestor) {
+      // Explicit Property Owner — cap at preferred_owners
+      ownerTier = propertyCount >= 2 ? "preferred_owners" : "basic";
     } else if (propertyCount >= 4) {
+      // Only fallback for users with no role set yet
       ownerTier = "elite";
     } else if (propertyCount >= 2) {
       ownerTier = "preferred_owners";

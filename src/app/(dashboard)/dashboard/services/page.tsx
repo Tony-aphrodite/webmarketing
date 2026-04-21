@@ -335,10 +335,21 @@ export default async function ServicesPage() {
     propertyCount = properties?.length ?? 0;
 
     const isInvestor = profile.role === "inversionista";
+    // Steve 4/20: Property Owner stays at Basic/Preferred regardless of count
+    const isOwnerNotInvestor =
+      profile.role === "propietario" || profile.role === "propietario_preferido";
 
     if (properties && properties.length > 0) {
-      // Steve #8: investors NEVER see "basic" — always elite (portfolio-based)
-      ownerTier = isInvestor ? "elite" : properties[0].service_tier;
+      // Investor → always Elite (portfolio-based)
+      // Property Owner → Basic/Preferred based on count, never auto-promoted to Elite
+      if (isInvestor) {
+        ownerTier = "elite";
+      } else if (isOwnerNotInvestor) {
+        ownerTier = propertyCount >= 2 ? "preferred_owners" : "basic";
+      } else {
+        // Fallback for users with no explicit role
+        ownerTier = properties[0].service_tier;
+      }
       ownerProperties = properties;
       totalCFP = properties.reduce(
         (sum, p) => sum + (Number(p.cfp_monthly) || 0),
@@ -347,6 +358,7 @@ export default async function ServicesPage() {
     } else {
       // Fallback: derive from role + property count
       if (isInvestor) ownerTier = "elite";
+      else if (isOwnerNotInvestor) ownerTier = profile.property_count >= 2 ? "preferred_owners" : "basic";
       else if (profile.property_count >= 4) ownerTier = "elite";
       else if (profile.property_count >= 2) ownerTier = "preferred_owners";
       else if (profile.property_count >= 1) ownerTier = "basic";
