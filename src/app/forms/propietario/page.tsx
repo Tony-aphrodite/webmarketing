@@ -124,6 +124,19 @@ const LEGAL_DOCS: Record<string, { title: string; text: string }> = {
     title: "Terms & Conditions",
     text: "By accepting these terms and conditions, you agree to the following: (1) All information provided in this form is accurate and truthful. (2) You are the legal owner or authorized representative of the property/properties listed. (3) You authorize Nexuma marketing ltd to act on your behalf for marketing and tenant placement purposes as outlined in your service plan. (4) Service fees are based on the assigned plan tier and are calculated as a percentage of monthly rent as described in the plan details. (5) Either party may terminate the agreement with 30 days written notice. (6) Disputes will be resolved under the laws of British Columbia, Canada.",
   },
+  // Steve 4/21 #16: 3 additional legal consents
+  consent_legal_representation: {
+    title: "Legal Representation Authorization",
+    text: "By accepting this consent, you authorize Nexuma marketing ltd to act as your designated representative for all matters related to the marketing, leasing, and tenant placement of the listed property/properties. This representation is limited to the scope of services outlined in your selected plan and does not include legal advice, litigation, or acts requiring power of attorney. You retain full ownership and decision-making authority over the property at all times. This authorization may be revoked at any time with 30 days written notice.",
+  },
+  consent_liability_limitation: {
+    title: "Limitation of Liability",
+    text: "You acknowledge and agree that Nexuma marketing ltd provides marketing and matching services and is not a party to any lease agreement between the property owner and the tenant. To the maximum extent permitted by law, Nexuma marketing ltd's total liability arising from the services shall not exceed the fees paid by you in the twelve (12) months preceding the claim. Nexuma marketing ltd is not liable for: tenant default, property damage caused by tenants, indirect or consequential damages, or outcomes outside of our direct control. This limitation does not exclude liability that cannot be excluded by law.",
+  },
+  consent_electronic_signature: {
+    title: "Electronic Signature Consent",
+    text: "By checking this box and submitting this form, you agree that your electronic check-box action constitutes a valid and binding electronic signature under the Personal Information Protection and Electronic Documents Act (PIPEDA) and British Columbia's Electronic Transactions Act. You consent to conduct this transaction by electronic means and agree that electronic records and signatures have the same legal effect as handwritten signatures on paper documents. You acknowledge having the ability to access, read, and retain a copy of these consents at any time.",
+  },
 };
 
 const TOTAL_STEPS = 6;
@@ -267,6 +280,9 @@ export default function OwnerFormPage() {
       consent_data_processing: false,
       consent_marketing: false,
       consent_third_party: false,
+      consent_legal_representation: false,
+      consent_liability_limitation: false,
+      consent_electronic_signature: false,
       area_unit: "sqft",
       occupancy_status: "vacant",
     },
@@ -1714,6 +1730,22 @@ export default function OwnerFormPage() {
                     id: "consent_terms",
                     field: "consent_third_party" as const,
                     label: "I accept the terms and conditions.",
+                  },
+                  // Steve 4/21 #16: 3 additional consents
+                  {
+                    id: "consent_legal_rep",
+                    field: "consent_legal_representation" as const,
+                    label: "I authorize legal representation by Nexuma marketing ltd for matters related to marketing and tenant placement.",
+                  },
+                  {
+                    id: "consent_liability",
+                    field: "consent_liability_limitation" as const,
+                    label: "I accept the limitation of liability outlined in the service agreement.",
+                  },
+                  {
+                    id: "consent_esignature",
+                    field: "consent_electronic_signature" as const,
+                    label: "I consent to use electronic signatures and acknowledge their legal validity.",
                   },
                 ].map(({ id, field, label }) => (
                   <div key={id} className="rounded-lg border p-3">

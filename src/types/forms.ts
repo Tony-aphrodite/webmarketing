@@ -56,7 +56,7 @@ export const ownerFormSchema = z.object({
   near_mall: z.boolean().default(false),
   nearby_supermarkets: z.array(z.string()).default([]),
 
-  // ─── Legal Consents (4 checkboxes per PDF) ───
+  // ─── Legal Consents (7 checkboxes: 4 original + 3 added Steve 4/21 #16) ───
   consent_image_usage: z.boolean().refine((v) => v === true, {
     message: "You must consent to image usage and editing",
   }),
@@ -68,6 +68,16 @@ export const ownerFormSchema = z.object({
   }),
   consent_third_party: z.boolean().refine((v) => v === true, {
     message: "You must accept terms and conditions",
+  }),
+  // Steve 4/21 #16
+  consent_legal_representation: z.boolean().refine((v) => v === true, {
+    message: "You must authorize legal representation",
+  }),
+  consent_liability_limitation: z.boolean().refine((v) => v === true, {
+    message: "You must accept the limitation of liability",
+  }),
+  consent_electronic_signature: z.boolean().refine((v) => v === true, {
+    message: "You must consent to electronic signature",
   }),
 });
 

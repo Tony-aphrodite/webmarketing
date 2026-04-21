@@ -296,6 +296,18 @@ function CaptacionForm({ onBack }: { onBack: () => void }) {
         body: JSON.stringify({ source: "pymes_captacion" }),
       });
 
+      // Steve 4/21 #7: Send lead email to commercial area
+      await fetch("/api/pymes-captacion-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          business_name: captData.business_name,
+          industry: captData.industry,
+          business_goals: captData.business_goals,
+          biggest_challenge: captData.biggest_challenge,
+        }),
+      }).catch((err) => console.error("Captacion email failed:", err));
+
       setCaptSuccess(true);
     } catch (e) {
       setCaptError("Failed to save. Please try again.");
@@ -318,22 +330,40 @@ function CaptacionForm({ onBack }: { onBack: () => void }) {
             </div>
             <CardTitle className="text-2xl">Submission Received!</CardTitle>
             <CardDescription>
-              Thank you for completing the Client Acquisition form. Our team will review your information and prepare a customized acquisition strategy.
+              Thank you. Our team will review your profile and contact you to schedule a personalized rescue session.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="rounded-lg border bg-muted/50 p-4 space-y-2">
               <p className="text-sm font-medium">What happens next?</p>
               <ul className="text-sm text-muted-foreground space-y-1 list-disc ml-4">
-                <li>Our team reviews your business profile and target audience</li>
-                <li>We design a tailored client acquisition strategy</li>
-                <li>You will receive an email to schedule a consultation meeting</li>
+                <li>Our commercial team has been notified and will contact you within 24 hours</li>
+                <li>We review your business profile and target audience</li>
+                <li>We design a tailored client acquisition strategy during your rescue session</li>
               </ul>
             </div>
             <div className="flex flex-col gap-2">
-              <Button onClick={() => router.push("/dashboard/services")} className="w-full gap-2">
-                <Calendar className="h-4 w-4" />
-                Schedule a Consultation
+              {/* Steve 4/21 #7: Primary CTA — AGENDAR MI SESIÓN DE RESCATE */}
+              <Button
+                onClick={async () => {
+                  await fetch("/api/pymes-captacion-email", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      business_name: captData.business_name,
+                      industry: captData.industry,
+                      business_goals: captData.business_goals,
+                      biggest_challenge: captData.biggest_challenge,
+                      reschedule: true,
+                    }),
+                  }).catch(() => null);
+                  alert("Our commercial team has been notified. They will contact you shortly to schedule your rescue session.");
+                }}
+                size="lg"
+                className="w-full gap-2 bg-red-600 hover:bg-red-700"
+              >
+                <Calendar className="h-5 w-5" />
+                SCHEDULE MY RESCUE SESSION
               </Button>
               <Button variant="outline" onClick={() => router.push("/dashboard")} className="w-full">
                 Go to Dashboard
@@ -601,6 +631,16 @@ export default function PymesCalculatorPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ source: "pymes_calculator" }),
       });
+
+      // Steve 4/21 #6: Send result email to user with recommendation + CTAs
+      await fetch("/api/pymes-result-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          diagnosis_id: diagnosis?.id,
+          monthly_revenue: data.monthly_revenue,
+        }),
+      }).catch((err) => console.error("PYMES email failed:", err));
 
       router.push(`/results/pymes/${diagnosis?.id}`);
     } catch (err) {

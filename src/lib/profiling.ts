@@ -61,11 +61,11 @@ export interface TenantCriteriaInput {
 export function countPremiumCriteria(data: TenantCriteriaInput): number {
   let count = 0;
 
-  // 1. Stable employment (verifiable)
+  // 1. Stable employment (Steve Old#1 4/19: verifiable checkbox removed from UI,
+  //    so we no longer require employment_verifiable — just stable employment type)
   if (
-    (data.employment_type === "full_time" ||
-      data.employment_type === "self_employed") &&
-    data.employment_verifiable
+    data.employment_type === "full_time" ||
+    data.employment_type === "self_employed"
   ) {
     count++;
   }
