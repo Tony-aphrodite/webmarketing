@@ -1753,7 +1753,7 @@ export default function OwnerFormPage() {
                       <Checkbox
                         id={id}
                         checked={watch(field) as boolean}
-                        onCheckedChange={(c) => setValue(field, c === true)}
+                        onCheckedChange={(c) => setValue(field, c === true, { shouldValidate: true })}
                       />
                       <div className="flex-1">
                         <Label htmlFor={id} className="text-sm font-normal leading-relaxed">
