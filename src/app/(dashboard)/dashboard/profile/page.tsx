@@ -264,7 +264,7 @@ export default function ProfilePage() {
           })}
           <p className="text-xs text-muted-foreground border-t pt-4">
             Data processing consent is required and cannot be revoked while using our services.
-            For questions about your data rights under PIPEDA/GDPR, contact privacy@webmarketing.ca
+            For questions about your data rights under PIPEDA/GDPR, contact privacy@nexuma.ca
           </p>
         </CardContent>
       </Card>

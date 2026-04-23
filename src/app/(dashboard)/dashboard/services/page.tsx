@@ -641,6 +641,14 @@ export default async function ServicesPage() {
                             <p className="text-sm text-muted-foreground">
                               To acquire: contact the commercial team to finalize the portfolio assignment and payment method (e-Transfer, credit card, or bank transfer).
                             </p>
+                            {/* Steve 4/22 #8: CTA to acquire portfolio */}
+                            <Link
+                              href="/dashboard/services#contact"
+                              className={cn(buttonVariants(), "w-full gap-2 mt-2 bg-amber-600 hover:bg-amber-700")}
+                            >
+                              Acquire {portfolio.name} Portfolio
+                              <ArrowRight className="h-4 w-4" />
+                            </Link>
                           </div>
                         )}
                       </div>

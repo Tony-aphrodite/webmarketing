@@ -31,7 +31,7 @@ import { FileText } from "lucide-react";
 const LEGAL_DOCS: Record<string, { title: string; text: string }> = {
   consent_data_processing: {
     title: "Data Processing, Screening & Communications Consent",
-    text: "In accordance with the Personal Information Protection Act (PIPA) of British Columbia and the Personal Information Protection and Electronic Documents Act (PIPEDA) of Canada, you consent to the collection, use, and processing of your personal information for the purpose of tenant matching, background screening, reference verification, and electronic communications. Your data is stored securely and will not be shared with unauthorized third parties. You may withdraw consent at any time by contacting privacy@webmarketing.ca. This consent covers: (1) Background and credit screening via authorized services, (2) Verification of references provided, (3) Electronic communications regarding property matches and service updates, and (4) Marketing communications (optional). You have the right to access, correct, and request deletion of your personal data.",
+    text: "In accordance with the Personal Information Protection Act (PIPA) of British Columbia and the Personal Information Protection and Electronic Documents Act (PIPEDA) of Canada, you consent to the collection, use, and processing of your personal information for the purpose of tenant matching, background screening, reference verification, and electronic communications. Your data is stored securely and will not be shared with unauthorized third parties. You may withdraw consent at any time by contacting privacy@nexuma.ca. This consent covers: (1) Background and credit screening via authorized services, (2) Verification of references provided, (3) Electronic communications regarding property matches and service updates, and (4) Marketing communications (optional). You have the right to access, correct, and request deletion of your personal data.",
   },
   consent_screening: {
     title: "Background Screening Consent (PIPA/PIPEDA)",
@@ -406,6 +406,19 @@ export default function TenantFormPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ source: "tenant_form" }),
       });
+
+      // Steve 4/22 #8: Send email to commercial + confirmation to tenant
+      await fetch("/api/tenant-submit-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          min_budget: data.min_budget,
+          max_budget: data.max_budget,
+          bedrooms_needed: data.bedrooms_needed,
+          move_in_date: data.move_in_date,
+          is_premium: false, // profiling endpoint will classify; email just for heads-up
+        }),
+      }).catch((err) => console.error("Tenant submit email failed:", err));
 
       router.push("/dashboard");
     } catch (err) {

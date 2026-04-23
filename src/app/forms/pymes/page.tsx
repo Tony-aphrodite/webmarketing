@@ -269,7 +269,12 @@ function CaptacionForm({ onBack }: { onBack: () => void }) {
     try {
       const supabase = createClient();
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) { router.push("/login"); return; }
+      if (!user) {
+        // Steve 4/22 #7: Don't redirect to login mid-submission; show friendly error instead
+        setCaptError("Your session has expired. Please refresh the page and try again (your data may be lost).");
+        setCaptLoading(false);
+        return;
+      }
 
       const { error: insertError } = await supabase
         .from("pymes_captacion")
@@ -661,7 +666,7 @@ export default function PymesCalculatorPage() {
           <div className="text-center">
             <div className="mb-4 inline-flex items-center gap-2 rounded-full bg-accent/10 px-4 py-1.5 text-sm font-medium text-accent">
               <BarChart3 className="h-4 w-4" />
-              Marketing Empresarial
+              Business Marketing
             </div>
             <h1 className="text-3xl font-bold tracking-tight">Choose Your Assessment</h1>
             <p className="mt-2 text-muted-foreground">

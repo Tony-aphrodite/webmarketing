@@ -328,7 +328,11 @@ export async function matchPropertiesForTenant(userId: string) {
 
   const premium = prefs.is_premium ?? false;
   const maxBudget = prefs.max_budget ? Number(prefs.max_budget) : null;
-  const minBudget = prefs.min_budget ? Number(prefs.min_budget) : null;
+  const rawMinBudget = prefs.min_budget ? Number(prefs.min_budget) : null;
+  // Steve #2-1 (4/22): If tenant only set max_budget (not min_budget),
+  // auto-apply min_budget = max_budget * 0.6 so we don't show properties
+  // far below tenant's target range (e.g., $1,000 property for tenant with $3,000 budget)
+  const minBudget = rawMinBudget ?? (maxBudget ? Math.floor(maxBudget * 0.6) : null);
   const bedrooms = prefs.bedrooms_needed ? Number(prefs.bedrooms_needed) : null;
   const amenities: string[] = prefs.preferred_amenities || [];
 

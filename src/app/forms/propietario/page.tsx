@@ -114,7 +114,7 @@ const LEGAL_DOCS: Record<string, { title: string; text: string }> = {
   },
   consent_data_processing: {
     title: "Rights & Privacy Declaration",
-    text: "In accordance with the Personal Information Protection Act (PIPA) of British Columbia and the Personal Information Protection and Electronic Documents Act (PIPEDA) of Canada, we collect and process your personal information solely for the purpose of providing our marketing and property management services. Your data will be stored securely and will not be shared with third parties without your explicit consent, except as required by law. You have the right to access, correct, and request deletion of your personal data at any time by contacting our privacy officer at privacy@webmarketing.ca.",
+    text: "In accordance with the Personal Information Protection Act (PIPA) of British Columbia and the Personal Information Protection and Electronic Documents Act (PIPEDA) of Canada, we collect and process your personal information solely for the purpose of providing our marketing and property management services. Your data will be stored securely and will not be shared with third parties without your explicit consent, except as required by law. You have the right to access, correct, and request deletion of your personal data at any time by contacting our privacy officer at privacy@nexuma.ca.",
   },
   consent_marketing: {
     title: "Electronic Communications (CASL)",
@@ -715,6 +715,19 @@ export default function OwnerFormPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ source: "owner_form" }),
       });
+
+      // Steve 4/22 #8: Send email to commercial area + confirmation to client
+      await fetch("/api/owner-submit-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_type: data.user_type,
+          property_count: data.property_count,
+          tier,
+          cities: data.cities,
+          rents: data.rents,
+        }),
+      }).catch((err) => console.error("Owner submit email failed:", err));
 
       router.push("/dashboard/properties");
     } catch (err) {
