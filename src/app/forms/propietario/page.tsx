@@ -535,6 +535,21 @@ export default function OwnerFormPage() {
 
       if (briefError) throw briefError;
 
+      // Steve 4/23 #6: Send email EARLY (before long property/photo operations)
+      // so that if photo upload fails, commercial team still gets the lead notification.
+      // Fire-and-forget so we don't block the submit flow.
+      fetch("/api/owner-submit-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_type: data.user_type,
+          property_count: data.property_count,
+          tier,
+          cities: data.cities,
+          rents: data.rents,
+        }),
+      }).catch((err) => console.error("Owner submit email failed:", err));
+
       if (isInvestorSubmit) {
         // ─── Investor: create all properties with portfolio assignment ───
         for (let i = 0; i < Math.min(propertyCount, investorProps.length); i++) {
@@ -715,19 +730,6 @@ export default function OwnerFormPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ source: "owner_form" }),
       });
-
-      // Steve 4/22 #8: Send email to commercial area + confirmation to client
-      await fetch("/api/owner-submit-email", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          user_type: data.user_type,
-          property_count: data.property_count,
-          tier,
-          cities: data.cities,
-          rents: data.rents,
-        }),
-      }).catch((err) => console.error("Owner submit email failed:", err));
 
       router.push("/dashboard/properties");
     } catch (err) {

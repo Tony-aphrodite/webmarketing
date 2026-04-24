@@ -52,7 +52,10 @@ export async function POST(request: Request) {
     }).catch((err) => console.error("Commercial email failed:", err));
 
     // 2. Confirmation email to the tenant
-    const clientEmail = profile?.email || user.email;
+    // Steve 4/23 #6: Use user.email (from auth) as primary, profile.email as backup.
+    // user.email is guaranteed to exist after signup.
+    const clientEmail = user.email || profile?.email;
+    console.log(`[tenant-submit-email] Sending to client: ${clientEmail}`);
     if (clientEmail) {
       resend.emails.send({
         from: FROM_EMAIL,

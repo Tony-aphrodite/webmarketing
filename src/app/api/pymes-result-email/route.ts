@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { Resend } from "resend";
 
 const FROM_EMAIL = process.env.RESEND_FROM_EMAIL || "WebMarketing <notifications@nexuma.ca>";
+const COMMERCIAL_EMAIL = process.env.COMMERCIAL_AREA_EMAIL || "alexsanabria33@hotmail.com";
 
 // Steve 4/21 #6: PYMES result email template (exact wording from MVP)
 function buildEmailHtml(params: {
@@ -121,7 +122,9 @@ export async function POST(request: Request) {
       .eq("id", user.id)
       .single();
 
-    const recipientEmail = profile?.email || user.email;
+    // Steve 4/23: user.email (from auth) is more reliable than profile.email
+    const recipientEmail = user.email || profile?.email;
+    console.log(`[pymes-result-email] Sending to client: ${recipientEmail}`);
     if (!recipientEmail) {
       return NextResponse.json({ error: "No email to send to" }, { status: 400 });
     }
@@ -157,13 +160,36 @@ export async function POST(request: Request) {
 
     const resend = new Resend(process.env.RESEND_API_KEY);
 
-    // Send to user
+    // Send to user (with Steve's template)
     await resend.emails.send({
       from: FROM_EMAIL,
       to: [recipientEmail],
       subject: `Your Sales Leak Diagnosis Results — Save $${annualLoss.toLocaleString()}/year`,
       html,
     });
+
+    // Steve 4/23 #6: Also notify commercial team about the new PYMES lead
+    const commercialHtml = `
+<div style="font-family:-apple-system,BlinkMacSystemFont,sans-serif;max-width:600px;margin:0 auto">
+  <h2 style="color:#0B38D9">New Sales Leak Diagnosis Completed</h2>
+  <p>A PYMES client has just completed the Sales Leak Diagnosis.</p>
+  <table style="border-collapse:collapse;width:100%;max-width:500px;margin:20px 0">
+    <tr><td style="padding:8px;font-weight:bold;background:#f5f5f5;width:40%">Name</td><td style="padding:8px">${profile?.full_name || "N/A"}</td></tr>
+    <tr><td style="padding:8px;font-weight:bold;background:#f5f5f5">Email</td><td style="padding:8px"><a href="mailto:${recipientEmail}">${recipientEmail}</a></td></tr>
+    <tr><td style="padding:8px;font-weight:bold;background:#f5f5f5">Diagnostic Score</td><td style="padding:8px">${diagnosis.total_score}/35</td></tr>
+    <tr><td style="padding:8px;font-weight:bold;background:#f5f5f5">Urgency Level</td><td style="padding:8px">${diagnosis.urgency_level}</td></tr>
+    <tr><td style="padding:8px;font-weight:bold;background:#f5f5f5">Estimated Annual Loss</td><td style="padding:8px">$${annualLoss.toLocaleString()} CAD</td></tr>
+    <tr><td style="padding:8px;font-weight:bold;background:#f5f5f5">Recommended Plan</td><td style="padding:8px">${diagnosis.recommended_plan}</td></tr>
+  </table>
+  <p style="color:#666;font-size:12px">Contact this lead within 24 hours to offer a rescue session.</p>
+</div>`;
+
+    await resend.emails.send({
+      from: FROM_EMAIL,
+      to: COMMERCIAL_EMAIL.split(",").map((s) => s.trim()).filter(Boolean),
+      subject: `New PYMES Lead — ${profile?.full_name || "Unknown"} (Score ${diagnosis.total_score}/35)`,
+      html: commercialHtml,
+    }).catch((err) => console.error("PYMES commercial email failed:", err));
 
     return NextResponse.json({ success: true });
   } catch (err) {

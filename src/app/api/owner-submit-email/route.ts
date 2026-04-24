@@ -59,7 +59,9 @@ export async function POST(request: Request) {
     }).catch((err) => console.error("Commercial email failed:", err));
 
     // 2. Confirmation email to the client
-    const clientEmail = profile?.email || user.email;
+    // Steve 4/23: user.email (from auth) is more reliable than profile.email
+    const clientEmail = user.email || profile?.email;
+    console.log(`[owner-submit-email] Sending to client: ${clientEmail}`);
     if (clientEmail) {
       const clientHtml = `
 <div style="font-family:-apple-system,BlinkMacSystemFont,sans-serif;max-width:600px;margin:0 auto">
