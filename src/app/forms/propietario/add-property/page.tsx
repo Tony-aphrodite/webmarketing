@@ -327,6 +327,28 @@ export default function AddPropertyPage() {
         body: JSON.stringify({ type: "owner" }),
       });
 
+      // Steve 4/24 #6: Send email when adding property via "+ New Property"
+      // Get current role to differentiate owner vs investor in email
+      const { data: profileForRole } = await supabase
+        .from("profiles")
+        .select("role")
+        .eq("id", user.id)
+        .single();
+      const userType = profileForRole?.role === "inversionista" ? "investor" : "owner";
+
+      fetch("/api/owner-submit-email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          user_type: userType,
+          property_count: totalProps,
+          tier,
+          cities: [data.zone_city],
+          rents: [data.monthly_rent],
+          source: "add_property",
+        }),
+      }).catch((err) => console.error("Add-property email failed:", err));
+
       router.push("/dashboard/properties");
     } catch (err) {
       setError("Failed to save. Please try again.");

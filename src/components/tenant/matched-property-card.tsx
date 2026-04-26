@@ -81,11 +81,20 @@ export function MatchedPropertyCard({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ property_id: property.id }),
       });
-      if (!res.ok) throw new Error("Application failed");
+      if (!res.ok) {
+        const body = await res.json().catch(() => ({}));
+        console.error("Apply for free failed:", res.status, body);
+        if (res.status === 401) {
+          setError("Your session expired. Please refresh the page and try again.");
+        } else {
+          setError(`Could not submit (status ${res.status}). Please try again.`);
+        }
+        return;
+      }
       setApplied(true);
     } catch (err) {
       console.error(err);
-      setError("Failed to submit application. Please try again.");
+      setError("Network error. Please check your connection and try again.");
     } finally {
       setApplying(false);
     }

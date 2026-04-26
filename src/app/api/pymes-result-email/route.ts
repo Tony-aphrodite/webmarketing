@@ -103,10 +103,10 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Not authenticated" }, { status: 401 });
     }
 
-    // Get diagnosis data
+    // Get diagnosis data — Steve 4/24 #6: include all 7 question scores for commercial email
     const { data: diagnosis } = await supabase
       .from("pymes_diagnosis")
-      .select("total_score, urgency_level, estimated_loss, recommended_plan")
+      .select("total_score, urgency_level, estimated_loss, recommended_plan, monthly_revenue, sector, company_name, q1_online_presence, q2_seo_positioning, q3_lead_generation, q4_lead_conversion, q5_client_retention, q6_repeat_purchases, q7_marketing_strategy")
       .eq("id", diagnosis_id)
       .eq("user_id", user.id)
       .single();
@@ -168,20 +168,86 @@ export async function POST(request: Request) {
       html,
     });
 
-    // Steve 4/23 #6: Also notify commercial team about the new PYMES lead
+    // Steve 4/24 #6: Commercial email with FULL diagnostic — 4 blocks, 7 questions, all scores
+    const score = (v: unknown) => Number(v) || 0;
+    const q1 = score(diagnosis.q1_online_presence);
+    const q2 = score(diagnosis.q2_seo_positioning);
+    const q3 = score(diagnosis.q3_lead_generation);
+    const q4 = score(diagnosis.q4_lead_conversion);
+    const q5 = score(diagnosis.q5_client_retention);
+    const q6 = score(diagnosis.q6_repeat_purchases);
+    const q7 = score(diagnosis.q7_marketing_strategy);
+
+    const blockSales = q3 + q4;             // Block 1: Sales (Lead Gen + Conversion)
+    const blockBrand = q1 + q2;             // Block 2: Brand (Online presence + SEO)
+    const blockSystems = q5 + q6;           // Block 3: Systems (Retention + Repeat)
+    const blockFuture = q7;                 // Block 4: Future (Marketing Strategy)
+
+    const scoreCell = (v: number) => `<td style="padding:8px;text-align:center;background:${v <= 2 ? "#fee2e2" : v >= 4 ? "#dcfce7" : "#fef3c7"};font-weight:600">${v}/5</td>`;
+
     const commercialHtml = `
-<div style="font-family:-apple-system,BlinkMacSystemFont,sans-serif;max-width:600px;margin:0 auto">
+<div style="font-family:-apple-system,BlinkMacSystemFont,sans-serif;max-width:680px;margin:0 auto">
   <h2 style="color:#0B38D9">New Sales Leak Diagnosis Completed</h2>
-  <p>A PYMES client has just completed the Sales Leak Diagnosis.</p>
-  <table style="border-collapse:collapse;width:100%;max-width:500px;margin:20px 0">
-    <tr><td style="padding:8px;font-weight:bold;background:#f5f5f5;width:40%">Name</td><td style="padding:8px">${profile?.full_name || "N/A"}</td></tr>
-    <tr><td style="padding:8px;font-weight:bold;background:#f5f5f5">Email</td><td style="padding:8px"><a href="mailto:${recipientEmail}">${recipientEmail}</a></td></tr>
-    <tr><td style="padding:8px;font-weight:bold;background:#f5f5f5">Diagnostic Score</td><td style="padding:8px">${diagnosis.total_score}/35</td></tr>
-    <tr><td style="padding:8px;font-weight:bold;background:#f5f5f5">Urgency Level</td><td style="padding:8px">${diagnosis.urgency_level}</td></tr>
-    <tr><td style="padding:8px;font-weight:bold;background:#f5f5f5">Estimated Annual Loss</td><td style="padding:8px">$${annualLoss.toLocaleString()} CAD</td></tr>
-    <tr><td style="padding:8px;font-weight:bold;background:#f5f5f5">Recommended Plan</td><td style="padding:8px">${diagnosis.recommended_plan}</td></tr>
+  <p>A PYMES client has just completed the Sales Leak Diagnosis. Full diagnostic breakdown below.</p>
+
+  <!-- Contact + Summary -->
+  <table style="border-collapse:collapse;width:100%;margin:20px 0;border:1px solid #e5e5e5">
+    <tr><td style="padding:10px;font-weight:bold;background:#f5f5f5;width:40%">Name</td><td style="padding:10px">${profile?.full_name || "N/A"}</td></tr>
+    <tr><td style="padding:10px;font-weight:bold;background:#f5f5f5">Email</td><td style="padding:10px"><a href="mailto:${recipientEmail}">${recipientEmail}</a></td></tr>
+    <tr><td style="padding:10px;font-weight:bold;background:#f5f5f5">Company</td><td style="padding:10px">${diagnosis.company_name || "N/A"}</td></tr>
+    <tr><td style="padding:10px;font-weight:bold;background:#f5f5f5">Sector</td><td style="padding:10px">${diagnosis.sector || "N/A"}</td></tr>
+    <tr><td style="padding:10px;font-weight:bold;background:#f5f5f5">Monthly Revenue</td><td style="padding:10px">$${Number(diagnosis.monthly_revenue || 0).toLocaleString()} CAD</td></tr>
+    <tr><td style="padding:10px;font-weight:bold;background:#f5f5f5">Diagnostic Score</td><td style="padding:10px"><strong>${diagnosis.total_score}/35</strong> — Urgency: <strong>${diagnosis.urgency_level}</strong></td></tr>
+    <tr><td style="padding:10px;font-weight:bold;background:#f5f5f5">Estimated Annual Loss</td><td style="padding:10px;color:#dc2626;font-weight:600">$${annualLoss.toLocaleString()} CAD</td></tr>
+    <tr><td style="padding:10px;font-weight:bold;background:#f5f5f5">Recommended Plan</td><td style="padding:10px;text-transform:capitalize">Plan ${diagnosis.recommended_plan}</td></tr>
   </table>
-  <p style="color:#666;font-size:12px">Contact this lead within 24 hours to offer a rescue session.</p>
+
+  <!-- Per-block breakdown (Steve 4/24 #6: full MVP-aligned scores) -->
+  <h3 style="color:#0B38D9;margin-top:32px;margin-bottom:8px">Per-Question Scores</h3>
+  <p style="font-size:13px;color:#666;margin:0 0 12px">Scale 1-5 (1: Bad/No • 5: Excellent/Yes). Color: red &lt;= 2, yellow = 3, green &gt;= 4</p>
+
+  <table style="border-collapse:collapse;width:100%;border:1px solid #e5e5e5;margin-bottom:12px">
+    <thead>
+      <tr style="background:#0B38D9;color:#fff">
+        <th style="padding:10px;text-align:left">Block</th>
+        <th style="padding:10px;text-align:left">Question</th>
+        <th style="padding:10px;text-align:center;width:80px">Score</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td rowspan="2" style="padding:10px;background:#fef3c7;font-weight:600;vertical-align:top">BLOCK 1<br>SALES</td>
+          <td style="padding:8px">Is your new-client flow constant and predictable month to month?</td>
+          ${scoreCell(q3)}</tr>
+      <tr><td style="padding:8px">Do you have an automatic system to follow up with prospects?</td>
+          ${scoreCell(q4)}</tr>
+
+      <tr><td rowspan="2" style="padding:10px;background:#fef3c7;font-weight:600;vertical-align:top;border-top:2px solid #e5e5e5">BLOCK 2<br>BRAND</td>
+          <td style="padding:8px;border-top:2px solid #e5e5e5">Is your value proposition so clear a child would understand it in 10 seconds?</td>
+          ${scoreCell(q1)}</tr>
+      <tr><td style="padding:8px">Does your visual identity look more professional than your direct competition?</td>
+          ${scoreCell(q2)}</tr>
+
+      <tr><td rowspan="2" style="padding:10px;background:#fef3c7;font-weight:600;vertical-align:top;border-top:2px solid #e5e5e5">BLOCK 3<br>SYSTEMS</td>
+          <td style="padding:8px;border-top:2px solid #e5e5e5">Can your business operate for a week without you intervening operationally?</td>
+          ${scoreCell(q5)}</tr>
+      <tr><td style="padding:8px">Do you measure the exact cost of acquiring each new client?</td>
+          ${scoreCell(q6)}</tr>
+
+      <tr><td style="padding:10px;background:#fef3c7;font-weight:600;vertical-align:top;border-top:2px solid #e5e5e5">BLOCK 4<br>FUTURE</td>
+          <td style="padding:8px;border-top:2px solid #e5e5e5">COST OF INACTION — How serious would it be to keep going the same in 12 months?</td>
+          ${scoreCell(q7)}</tr>
+    </tbody>
+  </table>
+
+  <h3 style="color:#0B38D9;margin-top:24px;margin-bottom:8px">Block Subtotals</h3>
+  <table style="border-collapse:collapse;width:100%;border:1px solid #e5e5e5">
+    <tr style="background:#f5f5f5"><td style="padding:10px;font-weight:600">Sales (Q3+Q4)</td><td style="padding:10px;text-align:right;font-weight:600">${blockSales}/10</td></tr>
+    <tr><td style="padding:10px;font-weight:600">Brand (Q1+Q2)</td><td style="padding:10px;text-align:right;font-weight:600">${blockBrand}/10</td></tr>
+    <tr style="background:#f5f5f5"><td style="padding:10px;font-weight:600">Systems (Q5+Q6)</td><td style="padding:10px;text-align:right;font-weight:600">${blockSystems}/10</td></tr>
+    <tr><td style="padding:10px;font-weight:600">Future (Q7)</td><td style="padding:10px;text-align:right;font-weight:600">${blockFuture}/5</td></tr>
+  </table>
+
+  <p style="color:#666;font-size:12px;margin-top:24px">Contact this lead within 24 hours to offer a rescue session.</p>
 </div>`;
 
     await resend.emails.send({

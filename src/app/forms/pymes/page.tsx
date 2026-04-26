@@ -351,18 +351,34 @@ function CaptacionForm({ onBack }: { onBack: () => void }) {
               {/* Steve 4/21 #7: Primary CTA — AGENDAR MI SESIÓN DE RESCATE */}
               <Button
                 onClick={async () => {
-                  await fetch("/api/pymes-captacion-email", {
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({
-                      business_name: captData.business_name,
-                      industry: captData.industry,
-                      business_goals: captData.business_goals,
-                      biggest_challenge: captData.biggest_challenge,
-                      reschedule: true,
-                    }),
-                  }).catch(() => null);
-                  alert("Our commercial team has been notified. They will contact you shortly to schedule your rescue session.");
+                  // Steve 4/24 #6: Robust handling — show success/error feedback explicitly
+                  try {
+                    const res = await fetch("/api/pymes-captacion-email", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        business_name: captData.business_name,
+                        industry: captData.industry,
+                        business_goals: captData.business_goals,
+                        biggest_challenge: captData.biggest_challenge,
+                        reschedule: true,
+                      }),
+                    });
+                    if (!res.ok) {
+                      const errBody = await res.json().catch(() => ({}));
+                      console.error("Schedule session failed:", res.status, errBody);
+                      alert(
+                        res.status === 401
+                          ? "Your session expired. Please refresh the page and try again."
+                          : `Could not send the request (status ${res.status}). Please try again or contact us directly.`
+                      );
+                      return;
+                    }
+                    alert("Our commercial team has been notified. They will contact you shortly to schedule your rescue session.");
+                  } catch (err) {
+                    console.error("Schedule session error:", err);
+                    alert("Network error. Please check your connection and try again.");
+                  }
                 }}
                 size="lg"
                 className="w-full gap-2 bg-red-600 hover:bg-red-700"
