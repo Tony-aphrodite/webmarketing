@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { PymesRadarChart } from "@/components/charts/pymes-radar-chart";
 import { CheckoutButton } from "@/components/checkout/checkout-button";
+import { ScheduleRescueButton } from "@/components/pymes/schedule-rescue-button";
 
 // ─── Plan Details ────────────────────────────────────
 const PLAN_DETAILS: Record<
@@ -604,12 +605,7 @@ export default async function PymesResultsPage({
                 <ArrowRight className="h-4 w-4" />
               </Link>
             )}
-            <Link
-              href="/dashboard/services#schedule"
-              className={cn(buttonVariants({ variant: "outline", size: "lg" }), "gap-2")}
-            >
-              Schedule My Rescue Session
-            </Link>
+            <ScheduleRescueButton diagnosisId={diagnosis.id} />
           </div>
           <p className="max-w-md text-xs text-muted-foreground">
             Book a free 15-minute personalized session where we break down your
