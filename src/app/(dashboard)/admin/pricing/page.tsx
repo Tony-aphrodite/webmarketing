@@ -36,7 +36,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, DollarSign, Percent, Tag } from "lucide-react";
+import { Plus, DollarSign, Tag, Users } from "lucide-react";
 
 interface ServicePrice {
   id: string;
@@ -67,11 +67,15 @@ export default function AdminPricingPage() {
   const [saving, setSaving] = useState(false);
   const [editingPrice, setEditingPrice] = useState<string | null>(null);
   const [newPrice, setNewPrice] = useState("");
+  const [foundersTaken, setFoundersTaken] = useState<number>(0);
+  const [foundersLimit, setFoundersLimit] = useState<number>(20);
+  const [foundersSaving, setFoundersSaving] = useState(false);
+  const [foundersMessage, setFoundersMessage] = useState<string | null>(null);
 
   const supabase = createClient();
 
   const load = useCallback(async () => {
-    const [{ data: svcData }, { data: promoData }] = await Promise.all([
+    const [{ data: svcData }, { data: promoData }, { data: cfgData }] = await Promise.all([
       supabase
         .from("services")
         .select("id, name, price, currency, is_active")
@@ -80,12 +84,39 @@ export default function AdminPricingPage() {
         .from("promotions")
         .select("*")
         .order("created_at", { ascending: false }),
+      supabase
+        .from("app_config")
+        .select("key, value")
+        .eq("category", "founders_plan"),
     ]);
 
     setServices(svcData || []);
     setPromotions((promoData as Promotion[]) || []);
+    const cfg = Object.fromEntries(
+      ((cfgData || []) as { key: string; value: string }[]).map((r) => [r.key, r.value]),
+    );
+    setFoundersTaken(Number(cfg.taken ?? "0"));
+    setFoundersLimit(Number(cfg.limit ?? "20"));
     setLoading(false);
   }, [supabase]);
+
+  async function saveFoundersConfig() {
+    setFoundersSaving(true);
+    setFoundersMessage(null);
+    const rows = [
+      { category: "founders_plan", key: "taken", value: String(foundersTaken) },
+      { category: "founders_plan", key: "limit", value: String(foundersLimit) },
+    ];
+    const { error } = await supabase
+      .from("app_config")
+      .upsert(rows, { onConflict: "category,key" });
+    if (error) {
+      setFoundersMessage(`Save failed: ${error.message}`);
+    } else {
+      setFoundersMessage("Updated. Visible on the public dashboard within seconds.");
+    }
+    setFoundersSaving(false);
+  }
 
   useEffect(() => {
     load();
@@ -146,6 +177,55 @@ export default function AdminPricingPage() {
           Manage service prices and promotional discounts
         </p>
       </div>
+
+      {/* Founders Plan Counter */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Users className="h-5 w-5" />
+            Founders Plan Counter
+          </CardTitle>
+          <CardDescription>
+            Drives the urgency banner shown to Basic-tier owners on the Services page.
+            The banner reads: &ldquo;{foundersTaken} owners have already chosen the Founders Package — only {Math.max(0, foundersLimit - foundersTaken)} spots left.&rdquo;
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="grid gap-4 sm:grid-cols-3">
+            <div className="space-y-2">
+              <Label>Owners enrolled</Label>
+              <Input
+                type="number"
+                min={0}
+                value={foundersTaken}
+                onChange={(e) => setFoundersTaken(Math.max(0, Number(e.target.value)))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Total cap</Label>
+              <Input
+                type="number"
+                min={0}
+                value={foundersLimit}
+                onChange={(e) => setFoundersLimit(Math.max(0, Number(e.target.value)))}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>&nbsp;</Label>
+              <Button
+                onClick={saveFoundersConfig}
+                disabled={foundersSaving}
+                className="w-full"
+              >
+                {foundersSaving ? "Saving..." : "Save Counter"}
+              </Button>
+            </div>
+          </div>
+          {foundersMessage && (
+            <p className="mt-3 text-sm text-muted-foreground">{foundersMessage}</p>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Service Prices */}
       <Card>

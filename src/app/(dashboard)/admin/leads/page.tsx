@@ -41,23 +41,40 @@ interface LeadRow {
   created_at: string;
 }
 
+interface AdminUser {
+  id: string;
+  full_name: string | null;
+  email: string;
+}
+
 export default function AdminLeadsPage() {
   const [leads, setLeads] = useState<LeadRow[]>([]);
+  const [admins, setAdmins] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedLead, setSelectedLead] = useState<LeadRow | null>(null);
   const [newStatus, setNewStatus] = useState("");
   const [notes, setNotes] = useState("");
+  const [assignedTo, setAssignedTo] = useState<string>("unassigned");
   const [saving, setSaving] = useState(false);
+  const [updateError, setUpdateError] = useState<string | null>(null);
 
   const supabase = createClient();
 
   const loadLeads = useCallback(async () => {
-    const { data } = await supabase
-      .from("leads")
-      .select("*")
-      .order("created_at", { ascending: false });
+    const [{ data: leadData }, { data: adminData }] = await Promise.all([
+      supabase
+        .from("leads")
+        .select("*")
+        .order("created_at", { ascending: false }),
+      supabase
+        .from("profiles")
+        .select("id, full_name, email")
+        .eq("role", "admin")
+        .order("full_name"),
+    ]);
 
-    setLeads(data || []);
+    setLeads(leadData || []);
+    setAdmins((adminData as AdminUser[]) || []);
     setLoading(false);
   }, [supabase]);
 
@@ -68,22 +85,49 @@ export default function AdminLeadsPage() {
   async function handleStatusUpdate() {
     if (!selectedLead) return;
     setSaving(true);
+    setUpdateError(null);
 
     const updates: Record<string, unknown> = {};
     if (newStatus && newStatus !== selectedLead.status) {
+      // Defense-in-depth: validate transition client-side. The DB has a trigger
+      // that also rejects invalid transitions in case this is bypassed.
+      const allowed = LEAD_STATUS_TRANSITIONS[selectedLead.status] || [];
+      if (!allowed.includes(newStatus)) {
+        setUpdateError(
+          `Cannot transition from ${selectedLead.status} to ${newStatus}.`,
+        );
+        setSaving(false);
+        return;
+      }
       updates.status = newStatus;
     }
     if (notes !== (selectedLead.notes || "")) {
       updates.notes = notes || null;
     }
+    const newAssignment = assignedTo === "unassigned" ? null : assignedTo;
+    if (newAssignment !== (selectedLead.assigned_to || null)) {
+      updates.assigned_to = newAssignment;
+    }
 
     if (Object.keys(updates).length > 0) {
-      await supabase.from("leads").update(updates).eq("id", selectedLead.id);
+      const { error } = await supabase
+        .from("leads")
+        .update(updates)
+        .eq("id", selectedLead.id);
+      if (error) {
+        setUpdateError(error.message);
+        setSaving(false);
+        return;
+      }
     }
 
     setSelectedLead(null);
     setSaving(false);
     loadLeads();
+  }
+
+  function adminLabel(a: AdminUser) {
+    return a.full_name?.trim() || a.email;
   }
 
   const columns: ColumnDef<LeadRow>[] = [
@@ -117,6 +161,7 @@ export default function AdminLeadsPage() {
       accessorKey: "source",
       header: "Source",
       cell: ({ row }) => row.getValue("source") || "—",
+      filterFn: "equals",
     },
     {
       accessorKey: "status",
@@ -139,6 +184,16 @@ export default function AdminLeadsPage() {
         new Date(row.getValue("created_at")).toLocaleDateString("en-CA"),
     },
     {
+      accessorKey: "assigned_to",
+      header: "Assigned To",
+      cell: ({ row }) => {
+        const id = row.getValue("assigned_to") as string | null;
+        if (!id) return <span className="text-muted-foreground">—</span>;
+        const admin = admins.find((a) => a.id === id);
+        return admin ? adminLabel(admin) : <span className="text-muted-foreground">—</span>;
+      },
+    },
+    {
       id: "actions",
       header: "Actions",
       cell: ({ row }) => (
@@ -150,6 +205,8 @@ export default function AdminLeadsPage() {
             setSelectedLead(lead);
             setNewStatus(lead.status);
             setNotes(lead.notes || "");
+            setAssignedTo(lead.assigned_to || "unassigned");
+            setUpdateError(null);
           }}
         >
           Manage
@@ -161,6 +218,14 @@ export default function AdminLeadsPage() {
   const statusOptions = Object.entries(LEAD_STATUS_LABELS).map(
     ([value, label]) => ({ value, label })
   );
+
+  const roleOptions = Array.from(
+    new Set(leads.map((l) => l.role).filter((r): r is string => !!r)),
+  ).map((r) => ({ value: r, label: ROLE_LABELS[r] || r }));
+
+  const sourceOptions = Array.from(
+    new Set(leads.map((l) => l.source).filter((s): s is string => !!s)),
+  ).map((s) => ({ value: s, label: s }));
 
   // Available transitions for selected lead
   const allowedStatuses = selectedLead
@@ -190,6 +255,16 @@ export default function AdminLeadsPage() {
             key: "status",
             label: "Status",
             options: statusOptions,
+          },
+          {
+            key: "role",
+            label: "Role",
+            options: roleOptions,
+          },
+          {
+            key: "source",
+            label: "Source",
+            options: sourceOptions,
           },
         ]}
       />
@@ -223,6 +298,27 @@ export default function AdminLeadsPage() {
               </p>
             </div>
             <div className="space-y-2">
+              <label className="text-sm font-medium">Assign To</label>
+              <Select value={assignedTo} onValueChange={(v) => v && setAssignedTo(v)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Unassigned" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="unassigned">Unassigned</SelectItem>
+                  {admins.map((a) => (
+                    <SelectItem key={a.id} value={a.id}>
+                      {adminLabel(a)}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {admins.length === 0 && (
+                <p className="text-xs text-muted-foreground">
+                  No admin users found. Grant the admin role to a profile to enable assignment.
+                </p>
+              )}
+            </div>
+            <div className="space-y-2">
               <label className="text-sm font-medium">Notes</label>
               <Textarea
                 value={notes}
@@ -231,6 +327,9 @@ export default function AdminLeadsPage() {
                 rows={4}
               />
             </div>
+            {updateError && (
+              <p className="text-sm text-red-600">{updateError}</p>
+            )}
             <div className="flex justify-end gap-2">
               <Button variant="outline" onClick={() => setSelectedLead(null)}>
                 Cancel

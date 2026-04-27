@@ -39,17 +39,17 @@ export default async function AdminDashboardPage() {
       .from("leads")
       .select("id, full_name, email, status, created_at")
       .order("created_at", { ascending: false })
-      .limit(5),
+      .limit(10),
     supabase
       .from("profiles")
       .select("id, full_name, email, role, created_at")
       .order("created_at", { ascending: false })
-      .limit(5),
+      .limit(10),
     supabase
       .from("payments")
       .select("id, amount, status, created_at, profiles:user_id(full_name)")
       .order("created_at", { ascending: false })
-      .limit(5),
+      .limit(10),
   ]);
 
   const totalRevenue = revenueData?.reduce(

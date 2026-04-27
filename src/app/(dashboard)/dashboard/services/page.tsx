@@ -457,6 +457,17 @@ export default async function ServicesPage() {
     .eq("is_active", true)
     .order("category");
 
+  // ─── Founders plan counter (admin-editable from /admin/pricing) ─────
+  const { data: foundersConfig } = await supabase
+    .from("app_config")
+    .select("key, value")
+    .eq("category", "founders_plan");
+  const cfg = Object.fromEntries(
+    (foundersConfig || []).map((r: { key: string; value: string }) => [r.key, r.value]),
+  );
+  const foundersTaken = Number(cfg.taken ?? "0");
+  const foundersLimit = Number(cfg.limit ?? "20");
+
   // Filter services relevant to user role
   const relevantServices = allServices?.filter((s) => {
     if (!s.target_roles || s.target_roles.length === 0) return true;
@@ -671,10 +682,8 @@ export default async function ServicesPage() {
             Available Plans
           </h2>
 
-          {/* Steve 4/21 #14: Founders plan urgency counter (editable via env) */}
-          {ownerTier === "basic" && (() => {
-            const foundersTaken = Number(process.env.NEXT_PUBLIC_FOUNDERS_TAKEN || "12");
-            const foundersLimit = 20;
+          {/* Founders plan urgency counter — value editable via /admin/pricing (Founders Plan section) */}
+          {ownerTier === "basic" && foundersLimit > 0 && (() => {
             const foundersLeft = Math.max(0, foundersLimit - foundersTaken);
             return (
               <div className="rounded-lg border-2 border-amber-400 bg-amber-50 p-4 text-center">

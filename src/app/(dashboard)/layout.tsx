@@ -29,7 +29,7 @@ export default async function DashboardLayout({
     <div className="flex min-h-screen flex-col">
       <DashboardHeader userName={userName} role={role} />
       <div className="flex flex-1">
-        <Sidebar role={role} />
+        <Sidebar role={role} userName={userName} />
         <main className="flex-1 overflow-x-hidden p-4 md:p-6">
           {children}
         </main>

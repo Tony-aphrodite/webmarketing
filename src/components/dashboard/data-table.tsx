@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useEffect } from "react";
 import {
   ColumnDef,
   SortingState,
@@ -60,6 +60,7 @@ export function DataTable<TData, TValue>({
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = useState("");
+  const [searchInput, setSearchInput] = useState("");
 
   const table = useReactTable({
     data,
@@ -74,6 +75,15 @@ export function DataTable<TData, TValue>({
     state: { sorting, columnFilters, globalFilter },
     initialState: { pagination: { pageSize } },
   });
+
+  // 300ms debounce so the table doesn't refilter on every keystroke
+  useEffect(() => {
+    if (!searchKey) return;
+    const handle = setTimeout(() => {
+      table.getColumn(searchKey)?.setFilterValue(searchInput);
+    }, 300);
+    return () => clearTimeout(handle);
+  }, [searchInput, searchKey, table]);
 
   if (loading) {
     return (
@@ -95,10 +105,8 @@ export function DataTable<TData, TValue>({
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
             <Input
               placeholder={searchPlaceholder}
-              value={(table.getColumn(searchKey)?.getFilterValue() as string) ?? ""}
-              onChange={(e) =>
-                table.getColumn(searchKey)?.setFilterValue(e.target.value)
-              }
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
               className="pl-9"
             />
           </div>

@@ -57,7 +57,7 @@ export function DashboardHeader({
                 </SheetTitle>
               </SheetHeader>
               <div className="overflow-y-auto">
-                <SidebarNav role={role} onNavigate={() => setOpen(false)} />
+                <SidebarNav role={role} userName={userName} onNavigate={() => setOpen(false)} />
               </div>
             </SheetContent>
           </Sheet>
